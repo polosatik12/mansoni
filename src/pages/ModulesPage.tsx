@@ -1,4 +1,4 @@
-import { Search, Sparkles, Building2, Shield, Car, Briefcase, GraduationCap, Heart, Plane, ShoppingBag, UtensilsCrossed, Dumbbell, LucideIcon } from "lucide-react";
+import { Search, Building2, Shield, Car, Briefcase, GraduationCap, Heart, Plane, ShoppingBag, UtensilsCrossed, Dumbbell, LucideIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
@@ -131,12 +131,8 @@ export function ModulesPage() {
         />
       </div>
 
-      {/* Available Modules */}
       <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h2 className="font-semibold text-foreground">Доступные модули</h2>
-        </div>
+        <h2 className="font-semibold text-foreground mb-4">Доступные модули</h2>
         <div className="grid grid-cols-2 gap-3">
           {availableModules.map((module) => (
             <ModuleCard key={module.id} module={module} />

@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,10 +11,7 @@ export function FeedTabs() {
 
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-primary" />
-        <span className="font-semibold text-foreground">Лента</span>
-      </div>
+      <span className="font-semibold text-foreground text-lg">Лента</span>
       <div className="flex bg-muted rounded-full p-1">
         {tabs.map((tab) => (
           <button
