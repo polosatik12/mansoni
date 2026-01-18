@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-
+import { CreateMenu } from "@/components/feed/CreateMenu";
+import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
+import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
 const highlights = [
   { id: "1", name: "..life?", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=150&q=80", hasEmoji: true },
   { id: "2", name: "🚗", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=150&q=80", hasEmoji: true },
@@ -32,12 +34,23 @@ const tabs = [
 
 export function ProfilePage() {
   const [activeTab, setActiveTab] = useState("posts");
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const [showPostEditor, setShowPostEditor] = useState(false);
+  const [showStoryEditor, setShowStoryEditor] = useState(false);
+
+  const handleCreateSelect = (type: string) => {
+    if (type === "post") {
+      setShowPostEditor(true);
+    } else if (type === "story") {
+      setShowStoryEditor(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" onClick={() => setShowCreateMenu(true)}>
           <Plus className="w-6 h-6" />
         </Button>
         <div className="flex items-center gap-1">
@@ -216,6 +229,25 @@ export function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Create Menu */}
+      <CreateMenu 
+        isOpen={showCreateMenu} 
+        onClose={() => setShowCreateMenu(false)} 
+        onSelect={handleCreateSelect}
+      />
+
+      {/* Post Editor */}
+      <PostEditorFlow 
+        isOpen={showPostEditor} 
+        onClose={() => setShowPostEditor(false)} 
+      />
+
+      {/* Story Editor */}
+      <StoryEditorFlow 
+        isOpen={showStoryEditor} 
+        onClose={() => setShowStoryEditor(false)} 
+      />
     </div>
   );
 }
