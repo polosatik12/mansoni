@@ -1,157 +1,60 @@
-import { Search, Filter, Users, Hash, TrendingUp, Compass } from "lucide-react";
+import { Search, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
 
-const filterTabs = [
-  { id: "all", label: "Все", icon: Compass },
-  { id: "people", label: "Люди", icon: Users },
-  { id: "tags", label: "Теги", icon: Hash },
-  { id: "trends", label: "Тренды", icon: TrendingUp },
-];
-
-const trends = [
-  { tag: "NFT2024", posts: "125K", growth: "+24%" },
-  { tag: "Dubai", posts: "89K", growth: "+18%" },
-  { tag: "Crypto", posts: "234K", growth: "+12%" },
-  { tag: "AI", posts: "456K", growth: "+45%" },
-];
-
-const recommendations = [
-  { name: "Дмитрий Волков", username: "dvolkov", avatar: "https://i.pravatar.cc/150?img=11", followers: "124K" },
-  { name: "Анна Петрова", username: "anna_p", avatar: "https://i.pravatar.cc/150?img=5", followers: "89K" },
-  { name: "Максим Козлов", username: "max_koz", avatar: "https://i.pravatar.cc/150?img=12", followers: "56K" },
-  { name: "Елена Смирнова", username: "elena_s", avatar: "https://i.pravatar.cc/150?img=9", followers: "234K" },
+const explorePosts = [
+  { id: "1", image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&q=80", isVideo: false },
+  { id: "2", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&q=80", isVideo: true },
+  { id: "3", image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&q=80", isVideo: false },
+  { id: "4", image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&q=80", isVideo: false },
+  { id: "5", image: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&q=80", isVideo: true },
+  { id: "6", image: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&q=80", isVideo: false },
+  { id: "7", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=80", isVideo: false },
+  { id: "8", image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80", isVideo: true },
+  { id: "9", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80", isVideo: false },
+  { id: "10", image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&q=80", isVideo: false },
+  { id: "11", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80", isVideo: true },
+  { id: "12", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80", isVideo: false },
+  { id: "13", image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&q=80", isVideo: false },
+  { id: "14", image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&q=80", isVideo: true },
+  { id: "15", image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80", isVideo: false },
+  { id: "16", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&q=80", isVideo: false },
+  { id: "17", image: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&q=80", isVideo: true },
+  { id: "18", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80", isVideo: false },
 ];
 
 export function SearchPage() {
-  const [activeFilter, setActiveFilter] = useState("all");
-
   return (
-    <div className="min-h-screen p-4 space-y-6">
+    <div className="min-h-screen bg-background">
       {/* Search Bar */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
+      <div className="sticky top-0 z-10 bg-background p-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            placeholder="Поиск людей, тегов, постов..."
-            className="pl-10 h-12 rounded-xl bg-card border-border"
+            placeholder="Поиск"
+            className="pl-10 h-11 rounded-xl bg-muted border-0"
           />
         </div>
-        <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl">
-          <Filter className="w-5 h-5" />
-        </Button>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-        {filterTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveFilter(tab.id)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
-              activeFilter === tab.id
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            )}
+      {/* Explore Grid */}
+      <div className="grid grid-cols-3 gap-[1px]">
+        {explorePosts.map((post) => (
+          <div
+            key={post.id}
+            className="aspect-square relative cursor-pointer overflow-hidden"
           >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
+            <img
+              src={post.image}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+            {post.isVideo && (
+              <div className="absolute top-2 right-2">
+                <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
+              </div>
+            )}
+          </div>
         ))}
-      </div>
-
-      {/* Trends */}
-      <div className="bg-card rounded-2xl border border-border p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h2 className="font-semibold text-foreground">Тренды</h2>
-          </div>
-          <button className="text-primary text-sm font-medium">Все</button>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {trends.map((trend) => (
-            <div
-              key={trend.tag}
-              className="bg-muted rounded-xl p-3 hover:bg-muted/80 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-1.5 mb-1">
-                <Hash className="w-4 h-4 text-primary" />
-                <span className="font-semibold text-foreground">{trend.tag}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{trend.posts} постов</span>
-                <span className="text-xs text-green-500 font-medium">{trend.growth}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Recommendations */}
-      <div className="bg-card rounded-2xl border border-border p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-muted-foreground" />
-            <h2 className="font-semibold text-foreground">Рекомендации</h2>
-          </div>
-          <button className="text-primary text-sm font-medium">Все</button>
-        </div>
-        <div className="space-y-4">
-          {recommendations.map((user) => (
-            <div key={user.username} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <p className="font-semibold text-foreground">{user.name}</p>
-                  <p className="text-sm text-muted-foreground">@{user.username}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">{user.followers}</span>
-                <Button size="sm" className="rounded-full">
-                  Подписаться
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Interesting section */}
-      <div className="bg-card rounded-2xl border border-border p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Compass className="w-5 h-5 text-primary" />
-          <h2 className="font-semibold text-foreground">Интересное</h2>
-        </div>
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="flex-shrink-0 w-32 h-44 rounded-xl overflow-hidden relative"
-            >
-              <img
-                src={`https://images.unsplash.com/photo-${1500000000000 + i * 100}?w=200&q=80`}
-                alt="Reel"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-2 left-2 right-2">
-                <div className="w-8 h-8 rounded-full bg-primary/90 flex items-center justify-center">
-                  <div className="w-0 h-0 border-l-[8px] border-l-white border-y-[5px] border-y-transparent ml-1" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
