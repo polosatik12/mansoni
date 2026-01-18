@@ -32,8 +32,8 @@ const insuranceNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/modules", icon: Grid3X3, label: "Сервисы" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
-  { to: "#policies", icon: FileText, label: "Мои полисы", isAction: true },
-  { to: "#support", icon: Headphones, label: "Поддержка", isAction: true },
+  { to: "#policies", icon: FileText, label: "Полисы", isAction: true },
+  { to: "#support", icon: Headphones, label: "Помощь", isAction: true },
 ];
 
 export function BottomNav() {
