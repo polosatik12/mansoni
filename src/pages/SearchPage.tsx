@@ -1,5 +1,13 @@
-import { Search, Play } from "lucide-react";
+import { Search, Play, Hash } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+
+const trends = [
+  { tag: "NFT2024", posts: "125K" },
+  { tag: "Dubai", posts: "89K" },
+  { tag: "Crypto", posts: "234K" },
+  { tag: "AI", posts: "456K" },
+];
 
 const explorePosts = [
   { id: "1", image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&q=80", isVideo: false },
@@ -26,7 +34,7 @@ export function SearchPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Search Bar */}
-      <div className="sticky top-0 z-10 bg-background p-3">
+      <div className="sticky top-0 z-10 bg-background p-3 pb-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
@@ -34,6 +42,25 @@ export function SearchPage() {
             className="pl-10 h-11 rounded-xl bg-muted border-0"
           />
         </div>
+      </div>
+
+      {/* Hashtags */}
+      <div className="px-3 py-3">
+        <ScrollArea className="w-full">
+          <div className="flex gap-2">
+            {trends.map((trend) => (
+              <button
+                key={trend.tag}
+                className="flex items-center gap-1.5 px-4 py-2 bg-muted rounded-full flex-shrink-0 active:opacity-70 transition-opacity"
+              >
+                <Hash className="w-4 h-4 text-primary" />
+                <span className="font-medium text-sm">{trend.tag}</span>
+                <span className="text-xs text-muted-foreground">{trend.posts}</span>
+              </button>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" className="invisible" />
+        </ScrollArea>
       </div>
 
       {/* Explore Grid */}
