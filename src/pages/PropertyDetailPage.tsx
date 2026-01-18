@@ -4,6 +4,7 @@ import { X, Heart, Share2, ChevronLeft, ChevronRight, MapPin, Phone, MessageCirc
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { PropertyMap } from "@/components/maps/PropertyMap";
 
 const propertyData = {
   id: "1",
@@ -44,6 +45,7 @@ const propertyData = {
   updatedAt: "29 дек в 17:33",
   badges: ["Только на Циан", "Онлайн-бронирование", "От застройщика"],
   promos: ["Рассрочка 0%", "Материнский капитал"],
+  coordinates: { lat: 55.7459, lng: 37.5298 }, // Москва-Сити coordinates
 };
 
 export function PropertyDetailPage() {
@@ -262,20 +264,19 @@ export function PropertyDetailPage() {
           ))}
         </div>
 
-        {/* Map placeholder */}
-        <div className="relative rounded-xl overflow-hidden mb-3">
-          <img
-            src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&q=80"
-            alt="Map"
-            className="w-full h-40 object-cover"
+        {/* Map */}
+        <div className="relative rounded-xl overflow-hidden mb-3 h-40">
+          <PropertyMap 
+            lat={propertyData.coordinates.lat} 
+            lng={propertyData.coordinates.lng}
+            address={propertyData.complex}
           />
-          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-              <Navigation className="w-6 h-6 text-white" />
-            </div>
-          </div>
         </div>
-        <Button variant="outline" className="w-full rounded-xl">
+        <Button 
+          variant="outline" 
+          className="w-full rounded-xl"
+          onClick={() => window.open(`https://yandex.ru/maps/?pt=${propertyData.coordinates.lng},${propertyData.coordinates.lat}&z=16&l=map`, '_blank')}
+        >
           Построить маршрут
         </Button>
       </div>
