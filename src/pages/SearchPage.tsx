@@ -17,8 +17,6 @@ const trends = [
   { tag: "Dubai", posts: "89K", growth: "+18%" },
   { tag: "Crypto", posts: "234K", growth: "+12%" },
   { tag: "AI", posts: "456K", growth: "+45%" },
-  { tag: "Startup", posts: "67K", growth: "+8%" },
-  { tag: "Tech", posts: "189K", growth: "+15%" },
 ];
 
 const recommendations = [
