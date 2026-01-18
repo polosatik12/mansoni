@@ -291,26 +291,40 @@ export function InsurancePage() {
         </div>
       </div>
 
-      {/* Hero */}
-      <div className="px-4 py-6 text-center bg-gradient-to-b from-teal-50 to-background dark:from-teal-950/20">
-        <div className="w-14 h-14 rounded-2xl bg-teal-500 flex items-center justify-center mx-auto mb-4">
-          <Shield className="w-7 h-7 text-white" />
+      {/* Hero - Apple style minimal */}
+      <div className="px-6 pt-10 pb-8 text-center">
+        <div className="w-16 h-16 rounded-[20px] bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-teal-500/25">
+          <Shield className="w-8 h-8 text-white" strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">Страхование онлайн</h1>
-        <p className="text-muted-foreground">Оформите полис за несколько минут без визита в офис</p>
+        <h1 className="text-[28px] font-semibold text-foreground tracking-tight mb-2">
+          Страхование
+        </h1>
+        <p className="text-base text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
+          Оформите полис за пару минут — без визита в офис
+        </p>
       </div>
 
-      {/* Features Grid */}
-      <div className="px-4 py-4 grid grid-cols-2 gap-3">
-        {features.map((feature, idx) => (
-          <div key={idx} className="bg-card rounded-2xl p-4 border border-border">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-              <feature.icon className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="font-semibold text-foreground text-sm mb-1">{feature.title}</h3>
-            <p className="text-xs text-muted-foreground">{feature.description}</p>
+      {/* Features - clean horizontal scroll */}
+      <div className="px-4 pb-6">
+        <ScrollArea className="w-full">
+          <div className="flex gap-3 pb-1">
+            {features.map((feature, idx) => (
+              <div 
+                key={idx} 
+                className="flex-shrink-0 w-[140px] bg-muted/50 rounded-2xl p-4 hover:bg-muted/80 transition-colors"
+              >
+                <feature.icon className="w-6 h-6 text-foreground mb-3" strokeWidth={1.5} />
+                <h3 className="font-medium text-foreground text-[13px] leading-tight mb-1">
+                  {feature.title}
+                </h3>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
           </div>
-        ))}
+          <ScrollBar orientation="horizontal" className="invisible" />
+        </ScrollArea>
       </div>
 
       {/* Categories */}
