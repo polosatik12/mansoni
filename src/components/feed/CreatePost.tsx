@@ -2,16 +2,19 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CreateMenu } from "./CreateMenu";
 import { PostEditorFlow } from "./PostEditorFlow";
+import { StoryEditorFlow } from "./StoryEditorFlow";
 
 export function CreatePost() {
   const [showMenu, setShowMenu] = useState(false);
-  const [showEditor, setShowEditor] = useState(false);
+  const [showPostEditor, setShowPostEditor] = useState(false);
+  const [showStoryEditor, setShowStoryEditor] = useState(false);
 
   const handleSelectType = (type: string) => {
     if (type === "post") {
-      setShowEditor(true);
+      setShowPostEditor(true);
+    } else if (type === "story") {
+      setShowStoryEditor(true);
     }
-    // Other types can be handled similarly
   };
 
   return (
@@ -44,8 +47,13 @@ export function CreatePost() {
       />
 
       <PostEditorFlow
-        isOpen={showEditor}
-        onClose={() => setShowEditor(false)}
+        isOpen={showPostEditor}
+        onClose={() => setShowPostEditor(false)}
+      />
+
+      <StoryEditorFlow
+        isOpen={showStoryEditor}
+        onClose={() => setShowStoryEditor(false)}
       />
     </>
   );
