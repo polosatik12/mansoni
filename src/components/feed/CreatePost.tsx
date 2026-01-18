@@ -1,17 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CreateMenu } from "./CreateMenu";
-import { CreatePostSheet } from "./CreatePostSheet";
+import { PostEditorFlow } from "./PostEditorFlow";
 
 export function CreatePost() {
   const [showMenu, setShowMenu] = useState(false);
-  const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const [createType, setCreateType] = useState<string | null>(null);
+  const [showEditor, setShowEditor] = useState(false);
 
   const handleSelectType = (type: string) => {
-    setCreateType(type);
     if (type === "post") {
-      setShowCreateSheet(true);
+      setShowEditor(true);
     }
     // Other types can be handled similarly
   };
@@ -45,9 +43,9 @@ export function CreatePost() {
         onSelect={handleSelectType}
       />
 
-      <CreatePostSheet
-        isOpen={showCreateSheet}
-        onClose={() => setShowCreateSheet(false)}
+      <PostEditorFlow
+        isOpen={showEditor}
+        onClose={() => setShowEditor(false)}
       />
     </>
   );
