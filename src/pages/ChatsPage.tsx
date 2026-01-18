@@ -1,8 +1,23 @@
-import { Search, MoreVertical, Check, CheckCheck } from "lucide-react";
+import { useState } from "react";
+import { Search, Check, CheckCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ChatConversation } from "@/components/chat/ChatConversation";
 
-const chats = [
+interface Chat {
+  id: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  online: boolean;
+  read: boolean;
+  verified?: boolean;
+  isGroup?: boolean;
+}
+
+const chats: Chat[] = [
   {
     id: "1",
     name: "Алиса Морозова",
@@ -68,6 +83,22 @@ const chats = [
 ];
 
 export function ChatsPage() {
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredChats = chats.filter((chat) =>
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (selectedChat) {
+    return (
+      <ChatConversation
+        chat={selectedChat}
+        onBack={() => setSelectedChat(null)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen">
       {/* Search */}
@@ -76,6 +107,8 @@ export function ChatsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             placeholder="Поиск в чатах..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-12 rounded-xl bg-card border-border"
           />
         </div>
@@ -83,10 +116,11 @@ export function ChatsPage() {
 
       {/* Chat List */}
       <div className="divide-y divide-border">
-        {chats.map((chat) => (
+        {filteredChats.map((chat) => (
           <div
             key={chat.id}
-            className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+            onClick={() => setSelectedChat(chat)}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted"
           >
             {/* Avatar */}
             <div className="relative">
