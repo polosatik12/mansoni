@@ -2,7 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { id: "foryou", label: "Для вас" },
+  { id: "foryou", label: "Рекомендации" },
   { id: "following", label: "Подписки" },
 ];
 
