@@ -281,9 +281,9 @@ export function InsurancePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-background border-b border-border">
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate("/modules")}>
+          <button onClick={() => navigate("/modules")} className="p-1 -ml-1">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <span className="font-semibold">Страхование</span>
@@ -291,60 +291,54 @@ export function InsurancePage() {
         </div>
       </div>
 
-      {/* Hero - Apple style minimal */}
-      <div className="px-6 pt-10 pb-8 text-center">
-        <div className="w-16 h-16 rounded-[20px] bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-teal-500/25">
-          <Shield className="w-8 h-8 text-white" strokeWidth={1.5} />
+      {/* Compact Hero */}
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl">
+          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <Shield className="w-6 h-6 text-white" strokeWidth={1.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-semibold text-white mb-0.5">Страхование онлайн</h1>
+            <p className="text-sm text-white/80">Полис за 2 минуты без визита в офис</p>
+          </div>
         </div>
-        <h1 className="text-[28px] font-semibold text-foreground tracking-tight mb-2">
-          Страхование
-        </h1>
-        <p className="text-base text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
-          Оформите полис за пару минут — без визита в офис
-        </p>
       </div>
 
-      {/* Features - clean horizontal scroll */}
-      <div className="px-4 pb-6">
-        <ScrollArea className="w-full">
-          <div className="flex gap-3 pb-1">
-            {features.map((feature, idx) => (
-              <div 
-                key={idx} 
-                className="flex-shrink-0 w-[140px] bg-muted/50 rounded-2xl p-4 hover:bg-muted/80 transition-colors"
-              >
-                <feature.icon className="w-6 h-6 text-foreground mb-3" strokeWidth={1.5} />
-                <h3 className="font-medium text-foreground text-[13px] leading-tight mb-1">
-                  {feature.title}
-                </h3>
-                <p className="text-[11px] text-muted-foreground leading-snug">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" className="invisible" />
-        </ScrollArea>
+      {/* Quick Actions Grid */}
+      <div className="px-4 py-3 grid grid-cols-4 gap-2">
+        {features.map((feature, idx) => (
+          <button
+            key={idx}
+            className="flex flex-col items-center p-3 rounded-xl bg-muted/50 active:bg-muted transition-colors"
+          >
+            <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center mb-2 shadow-sm">
+              <feature.icon className="w-5 h-5 text-primary" strokeWidth={1.5} />
+            </div>
+            <span className="text-[11px] text-center text-foreground font-medium leading-tight">
+              {feature.title.split(' ')[0]}
+            </span>
+          </button>
+        ))}
       </div>
 
       {/* Categories */}
-      <div className="px-4 py-3">
+      <div className="px-4 py-2">
         <ScrollArea className="w-full">
           <div className="flex gap-2">
             {categories.map((cat) => (
-              <Button
+              <button
                 key={cat.id}
-                variant={activeCategory === cat.id ? "default" : "outline"}
-                size="sm"
                 className={cn(
-                  "rounded-full flex-shrink-0",
-                  activeCategory === cat.id && "bg-primary"
+                  "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0",
+                  activeCategory === cat.id 
+                    ? "bg-foreground text-background" 
+                    : "bg-muted text-foreground"
                 )}
                 onClick={() => setActiveCategory(cat.id)}
               >
-                <cat.icon className="w-4 h-4 mr-1.5" />
+                <cat.icon className="w-4 h-4" strokeWidth={1.5} />
                 {cat.label}
-              </Button>
+              </button>
             ))}
           </div>
           <ScrollBar orientation="horizontal" className="invisible" />
