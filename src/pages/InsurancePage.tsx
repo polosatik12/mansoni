@@ -197,16 +197,16 @@ function ProductCard({ product }: { product: InsuranceProduct }) {
       </div>
 
       {/* Price & Actions */}
-      <div className="flex items-center justify-between">
-        <div>
-          <span className="text-lg font-bold text-foreground">от {product.priceFrom}</span>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-lg font-bold text-foreground whitespace-nowrap">от {product.priceFrom}</span>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="rounded-xl">
+          <Button variant="outline" size="sm" className="rounded-xl flex-1">
             <Calculator className="w-4 h-4 mr-1" />
             Рассчитать
           </Button>
-          <Button size="sm" className="rounded-xl bg-primary">
+          <Button size="sm" className="rounded-xl bg-primary flex-1">
             <MessageCircle className="w-4 h-4 mr-1" />
             Консультация
           </Button>
