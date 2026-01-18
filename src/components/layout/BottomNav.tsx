@@ -1,4 +1,4 @@
-import { Home, Grid3X3, MessageCircle, Search, Heart, FileText, Headphones, LucideIcon } from "lucide-react";
+import { Home, Grid3X3, MessageCircle, Search, Heart, FileText, Headphones, User, LucideIcon } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ const defaultNavItems: NavItem[] = [
   { to: "/search", icon: Search, label: "Поиск" },
   { to: "/modules", icon: Grid3X3, label: "Сервисы" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
+  { to: "/profile", icon: User, label: "Профиль" },
 ];
 
 // Real estate service nav items
