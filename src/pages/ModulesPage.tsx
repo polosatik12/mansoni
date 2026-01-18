@@ -189,6 +189,8 @@ export function ModulesPage() {
   const handleModuleClick = (moduleId: string) => {
     if (moduleId === "realestate") {
       navigate("/realestate");
+    } else if (moduleId === "insurance") {
+      navigate("/insurance");
     }
     // Add more module routes here as they're implemented
   };
