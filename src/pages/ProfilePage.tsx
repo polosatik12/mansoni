@@ -34,9 +34,9 @@ export function ProfilePage() {
   const [activeTab, setActiveTab] = useState("posts");
 
   return (
-    <div className="min-h-screen bg-background -mt-14">
+    <div className="min-h-screen bg-background">
       {/* Cover Image */}
-      <div className="relative h-48">
+      <div className="relative h-44">
         <img
           src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80"
           alt="Cover"
@@ -61,21 +61,21 @@ export function ProfilePage() {
             <Settings className="w-5 h-5" />
           </Button>
         </div>
+      </div>
 
-        {/* Avatar */}
-        <div className="absolute -bottom-16 left-4">
-          <div className="w-28 h-28 rounded-full border-4 border-card bg-card overflow-hidden shadow-lg">
-            <img
-              src="https://i.pravatar.cc/150?img=32"
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
+      {/* Avatar - positioned separately */}
+      <div className="relative z-10 -mt-14 ml-4 mb-4">
+        <div className="w-24 h-24 rounded-full border-4 border-card bg-card overflow-hidden shadow-lg">
+          <img
+            src="https://i.pravatar.cc/150?img=32"
+            alt="Profile"
+            className="w-full h-full object-cover"
+          />
         </div>
       </div>
 
       {/* Profile Info */}
-      <div className="bg-card rounded-t-3xl -mt-4 relative pt-14 px-4 pb-4">
+      <div className="bg-card px-4 pb-4">
         {/* Name & Verified */}
         <div className="flex items-center gap-2 mb-1">
           <h1 className="text-xl font-bold text-foreground">Александр Иванов</h1>
