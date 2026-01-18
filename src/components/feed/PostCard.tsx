@@ -155,9 +155,9 @@ export function PostCard({
         </div>
       )}
 
-      {/* Actions */}
+      {/* Actions with Stats */}
       <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-5">
           <button
             onClick={handleLike}
             className={cn(
@@ -166,40 +166,24 @@ export function PostCard({
             )}
           >
             <Heart className={cn("w-6 h-6", liked && "fill-current")} />
+            <span className="text-sm">{formatNumber(likeCount)}</span>
           </button>
           <button className="flex items-center gap-1.5 text-foreground">
             <MessageCircle className="w-6 h-6" />
+            <span className="text-sm">{formatNumber(comments)}</span>
           </button>
           <button className="flex items-center gap-1.5 text-foreground">
             <Send className="w-6 h-6" />
+            <span className="text-sm">{formatNumber(shares)}</span>
           </button>
         </div>
         <button
           onClick={() => setSaved(!saved)}
-          className="text-foreground"
+          className="flex items-center gap-1.5 text-foreground"
         >
           <Bookmark className={cn("w-6 h-6", saved && "fill-current")} />
+          <span className="text-sm">{formatNumber(saves)}</span>
         </button>
-      </div>
-
-      {/* Stats */}
-      <div className="px-4 flex items-center gap-4 text-sm">
-        <span className="flex items-center gap-1">
-          <Heart className="w-4 h-4" />
-          <span className="font-medium">{formatNumber(likeCount)}</span>
-        </span>
-        <span className="flex items-center gap-1">
-          <MessageCircle className="w-4 h-4" />
-          <span>{formatNumber(comments)}</span>
-        </span>
-        <span className="flex items-center gap-1">
-          <Send className="w-4 h-4" />
-          <span>{formatNumber(shares)}</span>
-        </span>
-        <span className="flex items-center gap-1">
-          <Bookmark className="w-4 h-4" />
-          <span>{formatNumber(saves)}</span>
-        </span>
       </div>
 
       {/* Caption */}
