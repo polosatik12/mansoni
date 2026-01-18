@@ -214,7 +214,7 @@ export function RealEstatePage() {
         <ScrollArea className="w-full">
           <div className="flex gap-4">
             {featuredProperties.map((property) => (
-              <div key={property.id} className="flex-shrink-0 w-[260px]">
+              <div key={property.id} className="flex-shrink-0 w-[260px] cursor-pointer" onClick={() => navigate(`/realestate/${property.id}`)}>
                 <div className="relative rounded-2xl overflow-hidden mb-3">
                   <img
                     src={property.image}
@@ -283,7 +283,7 @@ export function RealEstatePage() {
         </div>
         <div className="space-y-4">
           {allProperties.map((property) => (
-            <div key={property.id} className="bg-card rounded-2xl overflow-hidden border border-border">
+            <div key={property.id} className="bg-card rounded-2xl overflow-hidden border border-border cursor-pointer" onClick={() => navigate(`/realestate/${property.id}`)}>
               <div className="relative">
                 <img
                   src={property.image}
