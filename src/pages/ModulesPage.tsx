@@ -17,7 +17,7 @@ const modules: Module[] = [
     description: "Быстрые поездки по городу",
     image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&q=80",
     available: true,
-    gradient: "from-yellow-500/80 to-orange-600/80",
+    gradient: "from-yellow-500/30 to-orange-600/40",
   },
   {
     id: "carsharing",
@@ -25,7 +25,7 @@ const modules: Module[] = [
     description: "Аренда авто поминутно",
     image: "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=400&q=80",
     available: true,
-    gradient: "from-blue-500/80 to-cyan-600/80",
+    gradient: "from-blue-500/30 to-cyan-600/40",
   },
   {
     id: "delivery",
@@ -33,7 +33,7 @@ const modules: Module[] = [
     description: "Еда, продукты, курьеры",
     image: "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=400&q=80",
     available: true,
-    gradient: "from-green-500/80 to-emerald-600/80",
+    gradient: "from-green-500/30 to-emerald-600/40",
   },
   {
     id: "marketplace",
@@ -41,7 +41,7 @@ const modules: Module[] = [
     description: "Товары и услуги",
     image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&q=80",
     available: true,
-    gradient: "from-purple-500/80 to-violet-600/80",
+    gradient: "from-purple-500/30 to-violet-600/40",
   },
   {
     id: "realestate",
@@ -49,7 +49,7 @@ const modules: Module[] = [
     description: "Аренда и продажа",
     image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&q=80",
     available: true,
-    gradient: "from-slate-600/80 to-zinc-700/80",
+    gradient: "from-slate-600/30 to-zinc-700/40",
   },
   {
     id: "insurance",
@@ -57,7 +57,7 @@ const modules: Module[] = [
     description: "Защита имущества и жизни",
     image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&q=80",
     available: true,
-    gradient: "from-teal-500/80 to-cyan-600/80",
+    gradient: "from-teal-500/30 to-cyan-600/40",
   },
   {
     id: "jobs",
@@ -65,7 +65,7 @@ const modules: Module[] = [
     description: "Вакансии и резюме",
     image: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&q=80",
     available: false,
-    gradient: "from-indigo-500/80 to-blue-600/80",
+    gradient: "from-indigo-500/30 to-blue-600/40",
   },
   {
     id: "banking",
@@ -73,7 +73,7 @@ const modules: Module[] = [
     description: "Финансовые услуги",
     image: "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=400&q=80",
     available: false,
-    gradient: "from-emerald-500/80 to-green-600/80",
+    gradient: "from-emerald-500/30 to-green-600/40",
   },
   {
     id: "investments",
@@ -81,7 +81,7 @@ const modules: Module[] = [
     description: "Акции и портфели",
     image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80",
     available: false,
-    gradient: "from-amber-500/80 to-yellow-600/80",
+    gradient: "from-amber-500/30 to-yellow-600/40",
   },
   {
     id: "auto",
@@ -89,7 +89,7 @@ const modules: Module[] = [
     description: "Купля-продажа авто",
     image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&q=80",
     available: false,
-    gradient: "from-red-500/80 to-rose-600/80",
+    gradient: "from-red-500/30 to-rose-600/40",
   },
   {
     id: "travel",
@@ -97,7 +97,7 @@ const modules: Module[] = [
     description: "Авиа, ж/д, автобусы",
     image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&q=80",
     available: false,
-    gradient: "from-sky-500/80 to-blue-600/80",
+    gradient: "from-sky-500/30 to-blue-600/40",
   },
   {
     id: "hotels",
@@ -105,7 +105,7 @@ const modules: Module[] = [
     description: "Бронирование номеров",
     image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80",
     available: false,
-    gradient: "from-orange-500/80 to-amber-600/80",
+    gradient: "from-orange-500/30 to-amber-600/40",
   },
   {
     id: "entertainment",
@@ -113,15 +113,15 @@ const modules: Module[] = [
     description: "Кино, театр, концерты",
     image: "https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&q=80",
     available: false,
-    gradient: "from-pink-500/80 to-rose-600/80",
+    gradient: "from-pink-500/30 to-rose-600/40",
   },
   {
     id: "sport",
     name: "Спорт",
     description: "Залы, секции, билеты",
-    image: "https://images.unsplash.com/photo-1461896836934- voices?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&q=80",
     available: false,
-    gradient: "from-lime-500/80 to-green-600/80",
+    gradient: "from-lime-500/30 to-green-600/40",
   },
   {
     id: "education",
@@ -129,7 +129,7 @@ const modules: Module[] = [
     description: "Курсы и репетиторы",
     image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80",
     available: false,
-    gradient: "from-violet-500/80 to-purple-600/80",
+    gradient: "from-violet-500/30 to-purple-600/40",
   },
   {
     id: "music",
@@ -137,7 +137,7 @@ const modules: Module[] = [
     description: "Стриминг и треки",
     image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&q=80",
     available: false,
-    gradient: "from-fuchsia-500/80 to-pink-600/80",
+    gradient: "from-fuchsia-500/30 to-pink-600/40",
   },
 ];
 
@@ -152,11 +152,8 @@ function ModuleCard({ module }: { module: Module }) {
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         
-        {/* Gradient Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t ${module.gradient}`} />
-        
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        {/* Dark overlay for text readability - only at bottom */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
         {/* Coming Soon Badge */}
         {!module.available && (
