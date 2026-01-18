@@ -1,6 +1,6 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
+import { useNavigate } from "react-router-dom";
 interface Module {
   id: string;
   name: string;
@@ -141,9 +141,12 @@ const modules: Module[] = [
   },
 ];
 
-function ModuleCard({ module }: { module: Module }) {
+function ModuleCard({ module, onClick }: { module: Module; onClick?: () => void }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl cursor-pointer group">
+    <div 
+      className="relative overflow-hidden rounded-2xl cursor-pointer group"
+      onClick={onClick}
+    >
       <div className="relative aspect-[4/3]">
         {/* Background Image */}
         <img
@@ -179,8 +182,16 @@ function ModuleCard({ module }: { module: Module }) {
 }
 
 export function ModulesPage() {
+  const navigate = useNavigate();
   const availableModules = modules.filter((m) => m.available);
   const comingSoonModules = modules.filter((m) => !m.available);
+
+  const handleModuleClick = (moduleId: string) => {
+    if (moduleId === "realestate") {
+      navigate("/realestate");
+    }
+    // Add more module routes here as they're implemented
+  };
 
   return (
     <div className="min-h-screen p-4 space-y-6">
@@ -196,7 +207,11 @@ export function ModulesPage() {
       {/* Available Modules */}
       <div className="grid grid-cols-2 gap-3">
         {availableModules.map((module) => (
-          <ModuleCard key={module.id} module={module} />
+          <ModuleCard 
+            key={module.id} 
+            module={module} 
+            onClick={() => handleModuleClick(module.id)}
+          />
         ))}
       </div>
 
