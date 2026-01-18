@@ -180,25 +180,25 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Posts Grid */}
-      <div className="bg-card">
+      {/* Posts Grid - Full width */}
+      <div className="bg-card -mx-4 sm:mx-0">
         {activeTab === "posts" && (
-          <div className="grid grid-cols-3 gap-0.5">
+          <div className="grid grid-cols-3 gap-[2px]">
             {userPosts.map((post) => (
-              <div key={post.id} className="aspect-square relative group cursor-pointer">
+              <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden">
                 <img
                   src={post.image}
                   alt={`Post ${post.id}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
                 />
                 {post.isVideo && (
-                  <div className="absolute top-2 right-2">
-                    <div className="w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-                      <Play className="w-3 h-3 text-white fill-white" />
+                  <div className="absolute top-3 right-3">
+                    <div className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                      <Play className="w-4 h-4 text-white fill-white ml-0.5" />
                     </div>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
               </div>
             ))}
           </div>
