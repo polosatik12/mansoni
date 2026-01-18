@@ -58,6 +58,9 @@ export function SearchPage() {
                 <span className="text-xs text-muted-foreground">{trend.posts}</span>
               </button>
             ))}
+            <button className="px-4 py-2 text-primary font-medium text-sm flex-shrink-0 active:opacity-70 transition-opacity">
+              Все
+            </button>
           </div>
           <ScrollBar orientation="horizontal" className="invisible" />
         </ScrollArea>
