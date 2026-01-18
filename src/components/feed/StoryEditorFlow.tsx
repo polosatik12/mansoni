@@ -2,7 +2,6 @@ import { useState } from "react";
 import { X, ChevronDown, Camera, Type, Smile, Music, AtSign, ChevronRight, ArrowRight, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface StoryEditorFlowProps {
   isOpen: boolean;
@@ -17,14 +16,8 @@ const galleryImages = [
   { id: "4", src: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=300&q=80" },
   { id: "5", src: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300&q=80" },
   { id: "6", src: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=300&q=80" },
-];
-
-const quickActions = [
-  { id: "reply", label: "Ваш ответ", icon: "💬", color: "bg-green-500" },
-  { id: "music", label: "Музыка", icon: "🎵", color: "bg-purple-500" },
-  { id: "stickers", label: "Стикеры", icon: "😊", color: "bg-yellow-500" },
-  { id: "collage", label: "Коллаж", icon: "🖼", color: "bg-blue-500" },
-  { id: "audio", label: "Аудио", icon: "🎙", color: "bg-pink-500" },
+  { id: "7", src: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=300&q=80" },
+  { id: "8", src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=300&q=80" },
 ];
 
 type Step = "gallery" | "editor";
@@ -69,53 +62,34 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
       {step === "gallery" && (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 safe-area-top">
-            <Button variant="ghost" size="icon" className="text-white" onClick={handleClose}>
-              <X className="w-6 h-6" />
-            </Button>
-            <h1 className="font-semibold text-lg text-white">Добавить в историю</h1>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="text-white font-medium">
-                Текст
-              </Button>
-              <span className="text-white text-2xl font-bold">Aa</span>
+          <div className="flex items-center justify-between px-4 py-4 safe-area-top">
+            <button onClick={handleClose} className="text-white/80 hover:text-white">
+              <X className="w-7 h-7" strokeWidth={1.5} />
+            </button>
+            <h1 className="font-medium text-[17px] text-white">Добавить в историю</h1>
+            <div className="flex items-center gap-3">
+              <span className="text-white/80 text-[15px]">Текст</span>
+              <span className="text-white text-xl font-semibold">Aa</span>
             </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="px-4 py-4">
-            <ScrollArea className="w-full">
-              <div className="flex gap-3">
-                {quickActions.map((action) => (
-                  <button key={action.id} className="flex flex-col items-center gap-2 flex-shrink-0">
-                    <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center", action.color)}>
-                      <span className="text-2xl">{action.icon}</span>
-                    </div>
-                    <span className="text-xs text-white">{action.label}</span>
-                  </button>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" className="invisible" />
-            </ScrollArea>
           </div>
 
           {/* Gallery Header */}
           <div className="flex items-center justify-between px-4 py-3">
-            <button className="flex items-center gap-1 text-white font-semibold">
+            <button className="flex items-center gap-1 text-white font-medium text-[15px]">
               Недавние
-              <ChevronDown className="w-5 h-5" />
+              <ChevronDown className="w-4 h-4" />
             </button>
-            <button className="flex items-center gap-2 text-white">
-              <span className="text-sm font-medium">Выбрать</span>
+            <button className="text-white/80 text-[15px]">
+              Выбрать
             </button>
           </div>
 
           {/* Gallery Grid */}
           <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-4 gap-[2px]">
+            <div className="grid grid-cols-4 gap-[1px]">
               {/* Camera button */}
-              <button className="aspect-square bg-zinc-900 flex items-center justify-center">
-                <Camera className="w-8 h-8 text-white" />
+              <button className="aspect-square bg-zinc-900/80 flex items-center justify-center">
+                <Camera className="w-7 h-7 text-white/70" strokeWidth={1.5} />
               </button>
               
               {galleryImages.map((img) => (
@@ -130,9 +104,9 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                     className="w-full h-full object-cover"
                   />
                   {img.isVideo && (
-                    <div className="absolute bottom-1 left-1 flex items-center gap-1">
-                      <Eye className="w-3 h-3 text-white" />
-                      <span className="text-white text-xs">{img.views}</span>
+                    <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1">
+                      <Eye className="w-3.5 h-3.5 text-white drop-shadow-lg" />
+                      <span className="text-white text-xs font-medium drop-shadow-lg">{img.views}</span>
                     </div>
                   )}
                 </button>
