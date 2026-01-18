@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { CommentsSheet } from "./CommentsSheet";
 
 interface PostCardProps {
   author: {
@@ -40,6 +41,7 @@ export function PostCard({
   const [likeCount, setLikeCount] = useState(likes);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const allImages = images || (image ? [image] : []);
   const hasMultipleImages = allImages.length > 1;
@@ -179,7 +181,10 @@ export function PostCard({
             <Heart className={cn("w-6 h-6", liked && "fill-current")} />
             <span className="text-sm">{formatNumber(likeCount)}</span>
           </button>
-          <button className="flex items-center gap-1.5 text-foreground">
+          <button 
+            className="flex items-center gap-1.5 text-foreground"
+            onClick={() => setShowComments(true)}
+          >
             <MessageCircle className="w-6 h-6" />
             <span className="text-sm">{formatNumber(comments)}</span>
           </button>
@@ -221,6 +226,14 @@ export function PostCard({
           Показать перевод
         </button>
       </div>
+
+      {/* Comments Sheet */}
+      <CommentsSheet
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        postId={author.username + "-post"}
+        commentsCount={comments}
+      />
     </div>
   );
 }
