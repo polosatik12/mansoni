@@ -110,15 +110,27 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
           </div>
 
           {/* Preview */}
-          <div className="aspect-square bg-black relative">
+          <div className="aspect-square relative overflow-hidden">
             {selectedImages.length > 0 ? (
-              <img 
-                src={selectedImages[0]} 
-                alt="Selected" 
-                className="w-full h-full object-contain"
-              />
+              <>
+                {/* Blurred Background */}
+                <div 
+                  className="absolute inset-0 scale-150 blur-3xl opacity-50"
+                  style={{ 
+                    backgroundImage: `url(${selectedImages[0]})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/20" />
+                <img 
+                  src={selectedImages[0]} 
+                  alt="Selected" 
+                  className="relative w-full h-full object-contain"
+                />
+              </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <div className="w-full h-full bg-muted/30 flex items-center justify-center text-muted-foreground">
                 Выберите фото
               </div>
             )}
