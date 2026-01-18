@@ -45,8 +45,8 @@ export function SearchPage() {
       </div>
 
       {/* Hashtags */}
-      <div className="px-3 py-3">
-        <ScrollArea className="w-full">
+      <div className="px-3 py-3 flex items-center gap-2">
+        <div className="flex-1 overflow-x-auto scrollbar-hide">
           <div className="flex gap-2">
             {trends.map((trend) => (
               <button
@@ -58,12 +58,11 @@ export function SearchPage() {
                 <span className="text-xs text-muted-foreground">{trend.posts}</span>
               </button>
             ))}
-            <button className="px-4 py-2 text-primary font-medium text-sm flex-shrink-0 active:opacity-70 transition-opacity">
-              Все
-            </button>
           </div>
-          <ScrollBar orientation="horizontal" className="invisible" />
-        </ScrollArea>
+        </div>
+        <button className="px-3 py-2 text-primary font-medium text-sm flex-shrink-0">
+          Все
+        </button>
       </div>
 
       {/* Explore Grid */}
