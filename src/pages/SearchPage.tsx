@@ -1,4 +1,4 @@
-import { Search, Filter, Users, Hash, TrendingUp, Sparkles } from "lucide-react";
+import { Search, Filter, Users, Hash, TrendingUp, Compass } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 const filterTabs = [
-  { id: "all", label: "Все", icon: Sparkles },
+  { id: "all", label: "Все", icon: Compass },
   { id: "people", label: "Люди", icon: Users },
   { id: "tags", label: "Теги", icon: Hash },
   { id: "trends", label: "Тренды", icon: TrendingUp },
@@ -131,7 +131,7 @@ export function SearchPage() {
       {/* Interesting section */}
       <div className="bg-card rounded-2xl border border-border p-4">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-primary" />
+          <Compass className="w-5 h-5 text-primary" />
           <h2 className="font-semibold text-foreground">Интересное</h2>
         </div>
         <div className="flex gap-3 overflow-x-auto scrollbar-hide">
