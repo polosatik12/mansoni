@@ -1,9 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { CreateMenu } from "./CreateMenu";
 import { CreatePostSheet } from "./CreatePostSheet";
 
 export function CreatePost() {
+  const [showMenu, setShowMenu] = useState(false);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const [createType, setCreateType] = useState<string | null>(null);
+
+  const handleSelectType = (type: string) => {
+    setCreateType(type);
+    if (type === "post") {
+      setShowCreateSheet(true);
+    }
+    // Other types can be handled similarly
+  };
 
   return (
     <>
@@ -15,18 +26,24 @@ export function CreatePost() {
         />
         <div 
           className="flex-1 text-muted-foreground text-sm cursor-pointer"
-          onClick={() => setShowCreateSheet(true)}
+          onClick={() => setShowMenu(true)}
         >
           Что нового?
         </div>
         <Button 
           size="sm" 
           className="rounded-full px-5 font-semibold h-9"
-          onClick={() => setShowCreateSheet(true)}
+          onClick={() => setShowMenu(true)}
         >
           Создать
         </Button>
       </div>
+
+      <CreateMenu
+        isOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        onSelect={handleSelectType}
+      />
 
       <CreatePostSheet
         isOpen={showCreateSheet}
