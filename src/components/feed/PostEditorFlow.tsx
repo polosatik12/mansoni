@@ -204,32 +204,34 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
       {/* Step 2: Editor */}
       {step === "editor" && (
         <>
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 safe-area-top">
-            <Button variant="ghost" size="icon" onClick={handleBack}>
-              <X className="w-6 h-6" />
-            </Button>
-            <div className="flex items-center gap-3 flex-1 mx-4">
-              <div className="w-12 h-12 rounded-xl overflow-hidden">
-                <img src="https://i.pravatar.cc/48" alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">↗ A$AP Rocky · F...</p>
-                <p className="text-xs text-muted-foreground">Рекомендуемо...</p>
-              </div>
-              <Button variant="ghost" size="icon">
-                <span className="text-2xl">+</span>
-              </Button>
-            </div>
-          </div>
-
-          {/* Image Preview */}
-          <div className="flex-1 bg-black relative flex items-center justify-center">
-            <img 
-              src={selectedImages[0]} 
-              alt="Edit" 
-              className="max-w-full max-h-full object-contain"
+          {/* Full Screen with Blurred Background */}
+          <div className="flex-1 relative overflow-hidden">
+            {/* Blurred Background */}
+            <div 
+              className="absolute inset-0 scale-150 blur-3xl opacity-60"
+              style={{ 
+                backgroundImage: `url(${selectedImages[0]})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
             />
+            
+            {/* Close Button */}
+            <button 
+              className="absolute top-4 left-4 w-10 h-10 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center z-10 safe-area-top"
+              onClick={handleBack}
+            >
+              <X className="w-6 h-6" strokeWidth={1.5} />
+            </button>
+
+            {/* Image */}
+            <div className="absolute inset-0 flex items-center justify-center p-4">
+              <img 
+                src={selectedImages[0]} 
+                alt="Edit" 
+                className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+              />
+            </div>
           </div>
 
           {/* Editor Tools */}
