@@ -1,10 +1,22 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
-import { Calculator, MessageCircle } from "lucide-react";
+import { Calculator, MessageCircle, Search, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Service routes and their action buttons
 const serviceActions: Record<string, React.ReactNode> = {
+  "/realestate": (
+    <>
+      <Button size="sm" variant="ghost" className="flex flex-col items-center gap-0.5 h-auto py-2 px-3">
+        <Search className="w-5 h-5" />
+        <span className="text-[10px]">Поиск</span>
+      </Button>
+      <Button size="sm" variant="ghost" className="flex flex-col items-center gap-0.5 h-auto py-2 px-3">
+        <Heart className="w-5 h-5" />
+        <span className="text-[10px]">Избранное</span>
+      </Button>
+    </>
+  ),
   "/insurance": (
     <>
       <Button size="sm" variant="ghost" className="flex flex-col items-center gap-0.5 h-auto py-2 px-3">

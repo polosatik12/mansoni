@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, SlidersHorizontal, MapPin, BedDouble, Bath, Square, Star, Heart, Phone, MessageCircle, ChevronLeft, Building2, Home, Castle, Building, CheckCircle, X } from "lucide-react";
+import { Search, MapPin, BedDouble, Bath, Square, Star, Heart, Phone, MessageCircle, ChevronLeft, Building2, Home, Castle, Building, CheckCircle, X, Plus, ShoppingCart, Key, Landmark, TreePine, Store, Calendar, Calculator, Shield, BarChart3, FileCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,13 +10,23 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
-type DealType = "buy" | "rent";
+// Main categories like Cian
+const mainCategories = [
+  { id: "buy", label: "Купить", icon: ShoppingCart },
+  { id: "rent", label: "Снять", icon: Key },
+  { id: "new", label: "Новостройки", icon: Landmark },
+  { id: "houses", label: "Дома, участки", icon: TreePine },
+  { id: "commercial", label: "Коммерческая", icon: Store },
+  { id: "daily", label: "Посуточно", icon: Calendar },
+];
 
-const propertyTypes = [
-  { id: "all", label: "Все", icon: Building2 },
-  { id: "apartment", label: "Квартиры", icon: Building },
-  { id: "house", label: "Дома", icon: Home },
-  { id: "villa", label: "Виллы", icon: Castle },
+// Services horizontal scroll
+const services = [
+  { id: "newbuilding", label: "Подбор новостройки", icon: Building2 },
+  { id: "check", label: "Проверка жилья", icon: FileCheck },
+  { id: "mortgage", label: "Ипотечный калькулятор", icon: Calculator },
+  { id: "analytics", label: "Аналитика бизнесу", icon: BarChart3 },
+  { id: "insurance", label: "Страхование", icon: Shield },
 ];
 
 const featuredProperties = [
@@ -118,8 +128,7 @@ const roomOptions = [
 
 export function RealEstatePage() {
   const navigate = useNavigate();
-  const [dealType, setDealType] = useState<DealType>("buy");
-  const [selectedType, setSelectedType] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   
@@ -160,89 +169,72 @@ export function RealEstatePage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground px-4 pt-4 pb-8 rounded-b-3xl">
-        <div className="flex items-center gap-3 mb-6">
-          <button 
-            onClick={() => navigate("/modules")}
-            className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-xl font-semibold">Недвижимость</h1>
-        </div>
-
-        <h2 className="text-2xl font-bold text-center mb-2">
-          Найдите идеальную<br />недвижимость
-        </h2>
-        <p className="text-center text-primary-foreground/80 mb-6">
-          Москва, Дубай и другие города мира
-        </p>
-
-        {/* Deal Type Toggle */}
-        <div className="flex justify-center gap-2 mb-6">
-          <Button
-            onClick={() => setDealType("buy")}
-            className={cn(
-              "rounded-full px-6",
-              dealType === "buy"
-                ? "bg-white text-primary hover:bg-white/90"
-                : "bg-white/20 text-white hover:bg-white/30"
-            )}
-          >
-            Купить
-          </Button>
-          <Button
-            onClick={() => setDealType("rent")}
-            className={cn(
-              "rounded-full px-6",
-              dealType === "rent"
-                ? "bg-white text-primary hover:bg-white/90"
-                : "bg-white/20 text-white hover:bg-white/30"
-            )}
-          >
-            Арендовать
-          </Button>
-        </div>
-
-        {/* Search */}
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              placeholder="Город, район или адрес..."
-              className="pl-10 h-12 rounded-xl bg-white border-0 text-foreground"
-            />
-          </div>
-          <Button 
-            size="icon" 
-            className="h-12 w-12 rounded-xl bg-white text-primary hover:bg-white/90"
-            onClick={() => setShowFilters(true)}
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-          </Button>
+      {/* Search Bar */}
+      <div className="px-4 pt-4 pb-2">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            placeholder="Например, купить квартиру в Москве"
+            className="pl-12 h-12 rounded-2xl bg-muted border-0 text-foreground"
+          />
         </div>
       </div>
 
-      {/* Property Type Filter */}
+      {/* Main Categories Grid */}
       <div className="px-4 py-4">
+        <div className="grid grid-cols-2 gap-3">
+          {mainCategories.map((cat) => {
+            const Icon = cat.icon;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={cn(
+                  "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
+                  selectedCategory === cat.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-card hover:border-primary/50"
+                )}
+              >
+                <Icon className={cn(
+                  "w-5 h-5",
+                  selectedCategory === cat.id ? "text-primary" : "text-primary"
+                )} />
+                <span className="font-medium text-foreground">{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Post Ad Button */}
+      <div className="px-4 pb-4">
+        <Button 
+          variant="outline" 
+          className="w-full h-12 rounded-2xl border-2 border-primary/30 bg-primary/5 text-primary font-medium hover:bg-primary/10"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Разместить за 0 ₽
+        </Button>
+      </div>
+
+      {/* Services Scroll */}
+      <div className="pb-6">
         <ScrollArea className="w-full">
-          <div className="flex gap-2">
-            {propertyTypes.map((type) => {
-              const Icon = type.icon;
+          <div className="flex gap-3 px-4">
+            {services.map((service) => {
+              const Icon = service.icon;
               return (
                 <button
-                  key={type.id}
-                  onClick={() => setSelectedType(type.id)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-full flex-shrink-0 transition-all",
-                    selectedType === type.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
-                  )}
+                  key={service.id}
+                  className="flex-shrink-0 flex flex-col items-center w-20 p-3 rounded-2xl bg-muted/50 hover:bg-muted transition-colors"
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="font-medium text-sm">{type.label}</span>
+                  <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center mb-2 shadow-sm">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <span className="text-[11px] text-center text-foreground font-medium leading-tight">
+                    {service.label}
+                  </span>
                 </button>
               );
             })}
