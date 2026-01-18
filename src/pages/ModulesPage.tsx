@@ -1,125 +1,190 @@
-import { Search, Building2, Shield, Car, Briefcase, GraduationCap, Heart, Plane, ShoppingBag, UtensilsCrossed, Dumbbell, LucideIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 
 interface Module {
   id: string;
   name: string;
   description: string;
-  icon: LucideIcon;
-  color: string;
+  image: string;
   available: boolean;
+  gradient: string;
 }
 
-const availableModules: Module[] = [
+const modules: Module[] = [
+  {
+    id: "taxi",
+    name: "Такси",
+    description: "Быстрые поездки по городу",
+    image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&q=80",
+    available: true,
+    gradient: "from-yellow-500/80 to-orange-600/80",
+  },
+  {
+    id: "carsharing",
+    name: "Каршеринг",
+    description: "Аренда авто поминутно",
+    image: "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=400&q=80",
+    available: true,
+    gradient: "from-blue-500/80 to-cyan-600/80",
+  },
+  {
+    id: "delivery",
+    name: "Доставка",
+    description: "Еда, продукты, курьеры",
+    image: "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=400&q=80",
+    available: true,
+    gradient: "from-green-500/80 to-emerald-600/80",
+  },
+  {
+    id: "marketplace",
+    name: "Маркетплейс",
+    description: "Товары и услуги",
+    image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&q=80",
+    available: true,
+    gradient: "from-purple-500/80 to-violet-600/80",
+  },
   {
     id: "realestate",
     name: "Недвижимость",
     description: "Аренда и продажа",
-    icon: Building2,
-    color: "bg-blue-500/10 text-blue-500",
+    image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&q=80",
     available: true,
+    gradient: "from-slate-600/80 to-zinc-700/80",
   },
   {
     id: "insurance",
     name: "Страхование",
-    description: "Все виды страховок",
-    icon: Shield,
-    color: "bg-emerald-500/10 text-emerald-500",
+    description: "Защита имущества и жизни",
+    image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&q=80",
     available: true,
-  },
-];
-
-const comingSoonModules: Module[] = [
-  {
-    id: "auto",
-    name: "Авто",
-    description: "Купля-продажа авто",
-    icon: Car,
-    color: "bg-rose-500/10 text-rose-500",
-    available: false,
+    gradient: "from-teal-500/80 to-cyan-600/80",
   },
   {
     id: "jobs",
     name: "Работа",
     description: "Вакансии и резюме",
-    icon: Briefcase,
-    color: "bg-orange-500/10 text-orange-500",
+    image: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&q=80",
     available: false,
+    gradient: "from-indigo-500/80 to-blue-600/80",
   },
   {
-    id: "education",
-    name: "Образование",
-    description: "Курсы и обучение",
-    icon: GraduationCap,
-    color: "bg-violet-500/10 text-violet-500",
+    id: "banking",
+    name: "Банк",
+    description: "Финансовые услуги",
+    image: "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=400&q=80",
     available: false,
+    gradient: "from-emerald-500/80 to-green-600/80",
   },
   {
-    id: "health",
-    name: "Здоровье",
-    description: "Медицина и wellness",
-    icon: Heart,
-    color: "bg-pink-500/10 text-pink-500",
+    id: "investments",
+    name: "Инвестиции",
+    description: "Акции и портфели",
+    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80",
     available: false,
+    gradient: "from-amber-500/80 to-yellow-600/80",
+  },
+  {
+    id: "auto",
+    name: "Автопродажи",
+    description: "Купля-продажа авто",
+    image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&q=80",
+    available: false,
+    gradient: "from-red-500/80 to-rose-600/80",
   },
   {
     id: "travel",
     name: "Путешествия",
-    description: "Туры и билеты",
-    icon: Plane,
-    color: "bg-cyan-500/10 text-cyan-500",
+    description: "Авиа, ж/д, автобусы",
+    image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&q=80",
     available: false,
+    gradient: "from-sky-500/80 to-blue-600/80",
   },
   {
-    id: "marketplace",
-    name: "Маркетплейс",
-    description: "Покупки онлайн",
-    icon: ShoppingBag,
-    color: "bg-amber-500/10 text-amber-500",
+    id: "hotels",
+    name: "Отели",
+    description: "Бронирование номеров",
+    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80",
     available: false,
+    gradient: "from-orange-500/80 to-amber-600/80",
   },
   {
-    id: "food",
-    name: "Еда",
-    description: "Доставка и рестораны",
-    icon: UtensilsCrossed,
-    color: "bg-red-500/10 text-red-500",
+    id: "entertainment",
+    name: "Развлечения",
+    description: "Кино, театр, концерты",
+    image: "https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=400&q=80",
     available: false,
+    gradient: "from-pink-500/80 to-rose-600/80",
   },
   {
-    id: "fitness",
-    name: "Фитнес",
-    description: "Спорт и тренировки",
-    icon: Dumbbell,
-    color: "bg-green-500/10 text-green-500",
+    id: "sport",
+    name: "Спорт",
+    description: "Залы, секции, билеты",
+    image: "https://images.unsplash.com/photo-1461896836934- voices?w=400&q=80",
     available: false,
+    gradient: "from-lime-500/80 to-green-600/80",
+  },
+  {
+    id: "education",
+    name: "Образование",
+    description: "Курсы и репетиторы",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80",
+    available: false,
+    gradient: "from-violet-500/80 to-purple-600/80",
+  },
+  {
+    id: "music",
+    name: "Музыка",
+    description: "Стриминг и треки",
+    image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&q=80",
+    available: false,
+    gradient: "from-fuchsia-500/80 to-pink-600/80",
   },
 ];
 
 function ModuleCard({ module }: { module: Module }) {
-  const Icon = module.icon;
-  
   return (
-    <div className="bg-card rounded-2xl border border-border p-4 hover:shadow-md transition-all cursor-pointer relative">
-      {!module.available && (
-        <Badge
-          variant="secondary"
-          className="absolute top-3 right-3 text-[10px] px-2 py-0.5"
-        >
-          Скоро
-        </Badge>
-      )}
-      <div className={`w-12 h-12 rounded-xl ${module.color} flex items-center justify-center mb-3`}>
-        <Icon className="w-6 h-6" />
+    <div className="relative overflow-hidden rounded-2xl cursor-pointer group">
+      <div className="relative aspect-[4/3]">
+        {/* Background Image */}
+        <img
+          src={module.image}
+          alt={module.name}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        
+        {/* Gradient Overlay */}
+        <div className={`absolute inset-0 bg-gradient-to-t ${module.gradient}`} />
+        
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        
+        {/* Coming Soon Badge */}
+        {!module.available && (
+          <div className="absolute top-3 right-3">
+            <span className="px-2.5 py-1 bg-white/20 backdrop-blur-md text-white text-[11px] font-medium rounded-full">
+              Скоро
+            </span>
+          </div>
+        )}
+        
+        {/* Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <h3 className="font-semibold text-white text-base mb-0.5">
+            {module.name}
+          </h3>
+          <p className="text-white/80 text-xs">
+            {module.description}
+          </p>
+        </div>
       </div>
-      <h3 className="font-semibold text-foreground mb-1">{module.name}</h3>
-      <p className="text-sm text-muted-foreground">{module.description}</p>
     </div>
   );
 }
 
 export function ModulesPage() {
+  const availableModules = modules.filter((m) => m.available);
+  const comingSoonModules = modules.filter((m) => !m.available);
+
   return (
     <div className="min-h-screen p-4 space-y-6">
       {/* Search */}
@@ -127,22 +192,20 @@ export function ModulesPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
           placeholder="Поиск модулей..."
-          className="pl-10 h-12 rounded-xl bg-card border-border"
+          className="pl-10 h-12 rounded-2xl bg-card border-border"
         />
       </div>
 
-      <div>
-        <h2 className="font-semibold text-foreground mb-4">Доступные модули</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {availableModules.map((module) => (
-            <ModuleCard key={module.id} module={module} />
-          ))}
-        </div>
+      {/* Available Modules */}
+      <div className="grid grid-cols-2 gap-3">
+        {availableModules.map((module) => (
+          <ModuleCard key={module.id} module={module} />
+        ))}
       </div>
 
       {/* Coming Soon */}
       <div>
-        <h2 className="font-semibold text-foreground mb-4">Скоро появятся</h2>
+        <h2 className="font-semibold text-foreground mb-4 text-lg">Скоро появятся</h2>
         <div className="grid grid-cols-2 gap-3">
           {comingSoonModules.map((module) => (
             <ModuleCard key={module.id} module={module} />
