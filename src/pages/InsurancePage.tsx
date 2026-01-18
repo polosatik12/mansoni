@@ -322,27 +322,25 @@ export function InsurancePage() {
       </div>
 
       {/* Categories */}
-      <div className="px-4 py-2">
-        <ScrollArea className="w-full">
-          <div className="flex gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                className={cn(
-                  "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0",
-                  activeCategory === cat.id 
-                    ? "bg-foreground text-background" 
-                    : "bg-muted text-foreground"
-                )}
-                onClick={() => setActiveCategory(cat.id)}
-              >
-                <cat.icon className="w-4 h-4" strokeWidth={1.5} />
-                {cat.label}
-              </button>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" className="invisible" />
-        </ScrollArea>
+      {/* Categories - iOS style segments */}
+      <div className="px-4 py-3">
+        <div className="flex gap-2 p-1 bg-muted rounded-xl overflow-x-auto scrollbar-hide">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              className={cn(
+                "flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex-shrink-0 min-w-fit",
+                activeCategory === cat.id 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setActiveCategory(cat.id)}
+            >
+              <cat.icon className="w-4 h-4" strokeWidth={1.5} />
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Popular Products */}
