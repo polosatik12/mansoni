@@ -6,6 +6,8 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
+import { SettingsDrawer } from "@/components/profile/SettingsDrawer";
+
 const highlights = [
   { id: "1", name: "..life?", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=150&q=80", hasEmoji: true },
   { id: "2", name: "🚗", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=150&q=80", hasEmoji: true },
@@ -37,6 +39,7 @@ export function ProfilePage() {
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [showPostEditor, setShowPostEditor] = useState(false);
   const [showStoryEditor, setShowStoryEditor] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleCreateSelect = (type: string) => {
     if (type === "post") {
@@ -57,7 +60,7 @@ export function ProfilePage() {
           <span className="font-semibold text-lg">alex_ivanov</span>
           <span className="text-primary">▾</span>
         </div>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
           <Menu className="w-6 h-6" />
         </Button>
       </div>
@@ -247,6 +250,12 @@ export function ProfilePage() {
       <StoryEditorFlow 
         isOpen={showStoryEditor} 
         onClose={() => setShowStoryEditor(false)} 
+      />
+
+      {/* Settings Drawer */}
+      <SettingsDrawer 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
       />
     </div>
   );
