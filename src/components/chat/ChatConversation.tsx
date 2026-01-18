@@ -2,63 +2,20 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Phone, Video, MoreVertical, Send, Mic, Paperclip, Smile, X, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-interface Message {
-  id: string;
-  text?: string;
-  voice?: string;
-  voiceDuration?: number;
-  isOwn: boolean;
-  time: string;
-  read: boolean;
-}
-
-interface Chat {
-  id: string;
-  name: string;
-  avatar: string;
-  online: boolean;
-  verified?: boolean;
-}
+import { useMessages } from "@/hooks/useChat";
+import { useAuth } from "@/hooks/useAuth";
+import { format } from "date-fns";
 
 interface ChatConversationProps {
-  chat: Chat;
+  conversationId: string;
+  chatName: string;
+  chatAvatar: string;
   onBack: () => void;
 }
 
-const initialMessages: Message[] = [
-  {
-    id: "1",
-    text: "Привет! Как дела с проектом?",
-    isOwn: false,
-    time: "10:30",
-    read: true,
-  },
-  {
-    id: "2",
-    text: "Привет! Все отлично, заканчиваю дизайн 🎨",
-    isOwn: true,
-    time: "10:32",
-    read: true,
-  },
-  {
-    id: "3",
-    text: "Супер! Когда сможешь показать?",
-    isOwn: false,
-    time: "10:33",
-    read: true,
-  },
-  {
-    id: "4",
-    text: "Сегодня вечером скину превью",
-    isOwn: true,
-    time: "10:35",
-    read: true,
-  },
-];
-
-export function ChatConversation({ chat, onBack }: ChatConversationProps) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+export function ChatConversation({ conversationId, chatName, chatAvatar, onBack }: ChatConversationProps) {
+  const { user } = useAuth();
+  const { messages, loading, sendMessage } = useMessages(conversationId);
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -94,18 +51,17 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const sendMessage = () => {
+  const formatMessageTime = (dateStr: string) => {
+    try {
+      return format(new Date(dateStr), "HH:mm");
+    } catch {
+      return "";
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
-    
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
-      isOwn: true,
-      time: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
-      read: false,
-    };
-    
-    setMessages((prev) => [...prev, newMessage]);
+    await sendMessage(inputText);
     setInputText("");
   };
 
@@ -113,17 +69,10 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
     setIsRecording(true);
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (recordingTime > 0) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        voice: "voice_message",
-        voiceDuration: recordingTime,
-        isOwn: true,
-        time: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
-        read: false,
-      };
-      setMessages((prev) => [...prev, newMessage]);
+      // For now, just send a text placeholder for voice messages
+      await sendMessage(`🎤 Голосовое сообщение (${formatTime(recordingTime)})`);
     }
     setIsRecording(false);
   };
@@ -146,20 +95,15 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
         
         <div className="relative">
           <img
-            src={chat.avatar}
-            alt={chat.name}
-            className="w-10 h-10 rounded-full object-cover"
+            src={chatAvatar}
+            alt={chatName}
+            className="w-10 h-10 rounded-full object-cover bg-muted"
           />
-          {chat.online && (
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
-          )}
         </div>
         
         <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-foreground truncate">{chat.name}</h2>
-          <p className="text-xs text-muted-foreground">
-            {chat.online ? "в сети" : "был(а) недавно"}
-          </p>
+          <h2 className="font-semibold text-foreground truncate">{chatName}</h2>
+          <p className="text-xs text-muted-foreground">был(а) недавно</p>
         </div>
         
         <div className="flex items-center gap-1">
@@ -177,60 +121,77 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
 
       {/* Messages - scrollable */}
       <div className="flex-1 overflow-y-auto p-4 space-y-1 native-scroll">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.isOwn ? "justify-end" : "justify-start"}`}
-          >
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          </div>
+        )}
+
+        {!loading && messages.length === 0 && (
+          <div className="flex items-center justify-center py-8 text-center">
+            <p className="text-muted-foreground">Начните переписку!</p>
+          </div>
+        )}
+
+        {messages.map((message) => {
+          const isOwn = message.sender_id === user?.id;
+          const isVoice = message.content.startsWith("🎤");
+
+          return (
             <div
-              className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                message.isOwn
-                  ? "bg-primary text-primary-foreground rounded-br-md"
-                  : "bg-muted text-foreground rounded-bl-md"
-              }`}
+              key={message.id}
+              className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
             >
-              {message.voice ? (
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => toggleVoicePlay(message.id)}
-                  >
-                    {playingVoice === message.id ? (
-                      <Pause className="w-4 h-4" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <div className="flex-1">
-                    <div className="h-6 flex items-center gap-0.5">
-                      {Array.from({ length: 20 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-1 rounded-full ${
-                            message.isOwn ? "bg-primary-foreground/50" : "bg-foreground/30"
-                          }`}
-                          style={{ height: `${Math.random() * 16 + 8}px` }}
-                        />
-                      ))}
+              <div
+                className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                  isOwn
+                    ? "bg-primary text-primary-foreground rounded-br-md"
+                    : "bg-muted text-foreground rounded-bl-md"
+                }`}
+              >
+                {isVoice ? (
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => toggleVoicePlay(message.id)}
+                    >
+                      {playingVoice === message.id ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <div className="flex-1">
+                      <div className="h-6 flex items-center gap-0.5">
+                        {Array.from({ length: 20 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-1 rounded-full ${
+                              isOwn ? "bg-primary-foreground/50" : "bg-foreground/30"
+                            }`}
+                            style={{ height: `${Math.random() * 16 + 8}px` }}
+                          />
+                        ))}
+                      </div>
                     </div>
+                    <span className={`text-xs ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                      {message.content.match(/\(([^)]+)\)/)?.[1] || "0:00"}
+                    </span>
                   </div>
-                  <span className={`text-xs ${message.isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                    {formatTime(message.voiceDuration || 0)}
-                  </span>
+                ) : (
+                  <p className="text-sm">{message.content}</p>
+                )}
+                <div className={`flex items-center justify-end gap-1 mt-1 ${
+                  isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                }`}>
+                  <span className="text-[10px]">{formatMessageTime(message.created_at)}</span>
                 </div>
-              ) : (
-                <p className="text-sm">{message.text}</p>
-              )}
-              <div className={`flex items-center justify-end gap-1 mt-1 ${
-                message.isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-              }`}>
-                <span className="text-[10px]">{message.time}</span>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 
@@ -268,7 +229,7 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
                 placeholder="Сообщение..."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 className="pr-10 rounded-full bg-muted border-0"
               />
               <Button
@@ -284,7 +245,7 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
               <Button
                 size="icon"
                 className="rounded-full h-10 w-10"
-                onClick={sendMessage}
+                onClick={handleSendMessage}
               >
                 <Send className="w-5 h-5" />
               </Button>
