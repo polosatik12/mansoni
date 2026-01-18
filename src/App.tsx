@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HomePage } from "@/pages/HomePage";
 import { SearchPage } from "@/pages/SearchPage";
@@ -14,34 +15,38 @@ import { ReelsPage } from "@/pages/ReelsPage";
 import { RealEstatePage } from "@/pages/RealEstatePage";
 import { PropertyDetailPage } from "@/pages/PropertyDetailPage";
 import { InsurancePage } from "@/pages/InsurancePage";
+import { AuthPage } from "@/pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/modules" element={<ModulesPage />} />
-            <Route path="/chats" element={<ChatsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/user/:username" element={<UserProfilePage />} />
-            <Route path="/realestate" element={<RealEstatePage />} />
-            <Route path="/realestate/:id" element={<PropertyDetailPage />} />
-            <Route path="/insurance" element={<InsurancePage />} />
-          </Route>
-          <Route path="/reels" element={<ReelsPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/modules" element={<ModulesPage />} />
+              <Route path="/chats" element={<ChatsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/user/:username" element={<UserProfilePage />} />
+              <Route path="/realestate" element={<RealEstatePage />} />
+              <Route path="/realestate/:id" element={<PropertyDetailPage />} />
+              <Route path="/insurance" element={<InsurancePage />} />
+            </Route>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reels" element={<ReelsPage />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
