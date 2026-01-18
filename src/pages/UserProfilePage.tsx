@@ -1,9 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Settings, Grid3X3, Bookmark, Heart, Share2, Play, MoreHorizontal, BadgeCheck } from "lucide-react";
+import { ArrowLeft, Settings, Grid3X3, Bookmark, Heart, Share2, Play, MoreHorizontal, BadgeCheck, MessageCircle, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Mock user data - in real app this would come from API
 const usersData: Record<string, {
@@ -91,10 +94,106 @@ const tabs = [
 export function UserProfilePage() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   const user = username && usersData[username] ? usersData[username] : defaultUser;
+
+  const handleMessage = async () => {
+    if (!currentUser) {
+      toast.error("Войдите, чтобы написать сообщение");
+      navigate("/auth");
+      return;
+    }
+
+    setIsCreatingChat(true);
+
+    try {
+      // For demo purposes, we'll show a toast since we don't have real user IDs
+      // In a real app, you would look up the target user's ID and create a conversation
+      
+      // Check if the profile user exists in our database by username
+      const { data: targetProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .eq("display_name", user.name)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Error finding user:", profileError);
+      }
+
+      if (!targetProfile) {
+        // User doesn't exist in DB yet - show info toast
+        toast.info("Этот пользователь ещё не зарегистрирован в системе", {
+          description: "Пока можно переписываться только с зарегистрированными пользователями"
+        });
+        return;
+      }
+
+      if (targetProfile.user_id === currentUser.id) {
+        toast.error("Нельзя написать самому себе");
+        return;
+      }
+
+      // Check if conversation already exists between these users
+      const { data: existingConv } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("user_id", currentUser.id);
+
+      let existingConversationId: string | null = null;
+
+      if (existingConv && existingConv.length > 0) {
+        const myConvIds = existingConv.map(c => c.conversation_id);
+        
+        const { data: otherParticipant } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("user_id", targetProfile.user_id)
+          .in("conversation_id", myConvIds);
+
+        if (otherParticipant && otherParticipant.length > 0) {
+          existingConversationId = otherParticipant[0].conversation_id;
+        }
+      }
+
+      if (existingConversationId) {
+        // Navigate to existing conversation
+        toast.success("Открываем чат");
+        navigate("/chats");
+      } else {
+        // Create new conversation
+        const { data: newConv, error: convError } = await supabase
+          .from("conversations")
+          .insert({})
+          .select()
+          .single();
+
+        if (convError) throw convError;
+
+        // Add both participants
+        const { error: partError } = await supabase
+          .from("conversation_participants")
+          .insert([
+            { conversation_id: newConv.id, user_id: currentUser.id },
+            { conversation_id: newConv.id, user_id: targetProfile.user_id },
+          ]);
+
+        if (partError) throw partError;
+
+        toast.success("Чат создан!");
+        navigate("/chats");
+      }
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      toast.error("Не удалось создать чат");
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[60]">
@@ -161,7 +260,17 @@ export function UserProfilePage() {
             >
               {isFollowing ? "Отписаться" : "Подписаться"}
             </Button>
-            <Button variant="outline" className="rounded-full px-6">
+            <Button 
+              variant="outline" 
+              className="rounded-full px-6 gap-2"
+              onClick={handleMessage}
+              disabled={isCreatingChat}
+            >
+              {isCreatingChat ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <MessageCircle className="w-4 h-4" />
+              )}
               Сообщение
             </Button>
           </div>
