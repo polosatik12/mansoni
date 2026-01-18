@@ -9,6 +9,7 @@ import { SearchPage } from "@/pages/SearchPage";
 import { ModulesPage } from "@/pages/ModulesPage";
 import { ChatsPage } from "@/pages/ChatsPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { UserProfilePage } from "@/pages/UserProfilePage";
 import { ReelsPage } from "@/pages/ReelsPage";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/modules" element={<ModulesPage />} />
             <Route path="/chats" element={<ChatsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/user/:username" element={<UserProfilePage />} />
           </Route>
           <Route path="/reels" element={<ReelsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

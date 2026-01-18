@@ -2,6 +2,7 @@ import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface PostCardProps {
   author: {
@@ -33,6 +34,7 @@ export function PostCard({
   timeAgo,
   isRecommended = false,
 }: PostCardProps) {
+  const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
@@ -61,12 +63,16 @@ export function PostCard({
     ? content.slice(0, 100) + "..." 
     : content;
 
+  const goToProfile = () => {
+    navigate(`/user/${author.username}`);
+  };
+
   return (
     <div className="bg-card border-b border-border">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="relative">
+          <div className="relative cursor-pointer" onClick={goToProfile}>
             <img
               src={author.avatar}
               alt={author.name}
@@ -80,7 +86,12 @@ export function PostCard({
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-foreground text-sm">{author.username}</span>
+              <span 
+                className="font-semibold text-foreground text-sm cursor-pointer hover:underline"
+                onClick={goToProfile}
+              >
+                {author.username}
+              </span>
             </div>
             {isRecommended && (
               <p className="text-xs text-muted-foreground">Рекомендации для вас</p>
