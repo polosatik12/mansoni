@@ -94,11 +94,6 @@ export function ProfilePage() {
           <p className="text-sm text-foreground">Предприниматель</p>
         </div>
 
-        {/* Professional Dashboard */}
-        <div className="mt-3 p-3 bg-muted/50 rounded-xl">
-          <p className="font-medium text-sm">Профессиональная панель</p>
-          <p className="text-xs text-muted-foreground">99 просмотров за последние 30 дней.</p>
-        </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 mt-4">
