@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/search", icon: Search, label: "Поиск" },
-  { to: "/modules", icon: Grid3X3, label: "Модули" },
+  { to: "/modules", icon: Grid3X3, label: "Сервисы" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
   { to: "/profile", icon: User, label: "Профиль" },
 ];
