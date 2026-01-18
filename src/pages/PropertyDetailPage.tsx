@@ -120,7 +120,7 @@ export function PropertyDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background border-b border-border">
         <div className="flex items-center justify-between px-4 py-3 safe-area-top">
@@ -349,7 +349,7 @@ export function PropertyDetailPage() {
       </div>
 
       {/* Promos */}
-      <div className="px-4 py-4 pb-36">
+      <div className="px-4 py-4">
         <h3 className="font-semibold text-lg mb-4">Акции в ЖК «{propertyData.complex}»</h3>
         <ScrollArea className="w-full">
           <div className="flex gap-3">
@@ -365,6 +365,9 @@ export function PropertyDetailPage() {
           <ScrollBar orientation="horizontal" className="invisible" />
         </ScrollArea>
       </div>
+
+      {/* Spacer so last block doesn't hide behind fixed actions */}
+      <div aria-hidden className="h-20" />
 
       {/* Fixed Bottom Actions - positioned above BottomNav */}
       <div className="fixed bottom-16 left-0 right-0 bg-background border-t border-border px-4 py-3 z-40">
