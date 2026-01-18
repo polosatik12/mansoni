@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Search, SlidersHorizontal, MapPin, BedDouble, Bath, Square, Star, Heart, Phone, MessageCircle, ChevronLeft, Building2, Home, Castle, Building, CheckCircle } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, BedDouble, Bath, Square, Star, Heart, Phone, MessageCircle, ChevronLeft, Building2, Home, Castle, Building, CheckCircle, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 type DealType = "buy" | "rent";
 
@@ -104,16 +108,54 @@ const allProperties = [
   },
 ];
 
+const roomOptions = [
+  { id: "studio", label: "Студия" },
+  { id: "1", label: "1" },
+  { id: "2", label: "2" },
+  { id: "3", label: "3" },
+  { id: "4+", label: "4+" },
+];
+
 export function RealEstatePage() {
   const navigate = useNavigate();
   const [dealType, setDealType] = useState<DealType>("buy");
   const [selectedType, setSelectedType] = useState("all");
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filter states
+  const [priceRange, setPriceRange] = useState([0, 100]);
+  const [areaRange, setAreaRange] = useState([0, 500]);
+  const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
+  const [filterOptions, setFilterOptions] = useState({
+    verified: false,
+    withPhoto: true,
+    fromOwner: false,
+    newBuilding: false,
+  });
 
   const toggleFavorite = (id: string) => {
     setFavorites(prev => 
       prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
     );
+  };
+
+  const toggleRoom = (roomId: string) => {
+    setSelectedRooms(prev =>
+      prev.includes(roomId) ? prev.filter(r => r !== roomId) : [...prev, roomId]
+    );
+  };
+
+  const resetFilters = () => {
+    setPriceRange([0, 100]);
+    setAreaRange([0, 500]);
+    setSelectedRooms([]);
+    setFilterOptions({
+      verified: false,
+      withPhoto: true,
+      fromOwner: false,
+      newBuilding: false,
+    });
   };
 
   return (
@@ -172,7 +214,11 @@ export function RealEstatePage() {
               className="pl-10 h-12 rounded-xl bg-white border-0 text-foreground"
             />
           </div>
-          <Button size="icon" className="h-12 w-12 rounded-xl bg-white text-primary hover:bg-white/90">
+          <Button 
+            size="icon" 
+            className="h-12 w-12 rounded-xl bg-white text-primary hover:bg-white/90"
+            onClick={() => setShowFilters(true)}
+          >
             <SlidersHorizontal className="w-5 h-5" />
           </Button>
         </div>
@@ -355,6 +401,191 @@ export function RealEstatePage() {
           ))}
         </div>
       </div>
+
+      {/* Filters Sheet */}
+      <Sheet open={showFilters} onOpenChange={setShowFilters}>
+        <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <SheetHeader className="px-4 py-4 border-b border-border">
+              <div className="flex items-center justify-between">
+                <button onClick={() => setShowFilters(false)}>
+                  <X className="w-6 h-6" />
+                </button>
+                <SheetTitle className="text-lg font-semibold">Фильтры</SheetTitle>
+                <button 
+                  onClick={resetFilters}
+                  className="text-primary text-sm font-medium"
+                >
+                  Сбросить
+                </button>
+              </div>
+            </SheetHeader>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+              {/* Price Range */}
+              <div>
+                <h3 className="font-semibold mb-3">Цена, млн ₽</h3>
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="flex-1">
+                    <Input 
+                      type="number" 
+                      placeholder="От" 
+                      value={priceRange[0] || ''} 
+                      onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
+                  <span className="text-muted-foreground">—</span>
+                  <div className="flex-1">
+                    <Input 
+                      type="number" 
+                      placeholder="До" 
+                      value={priceRange[1] || ''} 
+                      onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
+                </div>
+                <Slider
+                  value={priceRange}
+                  onValueChange={setPriceRange}
+                  max={300}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Rooms */}
+              <div>
+                <h3 className="font-semibold mb-3">Комнаты</h3>
+                <div className="flex gap-2">
+                  {roomOptions.map((room) => (
+                    <button
+                      key={room.id}
+                      onClick={() => toggleRoom(room.id)}
+                      className={cn(
+                        "flex-1 py-3 rounded-xl text-sm font-medium transition-all",
+                        selectedRooms.includes(room.id)
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
+                      )}
+                    >
+                      {room.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Area Range */}
+              <div>
+                <h3 className="font-semibold mb-3">Площадь, м²</h3>
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="flex-1">
+                    <Input 
+                      type="number" 
+                      placeholder="От" 
+                      value={areaRange[0] || ''} 
+                      onChange={(e) => setAreaRange([Number(e.target.value), areaRange[1]])}
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
+                  <span className="text-muted-foreground">—</span>
+                  <div className="flex-1">
+                    <Input 
+                      type="number" 
+                      placeholder="До" 
+                      value={areaRange[1] || ''} 
+                      onChange={(e) => setAreaRange([areaRange[0], Number(e.target.value)])}
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
+                </div>
+                <Slider
+                  value={areaRange}
+                  onValueChange={setAreaRange}
+                  max={1000}
+                  step={10}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Additional Options */}
+              <div>
+                <h3 className="font-semibold mb-3">Дополнительно</h3>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                    <Checkbox 
+                      id="verified"
+                      checked={filterOptions.verified}
+                      onCheckedChange={(checked) => 
+                        setFilterOptions(prev => ({ ...prev, verified: !!checked }))
+                      }
+                    />
+                    <Label htmlFor="verified" className="flex-1 cursor-pointer">
+                      <span className="font-medium">Проверенные объявления</span>
+                      <p className="text-xs text-muted-foreground">Только проверенные застройщики</p>
+                    </Label>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                    <Checkbox 
+                      id="withPhoto"
+                      checked={filterOptions.withPhoto}
+                      onCheckedChange={(checked) => 
+                        setFilterOptions(prev => ({ ...prev, withPhoto: !!checked }))
+                      }
+                    />
+                    <Label htmlFor="withPhoto" className="flex-1 cursor-pointer">
+                      <span className="font-medium">С фото</span>
+                      <p className="text-xs text-muted-foreground">Только с фотографиями</p>
+                    </Label>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                    <Checkbox 
+                      id="fromOwner"
+                      checked={filterOptions.fromOwner}
+                      onCheckedChange={(checked) => 
+                        setFilterOptions(prev => ({ ...prev, fromOwner: !!checked }))
+                      }
+                    />
+                    <Label htmlFor="fromOwner" className="flex-1 cursor-pointer">
+                      <span className="font-medium">От собственника</span>
+                      <p className="text-xs text-muted-foreground">Без посредников</p>
+                    </Label>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                    <Checkbox 
+                      id="newBuilding"
+                      checked={filterOptions.newBuilding}
+                      onCheckedChange={(checked) => 
+                        setFilterOptions(prev => ({ ...prev, newBuilding: !!checked }))
+                      }
+                    />
+                    <Label htmlFor="newBuilding" className="flex-1 cursor-pointer">
+                      <span className="font-medium">Новостройки</span>
+                      <p className="text-xs text-muted-foreground">Только от застройщика</p>
+                    </Label>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-4 border-t border-border bg-background">
+              <Button 
+                className="w-full h-12 rounded-xl"
+                onClick={() => setShowFilters(false)}
+              >
+                Показать {allProperties.length} объектов
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
