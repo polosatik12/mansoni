@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Check, CheckCheck } from "lucide-react";
+import { Search, Check, CheckCheck, Mic } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ChatConversation } from "@/components/chat/ChatConversation";
@@ -15,6 +15,9 @@ interface Chat {
   read: boolean;
   verified?: boolean;
   isGroup?: boolean;
+  isVoice?: boolean;
+  voiceDuration?: string;
+  isSentByMe?: boolean;
 }
 
 const chats: Chat[] = [
@@ -27,16 +30,20 @@ const chats: Chat[] = [
     unread: 3,
     online: true,
     read: false,
+    isSentByMe: false,
   },
   {
     id: "2",
     name: "Дмитрий Волков",
     avatar: "https://i.pravatar.cc/150?img=11",
-    lastMessage: "Отправил документы на почту",
+    lastMessage: "",
     time: "15м",
     unread: 0,
     online: true,
     read: true,
+    isVoice: true,
+    voiceDuration: "0:24",
+    isSentByMe: true,
   },
   {
     id: "3",
@@ -48,6 +55,7 @@ const chats: Chat[] = [
     online: false,
     read: false,
     verified: true,
+    isSentByMe: false,
   },
   {
     id: "4",
@@ -59,16 +67,20 @@ const chats: Chat[] = [
     online: false,
     read: true,
     isGroup: true,
+    isSentByMe: false,
   },
   {
     id: "5",
     name: "Анна Петрова",
     avatar: "https://i.pravatar.cc/150?img=5",
-    lastMessage: "Спасибо за помощь!",
+    lastMessage: "",
     time: "вчера",
     unread: 0,
     online: false,
     read: true,
+    isVoice: true,
+    voiceDuration: "1:12",
+    isSentByMe: true,
   },
   {
     id: "6",
@@ -79,6 +91,7 @@ const chats: Chat[] = [
     unread: 0,
     online: false,
     read: true,
+    isSentByMe: false,
   },
 ];
 
@@ -152,19 +165,34 @@ export function ChatsPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground truncate pr-2">
-                  {chat.lastMessage}
-                </p>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {chat.read && !chat.unread && (
-                    <CheckCheck className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  {/* Read status for sent messages */}
+                  {chat.isSentByMe && chat.read && !chat.unread && (
+                    <CheckCheck className="w-4 h-4 text-primary flex-shrink-0" />
                   )}
-                  {chat.unread > 0 && (
-                    <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px]">
-                      {chat.unread}
-                    </Badge>
+                  {chat.isSentByMe && !chat.read && !chat.unread && (
+                    <Check className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  )}
+                  
+                  {/* Voice message indicator */}
+                  {chat.isVoice ? (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Mic className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-sm">{chat.voiceDuration}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground truncate">
+                      {chat.lastMessage}
+                    </p>
                   )}
                 </div>
+                
+                {/* Unread badge */}
+                {chat.unread > 0 && (
+                  <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px] flex-shrink-0 ml-2">
+                    {chat.unread}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
