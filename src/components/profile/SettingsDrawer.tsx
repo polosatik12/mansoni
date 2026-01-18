@@ -129,7 +129,6 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
               {/* Account */}
               <div className="border-b border-border">
                 <p className="px-5 pt-4 pb-2 text-sm text-muted-foreground">Аккаунт</p>
-                {renderMenuItem(<User className="w-5 h-5 text-muted-foreground" />, "Редактировать профиль", () => setCurrentScreen("editProfile"))}
                 {renderMenuItem(<Bookmark className="w-5 h-5 text-muted-foreground" />, "Сохранённое", () => setCurrentScreen("saved"))}
                 {renderMenuItem(<Archive className="w-5 h-5 text-muted-foreground" />, "Архив", () => setCurrentScreen("archive"))}
                 {renderMenuItem(<Clock className="w-5 h-5 text-muted-foreground" />, "Ваша активность", () => setCurrentScreen("activity"))}
