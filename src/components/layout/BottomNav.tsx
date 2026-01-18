@@ -1,4 +1,4 @@
-import { Home, Grid3X3, MessageCircle, Search, Heart, LucideIcon } from "lucide-react";
+import { Home, Grid3X3, MessageCircle, Search, Heart, FileText, Headphones, LucideIcon } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +18,8 @@ const defaultNavItems: NavItem[] = [
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
 ];
 
-// Service nav items (when inside a service like realestate, insurance)
-const serviceNavItems: NavItem[] = [
+// Real estate service nav items
+const realEstateNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/modules", icon: Grid3X3, label: "Сервисы" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
@@ -27,18 +27,30 @@ const serviceNavItems: NavItem[] = [
   { to: "#favorites", icon: Heart, label: "Избранное", isAction: true },
 ];
 
-// Service routes that trigger service mode
-const serviceRoutes = ["/realestate", "/insurance"];
+// Insurance service nav items
+const insuranceNavItems: NavItem[] = [
+  { to: "/", icon: Home, label: "Главная" },
+  { to: "/modules", icon: Grid3X3, label: "Сервисы" },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
+  { to: "#policies", icon: FileText, label: "Мои полисы", isAction: true },
+  { to: "#support", icon: Headphones, label: "Поддержка", isAction: true },
+];
 
 export function BottomNav() {
   const location = useLocation();
   
-  // Check if we're in a service page
-  const isServicePage = serviceRoutes.some(route => 
-    location.pathname.startsWith(route)
-  );
+  // Determine which nav items to show based on route
+  const getNavItems = (): NavItem[] => {
+    if (location.pathname.startsWith("/realestate")) {
+      return realEstateNavItems;
+    }
+    if (location.pathname.startsWith("/insurance")) {
+      return insuranceNavItems;
+    }
+    return defaultNavItems;
+  };
 
-  const navItems = isServicePage ? serviceNavItems : defaultNavItems;
+  const navItems = getNavItems();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
