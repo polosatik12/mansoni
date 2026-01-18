@@ -349,7 +349,7 @@ export function PropertyDetailPage() {
       </div>
 
       {/* Promos */}
-      <div className="px-4 py-4 pb-32">
+      <div className="px-4 py-4 pb-36">
         <h3 className="font-semibold text-lg mb-4">Акции в ЖК «{propertyData.complex}»</h3>
         <ScrollArea className="w-full">
           <div className="flex gap-3">
@@ -366,8 +366,8 @@ export function PropertyDetailPage() {
         </ScrollArea>
       </div>
 
-      {/* Fixed Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3 safe-area-bottom z-50">
+      {/* Fixed Bottom Actions - positioned above BottomNav */}
+      <div className="fixed bottom-16 left-0 right-0 bg-background border-t border-border px-4 py-3 z-40">
         <div className="flex gap-3">
           <Button className="flex-1 h-12 rounded-xl bg-primary">
             <Phone className="w-5 h-5 mr-2" />
