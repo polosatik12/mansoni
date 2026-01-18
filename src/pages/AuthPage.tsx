@@ -4,6 +4,7 @@ import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export function AuthPage() {
@@ -12,6 +13,7 @@ export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,6 +46,34 @@ export function AuthPage() {
     }
   };
 
+  const createTestUser = async () => {
+    setSeeding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-test-user", {
+        body: {
+          email: "dubaitech@test.local",
+          password: "12345678",
+          display_name: "Duba Tech",
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success("Тестовый пользователь готов", {
+        description: "Логин: dubaitech@test.local • Пароль: 12345678",
+      });
+
+      // auto-fill for convenience
+      setEmail("dubaitech@test.local");
+      setPassword("12345678");
+      setIsLogin(true);
+    } finally {
+      setSeeding(false);
+    }
+  };
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
@@ -135,7 +165,7 @@ export function AuthPage() {
           </form>
 
           {/* Switch mode */}
-          <div className="text-center">
+          <div className="text-center space-y-3">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
@@ -143,6 +173,20 @@ export function AuthPage() {
             >
               {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войти"}
             </button>
+
+            {import.meta.env.DEV && (
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full rounded-xl"
+                  onClick={createTestUser}
+                  disabled={seeding}
+                >
+                  {seeding ? "Создаю тестовый аккаунт..." : "Создать тестового пользователя для чата"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
