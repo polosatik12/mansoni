@@ -1,33 +1,33 @@
-import { Settings, Edit3, Grid3X3, Bookmark, Heart, Share2, Plus, Play } from "lucide-react";
+import { Settings, Grid3X3, Bookmark, Play, Plus, Menu, AtSign, Share2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const highlights = [
-  { id: "1", name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=150&q=80" },
-  { id: "2", name: "Work", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=150&q=80" },
+  { id: "1", name: "..life?", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=150&q=80", hasEmoji: true },
+  { id: "2", name: "🚗", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=150&q=80", hasEmoji: true },
   { id: "3", name: "Travel", image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=150&q=80" },
   { id: "4", name: "Food", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=150&q=80" },
-  { id: "5", name: "Tech", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=150&q=80" },
 ];
 
 const userPosts = [
-  { id: "1", image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&q=80", isVideo: true },
+  { id: "1", image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&q=80", isVideo: true, views: 175 },
   { id: "2", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&q=80", isVideo: false },
   { id: "3", image: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=300&q=80", isVideo: false },
   { id: "4", image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=300&q=80", isVideo: false },
-  { id: "5", image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=300&q=80", isVideo: true },
+  { id: "5", image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=300&q=80", isVideo: true, views: 89 },
   { id: "6", image: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300&q=80", isVideo: false },
   { id: "7", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=300&q=80", isVideo: false },
-  { id: "8", image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=300&q=80", isVideo: true },
+  { id: "8", image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=300&q=80", isVideo: true, views: 234 },
   { id: "9", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&q=80", isVideo: false },
 ];
 
 const tabs = [
-  { id: "posts", icon: Grid3X3, count: 142 },
-  { id: "saved", icon: Bookmark, count: 56 },
-  { id: "liked", icon: Heart, count: 234 },
+  { id: "posts", icon: Grid3X3 },
+  { id: "reels", icon: Play },
+  { id: "reposts", icon: Share2 },
+  { id: "tagged", icon: AtSign },
 ];
 
 export function ProfilePage() {
@@ -35,128 +35,113 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Cover Image */}
-      <div className="relative h-44">
-        <img
-          src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80"
-          alt="Cover"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        
-        {/* Top Actions */}
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-black/30 hover:bg-black/50 text-white rounded-full backdrop-blur-sm"
-          >
-            <Share2 className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-black/30 hover:bg-black/50 text-white rounded-full backdrop-blur-sm"
-          >
-            <Settings className="w-5 h-5" />
-          </Button>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <Button variant="ghost" size="icon">
+          <Plus className="w-6 h-6" />
+        </Button>
+        <div className="flex items-center gap-1">
+          <span className="font-semibold text-lg">alex_ivanov</span>
+          <span className="text-primary">▾</span>
         </div>
+        <Button variant="ghost" size="icon">
+          <Menu className="w-6 h-6" />
+        </Button>
       </div>
 
-      {/* Avatar - positioned separately */}
-      <div className="relative z-10 -mt-14 ml-4 mb-4">
-        <div className="w-24 h-24 rounded-full border-4 border-card bg-card overflow-hidden shadow-lg">
-          <img
-            src="https://i.pravatar.cc/150?img=32"
-            alt="Profile"
-            className="w-full h-full object-cover"
-          />
-        </div>
-      </div>
-
-      {/* Profile Info */}
-      <div className="bg-card px-4 pb-4">
-        {/* Name & Verified */}
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-xl font-bold text-foreground">Александр Иванов</h1>
-          <div className="w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center">
-            <span className="text-white text-xs">★</span>
+      {/* Profile Info Row */}
+      <div className="px-4 py-4">
+        <div className="flex items-start gap-4">
+          {/* Avatar with story ring */}
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-primary via-accent to-primary">
+              <div className="w-full h-full rounded-full bg-card p-0.5">
+                <img
+                  src="https://i.pravatar.cc/150?img=32"
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </div>
+            </div>
+            {/* Add story button */}
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-card flex items-center justify-center">
+              <Plus className="w-4 h-4 text-primary-foreground" />
+            </div>
           </div>
-        </div>
-        
-        <p className="text-muted-foreground text-sm mb-3">@alex_ivanov</p>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3 mb-4">
-          <Button className="rounded-full gap-2 px-6">
-            <Edit3 className="w-4 h-4" />
-            Редактировать
-          </Button>
-          <Button variant="outline" size="icon" className="rounded-full">
-            <span className="text-lg">•••</span>
-          </Button>
+          {/* Stats */}
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold mb-2">Александр Иванов</h1>
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <p className="font-bold text-foreground">142</p>
+                <p className="text-xs text-muted-foreground">публикации</p>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-foreground">12.4K</p>
+                <p className="text-xs text-muted-foreground">подписчики</p>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-foreground">892</p>
+                <p className="text-xs text-muted-foreground">подписки</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Bio */}
-        <p className="text-foreground mb-3 text-[15px] leading-relaxed">
-          Product Designer & Developer. Building the future of digital experiences. Passionate about Web3, AI, and creating beautiful interfaces.
-        </p>
+        <div className="mt-3">
+          <p className="text-sm text-foreground">Предприниматель</p>
+        </div>
 
-        {/* Website Link */}
-        <a href="#" className="text-primary font-medium text-sm mb-4 block">
-          nexus.design
-        </a>
+        {/* Professional Dashboard */}
+        <div className="mt-3 p-3 bg-muted/50 rounded-xl">
+          <p className="font-medium text-sm">Профессиональная панель</p>
+          <p className="text-xs text-muted-foreground">99 просмотров за последние 30 дней.</p>
+        </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-8 py-4 border-y border-border">
-          <div className="text-center">
-            <p className="text-xl font-bold text-foreground">142</p>
-            <p className="text-sm text-muted-foreground">Постов</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-foreground">12.4K</p>
-            <p className="text-sm text-muted-foreground">Подписчиков</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-foreground">892</p>
-            <p className="text-sm text-muted-foreground">Подписок</p>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 mt-4">
+          <Button variant="secondary" className="flex-1 rounded-lg h-9">
+            Редактировать профиль
+          </Button>
+          <Button variant="secondary" className="flex-1 rounded-lg h-9">
+            Поделиться профилем
+          </Button>
         </div>
       </div>
 
       {/* Highlights */}
-      <div className="bg-card px-4 py-4">
+      <div className="px-4 pb-4">
         <ScrollArea className="w-full">
           <div className="flex gap-4">
+            {/* Add New */}
+            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              <div className="w-16 h-16 rounded-full border-2 border-border flex items-center justify-center bg-card">
+                <Plus className="w-6 h-6 text-foreground" />
+              </div>
+              <span className="text-xs text-foreground">Добавить</span>
+            </div>
+
             {highlights.map((highlight) => (
-              <div key={highlight.id} className="flex flex-col items-center gap-2 flex-shrink-0">
-                <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-primary via-accent to-primary">
-                  <div className="w-full h-full rounded-full bg-card p-0.5">
-                    <img
-                      src={highlight.image}
-                      alt={highlight.name}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  </div>
+              <div key={highlight.id} className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                <div className="w-16 h-16 rounded-full p-0.5 bg-muted">
+                  <img
+                    src={highlight.image}
+                    alt={highlight.name}
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 </div>
-                <span className="text-xs text-foreground font-medium">{highlight.name}</span>
+                <span className="text-xs text-foreground">{highlight.name}</span>
               </div>
             ))}
-            
-            {/* Add New Highlight */}
-            <div className="flex flex-col items-center gap-2 flex-shrink-0">
-              <div className="w-16 h-16 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                <Plus className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <span className="text-xs text-muted-foreground font-medium">Новое</span>
-            </div>
           </div>
           <ScrollBar orientation="horizontal" className="invisible" />
         </ScrollArea>
       </div>
 
       {/* Content Tabs */}
-      <div className="bg-card sticky top-0 z-10">
+      <div className="border-t border-border sticky top-0 z-10 bg-card">
         <div className="flex">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -166,22 +151,21 @@ export function ProfilePage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-3 transition-all border-b-2",
+                  "flex-1 flex items-center justify-center py-3 transition-all border-b-2",
                   isActive
-                    ? "border-primary text-primary bg-primary/5"
+                    ? "border-foreground text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm font-medium">({tab.count})</span>
+                <Icon className={cn("w-6 h-6", tab.id === "reels" && "fill-current")} />
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Posts Grid - Full width */}
-      <div className="bg-card -mx-4 sm:mx-0">
+      {/* Posts Grid */}
+      <div>
         {activeTab === "posts" && (
           <div className="grid grid-cols-3 gap-[2px]">
             {userPosts.map((post) => (
@@ -189,38 +173,51 @@ export function ProfilePage() {
                 <img
                   src={post.image}
                   alt={`Post ${post.id}`}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  className="w-full h-full object-cover"
                 />
                 {post.isVideo && (
-                  <div className="absolute top-3 right-3">
-                    <div className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                      <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                  <>
+                    <div className="absolute top-2 right-2">
+                      <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
                     </div>
-                  </div>
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1">
+                      <Eye className="w-4 h-4 text-white drop-shadow-lg" />
+                      <span className="text-white text-xs font-medium drop-shadow-lg">{post.views}</span>
+                    </div>
+                  </>
                 )}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
               </div>
             ))}
           </div>
         )}
 
-        {activeTab === "saved" && (
+        {activeTab === "reels" && (
           <div className="p-12 text-center">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-              <Bookmark className="w-8 h-8 text-muted-foreground" />
+              <Play className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold text-foreground mb-1">Сохранённые посты</h3>
-            <p className="text-sm text-muted-foreground">Сохраняйте интересные посты</p>
+            <h3 className="font-semibold text-foreground mb-1">Reels</h3>
+            <p className="text-sm text-muted-foreground">Ваши видео Reels</p>
           </div>
         )}
 
-        {activeTab === "liked" && (
+        {activeTab === "reposts" && (
           <div className="p-12 text-center">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-              <Heart className="w-8 h-8 text-muted-foreground" />
+              <Share2 className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold text-foreground mb-1">Понравившиеся</h3>
-            <p className="text-sm text-muted-foreground">Посты, которые вам понравились</p>
+            <h3 className="font-semibold text-foreground mb-1">Репосты</h3>
+            <p className="text-sm text-muted-foreground">Публикации, которыми вы поделились</p>
+          </div>
+        )}
+
+        {activeTab === "tagged" && (
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+              <AtSign className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-foreground mb-1">Отметки</h3>
+            <p className="text-sm text-muted-foreground">Публикации с вашими отметками</p>
           </div>
         )}
       </div>
