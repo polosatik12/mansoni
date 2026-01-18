@@ -21,18 +21,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Ensure the profile row exists for this user (server-side upsert)
+        if (session?.user) {
+          await supabase.functions.invoke("ensure-profile", {
+            body: {
+              display_name: session.user.user_metadata?.full_name || session.user.email,
+            },
+          });
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      if (session?.user) {
+        await supabase.functions.invoke("ensure-profile", {
+          body: {
+            display_name: session.user.user_metadata?.full_name || session.user.email,
+          },
+        });
+      }
     });
 
     return () => subscription.unsubscribe();
