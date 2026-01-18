@@ -176,7 +176,7 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-1">
         {messages.map((message) => (
           <div
             key={message.id}
