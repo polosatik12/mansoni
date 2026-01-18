@@ -51,8 +51,8 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
       {/* Drawer */}
       <div 
         className={cn(
-          "fixed top-0 left-0 bottom-0 z-[81] w-[85%] max-w-[320px] bg-card shadow-2xl transition-transform duration-300 ease-out",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed top-0 right-0 bottom-0 z-[81] w-[85%] max-w-[320px] bg-card shadow-2xl transition-transform duration-300 ease-out",
+          isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="flex flex-col h-full safe-area-top safe-area-bottom">
