@@ -1,23 +1,36 @@
-import { Home, Grid3X3, MessageCircle } from "lucide-react";
+import { Home, Grid3X3, MessageCircle, Search, Heart, LucideIcon } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
 
-// Core nav items that always show
-const coreNavItems = [
+interface NavItem {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  badge?: number;
+  isAction?: boolean;
+}
+
+// Default nav items (main pages)
+const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
+  { to: "/search", icon: Search, label: "Поиск" },
   { to: "/modules", icon: Grid3X3, label: "Сервисы" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
 ];
 
-// Service routes that trigger compact mode
+// Service nav items (when inside a service like realestate, insurance)
+const serviceNavItems: NavItem[] = [
+  { to: "/", icon: Home, label: "Главная" },
+  { to: "/modules", icon: Grid3X3, label: "Сервисы" },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
+  { to: "#search", icon: Search, label: "Поиск", isAction: true },
+  { to: "#favorites", icon: Heart, label: "Избранное", isAction: true },
+];
+
+// Service routes that trigger service mode
 const serviceRoutes = ["/realestate", "/insurance"];
 
-interface BottomNavProps {
-  serviceActions?: ReactNode;
-}
-
-export function BottomNav({ serviceActions }: BottomNavProps) {
+export function BottomNav() {
   const location = useLocation();
   
   // Check if we're in a service page
@@ -25,22 +38,34 @@ export function BottomNav({ serviceActions }: BottomNavProps) {
     location.pathname.startsWith(route)
   );
 
+  const navItems = isServicePage ? serviceNavItems : defaultNavItems;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
-      <div className="flex items-center h-16 max-w-lg mx-auto pb-[env(safe-area-inset-bottom)]">
-        {/* Core nav - left aligned when in service, centered otherwise */}
-        <div className={cn(
-          "flex items-center",
-          isServicePage ? "justify-start pl-2" : "flex-1 justify-around"
-        )}>
-          {coreNavItems.map((item) => (
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto pb-[env(safe-area-inset-bottom)]">
+        {navItems.map((item) => {
+          // For action items (not real routes), use button
+          if (item.isAction) {
+            return (
+              <button
+                key={item.to}
+                className="flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors text-muted-foreground hover:text-primary"
+              >
+                <div className="relative">
+                  <item.icon className="w-6 h-6" />
+                </div>
+                <span className="text-[11px] font-medium">{item.label}</span>
+              </button>
+            );
+          }
+
+          return (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center gap-1 h-full transition-colors",
-                  isServicePage ? "w-14 px-1" : "w-16",
+                  "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )
               }
@@ -60,19 +85,12 @@ export function BottomNav({ serviceActions }: BottomNavProps) {
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] font-medium">{item.label}</span>
+                  <span className="text-[11px] font-medium">{item.label}</span>
                 </>
               )}
             </NavLink>
-          ))}
-        </div>
-
-        {/* Service actions - right side, only shows in service pages */}
-        {isServicePage && (
-          <div className="flex-1 flex items-center justify-end pr-3 gap-2">
-            {serviceActions}
-          </div>
-        )}
+          );
+        })}
       </div>
     </nav>
   );
