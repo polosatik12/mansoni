@@ -412,7 +412,7 @@ export function RealEstatePage() {
 
       {/* Filters Sheet */}
       <Sheet open={showFilters} onOpenChange={setShowFilters}>
-        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0">
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0" hideCloseButton>
           <div className="flex flex-col h-full">
             {/* Header */}
             <SheetHeader className="px-4 py-4 border-b border-border">
