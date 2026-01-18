@@ -131,16 +131,21 @@ export function RealEstatePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [filterCategory, setFilterCategory] = useState<string>("");
   
   // Filter states
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [areaRange, setAreaRange] = useState([0, 500]);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
+  const [selectedCity, setSelectedCity] = useState("Москва");
   const [filterOptions, setFilterOptions] = useState({
     verified: false,
     withPhoto: true,
     fromOwner: false,
     newBuilding: false,
+    withBalcony: false,
+    withParking: false,
+    withFurniture: false,
   });
 
   const toggleFavorite = (id: string) => {
@@ -164,7 +169,21 @@ export function RealEstatePage() {
       withPhoto: true,
       fromOwner: false,
       newBuilding: false,
+      withBalcony: false,
+      withParking: false,
+      withFurniture: false,
     });
+  };
+
+  const handleCategoryClick = (catId: string) => {
+    setSelectedCategory(catId);
+    setFilterCategory(catId);
+    setShowFilters(true);
+  };
+
+  const getCategoryTitle = () => {
+    const cat = mainCategories.find(c => c.id === filterCategory);
+    return cat ? cat.label : "Фильтры";
   };
 
   return (
@@ -188,7 +207,7 @@ export function RealEstatePage() {
             return (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => handleCategoryClick(cat.id)}
                 className={cn(
                   "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
                   selectedCategory === cat.id
@@ -196,10 +215,7 @@ export function RealEstatePage() {
                     : "border-border bg-card hover:border-primary/50"
                 )}
               >
-                <Icon className={cn(
-                  "w-5 h-5",
-                  selectedCategory === cat.id ? "text-primary" : "text-primary"
-                )} />
+                <Icon className="w-5 h-5 text-primary" />
                 <span className="font-medium text-foreground">{cat.label}</span>
               </button>
             );
@@ -396,7 +412,7 @@ export function RealEstatePage() {
 
       {/* Filters Sheet */}
       <Sheet open={showFilters} onOpenChange={setShowFilters}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0">
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0">
           <div className="flex flex-col h-full">
             {/* Header */}
             <SheetHeader className="px-4 py-4 border-b border-border">
@@ -404,7 +420,7 @@ export function RealEstatePage() {
                 <button onClick={() => setShowFilters(false)}>
                   <X className="w-6 h-6" />
                 </button>
-                <SheetTitle className="text-lg font-semibold">Фильтры</SheetTitle>
+                <SheetTitle className="text-lg font-semibold">{getCategoryTitle()}</SheetTitle>
                 <button 
                   onClick={resetFilters}
                   className="text-primary text-sm font-medium"
@@ -416,9 +432,55 @@ export function RealEstatePage() {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+              {/* City Selection */}
+              <div>
+                <h3 className="font-semibold mb-3">Город</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {["Москва", "Санкт-Петербург", "Дубай", "Сочи"].map((city) => (
+                    <button
+                      key={city}
+                      onClick={() => setSelectedCity(city)}
+                      className={cn(
+                        "px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+                        selectedCity === city
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
+                      )}
+                    >
+                      {city}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rooms - show for buy/rent/daily */}
+              {(filterCategory === "buy" || filterCategory === "rent" || filterCategory === "daily") && (
+                <div>
+                  <h3 className="font-semibold mb-3">Комнаты</h3>
+                  <div className="flex gap-2">
+                    {roomOptions.map((room) => (
+                      <button
+                        key={room.id}
+                        onClick={() => toggleRoom(room.id)}
+                        className={cn(
+                          "flex-1 py-3 rounded-xl text-sm font-medium transition-all",
+                          selectedRooms.includes(room.id)
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-foreground"
+                        )}
+                      >
+                        {room.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Price Range */}
               <div>
-                <h3 className="font-semibold mb-3">Цена, млн ₽</h3>
+                <h3 className="font-semibold mb-3">
+                  {filterCategory === "rent" || filterCategory === "daily" ? "Цена, ₽/мес" : "Цена, млн ₽"}
+                </h3>
                 <div className="flex items-center gap-4 mb-3">
                   <div className="flex-1">
                     <Input 
@@ -443,31 +505,10 @@ export function RealEstatePage() {
                 <Slider
                   value={priceRange}
                   onValueChange={setPriceRange}
-                  max={300}
+                  max={filterCategory === "rent" ? 500 : 300}
                   step={1}
                   className="w-full"
                 />
-              </div>
-
-              {/* Rooms */}
-              <div>
-                <h3 className="font-semibold mb-3">Комнаты</h3>
-                <div className="flex gap-2">
-                  {roomOptions.map((room) => (
-                    <button
-                      key={room.id}
-                      onClick={() => toggleRoom(room.id)}
-                      className={cn(
-                        "flex-1 py-3 rounded-xl text-sm font-medium transition-all",
-                        selectedRooms.includes(room.id)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      )}
-                    >
-                      {room.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Area Range */}
@@ -497,11 +538,42 @@ export function RealEstatePage() {
                 <Slider
                   value={areaRange}
                   onValueChange={setAreaRange}
-                  max={1000}
+                  max={filterCategory === "houses" ? 2000 : 500}
                   step={10}
                   className="w-full"
                 />
               </div>
+
+              {/* Floor - for apartments */}
+              {(filterCategory === "buy" || filterCategory === "rent" || filterCategory === "new") && (
+                <div>
+                  <h3 className="font-semibold mb-3">Этаж</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Input 
+                        type="number" 
+                        placeholder="От" 
+                        className="h-11 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <Input 
+                        type="number" 
+                        placeholder="До" 
+                        className="h-11 rounded-xl"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button className="px-4 py-2 rounded-xl bg-muted text-sm font-medium">
+                      Не первый
+                    </button>
+                    <button className="px-4 py-2 rounded-xl bg-muted text-sm font-medium">
+                      Не последний
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Additional Options */}
               <div>
@@ -509,59 +581,77 @@ export function RealEstatePage() {
                 <div className="space-y-3">
                   <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
                     <Checkbox 
-                      id="verified"
-                      checked={filterOptions.verified}
-                      onCheckedChange={(checked) => 
-                        setFilterOptions(prev => ({ ...prev, verified: !!checked }))
-                      }
-                    />
-                    <Label htmlFor="verified" className="flex-1 cursor-pointer">
-                      <span className="font-medium">Проверенные объявления</span>
-                      <p className="text-xs text-muted-foreground">Только проверенные застройщики</p>
-                    </Label>
-                  </label>
-
-                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
-                    <Checkbox 
-                      id="withPhoto"
                       checked={filterOptions.withPhoto}
                       onCheckedChange={(checked) => 
                         setFilterOptions(prev => ({ ...prev, withPhoto: !!checked }))
                       }
                     />
-                    <Label htmlFor="withPhoto" className="flex-1 cursor-pointer">
-                      <span className="font-medium">С фото</span>
-                      <p className="text-xs text-muted-foreground">Только с фотографиями</p>
-                    </Label>
+                    <span className="font-medium text-sm">С фото</span>
                   </label>
 
                   <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
                     <Checkbox 
-                      id="fromOwner"
+                      checked={filterOptions.verified}
+                      onCheckedChange={(checked) => 
+                        setFilterOptions(prev => ({ ...prev, verified: !!checked }))
+                      }
+                    />
+                    <span className="font-medium text-sm">Проверенные объявления</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                    <Checkbox 
                       checked={filterOptions.fromOwner}
                       onCheckedChange={(checked) => 
                         setFilterOptions(prev => ({ ...prev, fromOwner: !!checked }))
                       }
                     />
-                    <Label htmlFor="fromOwner" className="flex-1 cursor-pointer">
-                      <span className="font-medium">От собственника</span>
-                      <p className="text-xs text-muted-foreground">Без посредников</p>
-                    </Label>
+                    <span className="font-medium text-sm">От собственника</span>
+                  </label>
+
+                  {(filterCategory === "rent" || filterCategory === "daily") && (
+                    <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                      <Checkbox 
+                        checked={filterOptions.withFurniture}
+                        onCheckedChange={(checked) => 
+                          setFilterOptions(prev => ({ ...prev, withFurniture: !!checked }))
+                        }
+                      />
+                      <span className="font-medium text-sm">С мебелью</span>
+                    </label>
+                  )}
+
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                    <Checkbox 
+                      checked={filterOptions.withBalcony}
+                      onCheckedChange={(checked) => 
+                        setFilterOptions(prev => ({ ...prev, withBalcony: !!checked }))
+                      }
+                    />
+                    <span className="font-medium text-sm">С балконом/лоджией</span>
                   </label>
 
                   <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
                     <Checkbox 
-                      id="newBuilding"
-                      checked={filterOptions.newBuilding}
+                      checked={filterOptions.withParking}
                       onCheckedChange={(checked) => 
-                        setFilterOptions(prev => ({ ...prev, newBuilding: !!checked }))
+                        setFilterOptions(prev => ({ ...prev, withParking: !!checked }))
                       }
                     />
-                    <Label htmlFor="newBuilding" className="flex-1 cursor-pointer">
-                      <span className="font-medium">Новостройки</span>
-                      <p className="text-xs text-muted-foreground">Только от застройщика</p>
-                    </Label>
+                    <span className="font-medium text-sm">С парковкой</span>
                   </label>
+
+                  {filterCategory === "new" && (
+                    <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                      <Checkbox 
+                        checked={filterOptions.newBuilding}
+                        onCheckedChange={(checked) => 
+                          setFilterOptions(prev => ({ ...prev, newBuilding: !!checked }))
+                        }
+                      />
+                      <span className="font-medium text-sm">Сдача в этом году</span>
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
