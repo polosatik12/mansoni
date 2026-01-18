@@ -128,87 +128,38 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
             />
             
             {/* Close Button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute top-4 left-4 bg-black/40 text-white rounded-full safe-area-top"
+            <button 
+              className="absolute top-4 left-4 w-10 h-10 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center safe-area-top"
               onClick={handleBack}
             >
-              <X className="w-6 h-6" />
-            </Button>
+              <X className="w-6 h-6" strokeWidth={1.5} />
+            </button>
 
             {/* Right Side Tools */}
-            <div className="absolute top-20 right-4 flex flex-col gap-4 safe-area-top">
-              <button className="w-11 h-11 rounded-full bg-black/40 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">Aa</span>
+            <div className="absolute top-16 right-4 flex flex-col gap-3 safe-area-top">
+              <button className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                <span className="text-white font-semibold text-[15px]">Aa</span>
               </button>
-              <button className="w-11 h-11 rounded-full bg-black/40 flex items-center justify-center">
-                <Smile className="w-6 h-6 text-white" />
+              <button className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                <Smile className="w-5 h-5 text-white" strokeWidth={1.5} />
               </button>
-              <button className="w-11 h-11 rounded-full bg-black/40 flex items-center justify-center">
-                <Music className="w-6 h-6 text-white" />
+              <button className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                <Music className="w-5 h-5 text-white" strokeWidth={1.5} />
               </button>
-              <button className="w-11 h-11 rounded-full bg-black/40 flex items-center justify-center">
-                <AtSign className="w-6 h-6 text-white" />
+              <button className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                <AtSign className="w-5 h-5 text-white" strokeWidth={1.5} />
               </button>
-              <button className="w-11 h-11 rounded-full bg-black/40 flex items-center justify-center">
-                <ChevronDown className="w-6 h-6 text-white" />
-              </button>
-            </div>
-
-            {/* Bottom Gallery Preview */}
-            <div className="absolute bottom-32 left-4 right-4 flex items-center gap-2">
-              <button className="p-2 rounded-full bg-black/40" onClick={handleBack}>
-                <ChevronRight className="w-5 h-5 text-white rotate-180" />
-              </button>
-              <div className="flex-1 flex justify-center">
-                <div className="w-12 h-16 rounded-lg overflow-hidden border-2 border-white">
-                  <img src={selectedImage} alt="" className="w-full h-full object-cover" />
-                </div>
-              </div>
-              <button className="p-2 rounded-full bg-black/40">
-                <ChevronRight className="w-5 h-5 text-white" />
-              </button>
-            </div>
-
-            {/* Caption Input */}
-            <div className="absolute bottom-20 left-4 right-4">
-              <div className="flex items-center gap-3 bg-black/40 rounded-full px-4 py-3">
-                <img 
-                  src="https://i.pravatar.cc/32" 
-                  alt="" 
-                  className="w-8 h-8 rounded-full"
-                />
-                <input
-                  type="text"
-                  placeholder="Добавьте подпись..."
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  className="flex-1 bg-transparent text-white placeholder:text-white/60 outline-none text-sm"
-                />
-              </div>
             </div>
           </div>
 
           {/* Bottom Actions */}
-          <div className="bg-black px-4 py-4 flex items-center gap-3 safe-area-bottom">
-            <button 
-              onClick={() => handlePublish("story")}
-              className="flex-1 flex items-center gap-3 bg-zinc-800 rounded-full px-4 py-3"
-            >
-              <img 
-                src="https://i.pravatar.cc/40?img=32" 
-                alt="" 
-                className="w-8 h-8 rounded-full"
-              />
-              <span className="text-white font-medium">Ваши истории</span>
-            </button>
+          <div className="absolute bottom-0 left-0 right-0 px-4 py-5 flex items-center justify-end gap-3 safe-area-bottom">
             <button 
               onClick={() => handlePublish("close-friends")}
-              className="flex items-center gap-2 bg-green-500 rounded-full px-4 py-3"
+              className="flex items-center gap-2 bg-green-500 rounded-full px-5 py-3"
             >
               <span className="text-lg">⭐</span>
-              <span className="text-white font-medium">Близкие др...</span>
+              <span className="text-white font-medium text-[15px]">Близкие др...</span>
             </button>
             <button 
               onClick={() => handlePublish("story")}
