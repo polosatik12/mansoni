@@ -137,9 +137,9 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
+    <div className="fixed inset-0 flex flex-col bg-background z-40">
+      {/* Header - fixed */}
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border bg-card safe-area-top">
         <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </Button>
@@ -175,8 +175,8 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+      {/* Messages - scrollable */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-1 native-scroll">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -234,8 +234,8 @@ export function ChatConversation({ chat, onBack }: ChatConversationProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t border-border bg-card p-3">
+      {/* Input - fixed */}
+      <div className="flex-shrink-0 border-t border-border bg-card p-3 safe-area-bottom">
         {isRecording ? (
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={cancelRecording}>
