@@ -54,7 +54,7 @@ export function ServicesMenu() {
           <Menu className="w-5 h-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] bg-card border-border p-0">
+      <SheetContent side="left" className="w-[300px] bg-card border-border p-0">
         <SheetHeader className="p-4 border-b border-border">
           <SheetTitle className="text-left">Сервисы</SheetTitle>
         </SheetHeader>
