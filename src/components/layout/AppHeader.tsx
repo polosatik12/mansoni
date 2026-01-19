@@ -1,5 +1,6 @@
-import { Menu, Search, Sun, Bell, MessageCircle } from "lucide-react";
+import { Search, Sun, Bell, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ServicesMenu } from "./ServicesMenu";
 
 interface AppHeaderProps {
   title?: string;
@@ -11,9 +12,6 @@ export function AppHeader({ title, showLogo = true }: AppHeaderProps) {
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border">
       <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="text-foreground">
-            <Menu className="w-5 h-5" />
-          </Button>
           {showLogo && (
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg">N</span>
@@ -39,6 +37,7 @@ export function AppHeader({ title, showLogo = true }: AppHeaderProps) {
               3
             </span>
           </Button>
+          <ServicesMenu />
         </div>
       </div>
     </header>

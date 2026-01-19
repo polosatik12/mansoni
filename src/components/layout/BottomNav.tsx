@@ -1,4 +1,4 @@
-import { Home, Grid3X3, MessageCircle, Search, Heart, FileText, Headphones, User, LucideIcon } from "lucide-react";
+import { Home, MessageCircle, Search, Heart, FileText, Headphones, User, LucideIcon } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -10,11 +10,10 @@ interface NavItem {
   isAction?: boolean;
 }
 
-// Default nav items (main pages)
+// Default nav items (main pages) - without "Сервисы"
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/search", icon: Search, label: "Поиск" },
-  { to: "/modules", icon: Grid3X3, label: "Сервисы" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
   { to: "/profile", icon: User, label: "Профиль" },
 ];
@@ -22,7 +21,6 @@ const defaultNavItems: NavItem[] = [
 // Real estate service nav items
 const realEstateNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
-  { to: "/modules", icon: Grid3X3, label: "Сервисы" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
   { to: "#search", icon: Search, label: "Поиск", isAction: true },
   { to: "#favorites", icon: Heart, label: "Избранное", isAction: true },
@@ -31,7 +29,6 @@ const realEstateNavItems: NavItem[] = [
 // Insurance service nav items
 const insuranceNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
-  { to: "/modules", icon: Grid3X3, label: "Сервисы" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
   { to: "#policies", icon: FileText, label: "Полисы", isAction: true },
   { to: "#support", icon: Headphones, label: "Помощь", isAction: true },
