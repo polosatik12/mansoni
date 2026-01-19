@@ -60,14 +60,14 @@ export function Stories() {
 
   return (
     <div 
-      className="bg-background transition-all duration-150"
+      className="sticky top-0 z-30 bg-background transition-all duration-150"
       style={{ 
         paddingTop: `${12 - collapseProgress * 4}px`,
         paddingBottom: `${12 - collapseProgress * 8}px`,
       }}
     >
       <ScrollArea className="w-full">
-        <div
+        <div 
           className="flex px-4 transition-all duration-150"
           style={{ gap: `${expandedGap}px` }}
         >

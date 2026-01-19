@@ -53,12 +53,8 @@ const posts = [
 export function HomePage() {
   return (
     <div className="min-h-screen">
-      {/* Sticky header with tabs and stories */}
-      <div className="sticky top-0 z-30 bg-background">
-        <FeedTabs />
-        <Stories />
-      </div>
-      
+      <FeedTabs />
+      <Stories />
       <CreatePost />
       
       <div className="space-y-0">
