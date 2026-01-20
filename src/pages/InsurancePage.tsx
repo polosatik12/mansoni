@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { InsuranceAssistant } from "@/components/insurance/InsuranceAssistant";
+import { OsagoCalculator } from "@/components/insurance/OsagoCalculator";
 
 const categories = [
   { id: "all", label: "Все", icon: Shield },
@@ -306,7 +308,10 @@ export function InsurancePage() {
 
       {/* Quick Actions Grid */}
       <div className="px-4 py-3 grid grid-cols-4 gap-2">
-        {features.map((feature, idx) => (
+        {/* OSAGO Calculator as first item */}
+        <OsagoCalculator />
+        
+        {features.slice(1).map((feature, idx) => (
           <button
             key={idx}
             className="flex flex-col items-center p-3 rounded-xl bg-muted/50 active:bg-muted transition-colors"
@@ -368,6 +373,9 @@ export function InsurancePage() {
           ))}
         </div>
       </div>
+
+      {/* AI Insurance Assistant */}
+      <InsuranceAssistant />
     </div>
   );
 }
