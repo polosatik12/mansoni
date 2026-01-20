@@ -17,6 +17,7 @@ import { PropertyDetailPage } from "@/pages/PropertyDetailPage";
 import { InsurancePage } from "@/pages/InsurancePage";
 import { AuthPage } from "@/pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import { CommandPalette } from "@/components/CommandPalette";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <CommandPalette />
         <BrowserRouter>
           <Routes>
             <Route element={<AppLayout />}>
