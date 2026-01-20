@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RealEstateFilters } from "@/components/realestate/RealEstateFilters";
 import { PropertyAssistant } from "@/components/realestate/PropertyAssistant";
+import { MortgageCalculator } from "@/components/realestate/MortgageCalculator";
 
 // Main categories like Cian
 const mainCategories = [
@@ -196,11 +197,16 @@ export function RealEstatePage() {
         resultsCount={allProperties.length * 350}
       />
 
+      {/* Mortgage Calculator */}
+      <div className="px-4 pb-2">
+        <MortgageCalculator />
+      </div>
+
       {/* Post Ad Button */}
       <div className="px-4 pb-4">
         <Button 
           variant="outline" 
-          className="w-full h-12 rounded-2xl border-2 border-primary/30 bg-primary/5 text-primary font-medium hover:bg-primary/10"
+          className="w-full h-12 rounded-2xl border-2 border-border bg-card text-foreground font-medium hover:bg-muted"
         >
           <Plus className="w-5 h-5 mr-2" />
           Разместить за 0 ₽
