@@ -1,6 +1,6 @@
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { CommentsSheet } from "./CommentsSheet";
@@ -42,13 +42,40 @@ export function PostCard({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [likeAnimation, setLikeAnimation] = useState(false);
+  const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; y: number }[]>([]);
+  const heartIdRef = useRef(0);
 
   const allImages = images || (image ? [image] : []);
   const hasMultipleImages = allImages.length > 1;
 
   const handleLike = () => {
+    if (!liked) {
+      setLikeAnimation(true);
+      setTimeout(() => setLikeAnimation(false), 300);
+    }
     setLiked(!liked);
     setLikeCount(liked ? likeCount - 1 : likeCount + 1);
+  };
+
+  const handleDoubleTap = (e: React.MouseEvent) => {
+    if (!liked) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const newHeart = { id: heartIdRef.current++, x, y };
+      setFloatingHearts(prev => [...prev, newHeart]);
+      
+      setTimeout(() => {
+        setFloatingHearts(prev => prev.filter(h => h.id !== newHeart.id));
+      }, 1000);
+      
+      setLiked(true);
+      setLikeCount(likeCount + 1);
+      setLikeAnimation(true);
+      setTimeout(() => setLikeAnimation(false), 300);
+    }
   };
 
   const formatNumber = (num: number) => {
@@ -116,12 +143,26 @@ export function PostCard({
 
       {/* Image Carousel */}
       {allImages.length > 0 && (
-        <div className="relative aspect-square">
+        <div 
+          className="relative aspect-square cursor-pointer select-none"
+          onDoubleClick={handleDoubleTap}
+        >
           <img
             src={allImages[currentImageIndex]}
             alt="Post image"
             className="w-full h-full object-cover"
           />
+          
+          {/* Floating hearts on double tap */}
+          {floatingHearts.map((heart) => (
+            <div
+              key={heart.id}
+              className="absolute pointer-events-none animate-float-heart"
+              style={{ left: heart.x - 30, top: heart.y - 30 }}
+            >
+              <Heart className="w-16 h-16 text-destructive fill-current drop-shadow-lg" />
+            </div>
+          ))}
           
           {/* Image counter */}
           {hasMultipleImages && (
@@ -174,11 +215,17 @@ export function PostCard({
           <button
             onClick={handleLike}
             className={cn(
-              "flex items-center gap-1.5 transition-colors",
+              "flex items-center gap-1.5 transition-all",
               liked ? "text-destructive" : "text-foreground"
             )}
           >
-            <Heart className={cn("w-6 h-6", liked && "fill-current")} />
+            <Heart 
+              className={cn(
+                "w-6 h-6 transition-transform",
+                liked && "fill-current",
+                likeAnimation && "animate-like-bounce"
+              )} 
+            />
             <span className="text-sm">{formatNumber(likeCount)}</span>
           </button>
           <button 
