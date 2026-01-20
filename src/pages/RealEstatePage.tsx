@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RealEstateFilters } from "@/components/realestate/RealEstateFilters";
+import { PropertyAssistant } from "@/components/realestate/PropertyAssistant";
 
 // Main categories like Cian
 const mainCategories = [
@@ -640,6 +641,9 @@ export function RealEstatePage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* AI Property Assistant */}
+      <PropertyAssistant />
     </div>
   );
 }
