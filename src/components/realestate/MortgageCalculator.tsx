@@ -414,10 +414,27 @@ export function MortgageCalculator() {
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Банки</p>
               <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full bg-yellow-400 border-2 border-background" />
-                <div className="w-8 h-8 rounded-full bg-green-500 border-2 border-background" />
-                <div className="w-8 h-8 rounded-full bg-red-500 border-2 border-background flex items-center justify-center text-white text-xs font-bold">
-                  +11
+                {/* Сбербанк */}
+                <div className="w-8 h-8 rounded-full bg-[#21A038] border-2 border-background flex items-center justify-center overflow-hidden">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                  </svg>
+                </div>
+                {/* Тинькофф */}
+                <div className="w-8 h-8 rounded-full bg-[#FFDD2D] border-2 border-background flex items-center justify-center">
+                  <span className="text-black font-black text-sm">T</span>
+                </div>
+                {/* Альфа-Банк */}
+                <div className="w-8 h-8 rounded-full bg-[#EF3124] border-2 border-background flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">A</span>
+                </div>
+                {/* ВТБ */}
+                <div className="w-8 h-8 rounded-full bg-[#0A2973] border-2 border-background flex items-center justify-center">
+                  <span className="text-white font-bold text-[10px]">ВТБ</span>
+                </div>
+                {/* Счётчик остальных */}
+                <div className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-foreground text-xs font-bold">
+                  +9
                 </div>
               </div>
             </div>
