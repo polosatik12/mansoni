@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { RealEstateFilters } from "@/components/realestate/RealEstateFilters";
 
 // Main categories like Cian
 const mainCategories = [
@@ -188,40 +189,11 @@ export function RealEstatePage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Search Bar */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            placeholder="Например, купить квартиру в Москве"
-            className="pl-12 h-12 rounded-2xl bg-muted border-0 text-foreground"
-          />
-        </div>
-      </div>
-
-      {/* Main Categories Grid */}
-      <div className="px-4 py-4">
-        <div className="grid grid-cols-2 gap-3">
-          {mainCategories.map((cat) => {
-            const Icon = cat.icon;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => handleCategoryClick(cat.id)}
-                className={cn(
-                  "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left",
-                  selectedCategory === cat.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-card hover:border-primary/50"
-                )}
-              >
-                <Icon className="w-5 h-5 text-primary" />
-                <span className="font-medium text-foreground">{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Avito-style Filters Header */}
+      <RealEstateFilters 
+        onShowResults={() => {}} 
+        resultsCount={allProperties.length * 350}
+      />
 
       {/* Post Ad Button */}
       <div className="px-4 pb-4">
