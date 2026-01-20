@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { Stories } from "@/components/feed/Stories";
 import { CreatePost } from "@/components/feed/CreatePost";
 import { PostCard } from "@/components/feed/PostCard";
+import { PullToRefresh } from "@/components/feed/PullToRefresh";
+import { toast } from "sonner";
 
-const posts = [
+const initialPosts = [
   {
     author: {
       name: "Dubai Tech Hub",
@@ -51,17 +54,36 @@ const posts = [
 ];
 
 export function HomePage() {
+  const [posts, setPosts] = useState(initialPosts);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRefresh = async () => {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Shuffle posts to simulate new content
+    setPosts(prev => [...prev].sort(() => Math.random() - 0.5));
+    setRefreshKey(prev => prev + 1);
+    
+    toast.success("Лента обновлена!", {
+      duration: 2000,
+      position: "top-center",
+    });
+  };
+
   return (
-    <div className="min-h-screen">
-      <FeedTabs />
-      <Stories />
-      <CreatePost />
-      
-      <div className="space-y-0">
-        {posts.map((post, index) => (
-          <PostCard key={index} {...post} />
-        ))}
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen" key={refreshKey}>
+        <FeedTabs />
+        <Stories />
+        <CreatePost />
+        
+        <div className="space-y-0">
+          {posts.map((post, index) => (
+            <PostCard key={`${post.author.username}-${index}`} {...post} />
+          ))}
+        </div>
       </div>
-    </div>
+    </PullToRefresh>
   );
 }
