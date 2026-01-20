@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
-import { Calculator, TrendingDown, TrendingUp, Calendar, PiggyBank, X, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -11,352 +10,417 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-interface PaymentScheduleItem {
-  month: number;
-  payment: number;
-  principal: number;
-  interest: number;
-  balance: number;
-}
+const regions = [
+  "Москва",
+  "Санкт-Петербург", 
+  "Краснодар",
+  "Казань",
+  "Новосибирск",
+  "Екатеринбург",
+];
+
+const propertyTypes = [
+  { id: "new", label: "Новостройка" },
+  { id: "secondary", label: "Вторичная" },
+  { id: "house", label: "Дом" },
+  { id: "construction", label: "Строительство дома" },
+];
+
+const downPaymentOptions = [20, 25, 30, 35, 40];
+const termOptions = [5, 10, 15, 20, 25, 30];
+
+const mortgagePrograms = [
+  { id: "family", name: "Семейная", description: "Для тех, у кого есть дети", rate: 6 },
+  { id: "base", name: "Базовая", description: "Для всех, до 100 млн ₽", rate: 19 },
+  { id: "it", name: "IT-ипотека", description: "Для IT-специалистов", rate: 5 },
+  { id: "military", name: "Военная", description: "Для военнослужащих", rate: 7 },
+];
+
+const ageOptions = [
+  { id: "over21", label: "Старше 21 года" },
+  { id: "under21", label: "До 21 года" },
+];
+
+const employmentTypes = [
+  { id: "employee", label: "Работа по найму" },
+  { id: "ip", label: "ИП" },
+  { id: "business", label: "Владелец бизнеса" },
+  { id: "self", label: "Самозанятый" },
+];
+
+const workExperience = [
+  { id: "over1y", label: "Больше года" },
+  { id: "6-12m", label: "6-12 месяцев" },
+  { id: "3-6m", label: "3-6 месяцев" },
+  { id: "under3m", label: "До 3 месяцев" },
+];
+
+const currentJobExperience = [
+  { id: "over3m", label: "Больше 3 месяцев" },
+  { id: "under3m", label: "До 3 месяцев" },
+];
+
+const incomeConfirmation = [
+  { id: "2ndfl", label: "2-НДФЛ" },
+  { id: "bank", label: "Справка по форме банка" },
+  { id: "sfr", label: "Выписка из СФР" },
+  { id: "none", label: "Без подтверждения" },
+];
 
 export function MortgageCalculator() {
   const [isOpen, setIsOpen] = useState(false);
-  const [propertyPrice, setPropertyPrice] = useState(10000000);
-  const [downPayment, setDownPayment] = useState(2000000);
+  const [region, setRegion] = useState("Москва");
+  const [propertyType, setPropertyType] = useState("new");
+  const [propertyPrice, setPropertyPrice] = useState(5000000);
+  const [downPaymentPercent, setDownPaymentPercent] = useState(30);
   const [term, setTerm] = useState(20);
-  const [rate, setRate] = useState(16);
-  const [paymentType, setPaymentType] = useState<"annuity" | "differentiated">("annuity");
+  const [selectedProgram, setSelectedProgram] = useState("base");
+  const [age, setAge] = useState("over21");
+  const [employment, setEmployment] = useState("employee");
+  const [experience, setExperience] = useState("over1y");
+  const [currentExp, setCurrentExp] = useState("over3m");
+  const [incomeType, setIncomeType] = useState("2ndfl");
 
-  const downPaymentPercent = Math.round((downPayment / propertyPrice) * 100);
+  const downPayment = Math.round(propertyPrice * (downPaymentPercent / 100));
   const loanAmount = propertyPrice - downPayment;
 
   const calculations = useMemo(() => {
+    const program = mortgagePrograms.find(p => p.id === selectedProgram);
+    const rate = program?.rate || 19;
     const monthlyRate = rate / 100 / 12;
     const totalMonths = term * 12;
 
-    if (paymentType === "annuity") {
-      // Аннуитетный платёж
-      const monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / 
-                            (Math.pow(1 + monthlyRate, totalMonths) - 1);
-      const totalPayment = monthlyPayment * totalMonths;
-      const overpayment = totalPayment - loanAmount;
+    const monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / 
+                          (Math.pow(1 + monthlyRate, totalMonths) - 1);
 
-      // График платежей (первые 12 месяцев + последние 3)
-      const schedule: PaymentScheduleItem[] = [];
-      let balance = loanAmount;
-      
-      for (let i = 1; i <= totalMonths; i++) {
-        const interest = balance * monthlyRate;
-        const principal = monthlyPayment - interest;
-        balance -= principal;
-        
-        if (i <= 12 || i > totalMonths - 3) {
-          schedule.push({
-            month: i,
-            payment: monthlyPayment,
-            principal,
-            interest,
-            balance: Math.max(0, balance),
-          });
-        }
-      }
-
-      return {
-        monthlyPayment,
-        totalPayment,
-        overpayment,
-        schedule,
-        lastPayment: monthlyPayment,
-      };
-    } else {
-      // Дифференцированный платёж
-      const principalPayment = loanAmount / totalMonths;
-      const schedule: PaymentScheduleItem[] = [];
-      let balance = loanAmount;
-      let totalPayment = 0;
-      let firstPayment = 0;
-      let lastPayment = 0;
-
-      for (let i = 1; i <= totalMonths; i++) {
-        const interest = balance * monthlyRate;
-        const payment = principalPayment + interest;
-        totalPayment += payment;
-        balance -= principalPayment;
-
-        if (i === 1) firstPayment = payment;
-        if (i === totalMonths) lastPayment = payment;
-
-        if (i <= 12 || i > totalMonths - 3) {
-          schedule.push({
-            month: i,
-            payment,
-            principal: principalPayment,
-            interest,
-            balance: Math.max(0, balance),
-          });
-        }
-      }
-
-      return {
-        monthlyPayment: firstPayment,
-        totalPayment,
-        overpayment: totalPayment - loanAmount,
-        schedule,
-        lastPayment,
-      };
-    }
-  }, [loanAmount, rate, term, paymentType]);
+    return {
+      rate,
+      monthlyPayment: Math.round(monthlyPayment),
+    };
+  }, [loanAmount, term, selectedProgram]);
 
   const formatPrice = (value: number) => {
-    return Math.round(value).toLocaleString("ru-RU") + " ₽";
+    return value.toLocaleString("ru-RU") + " ₽";
   };
 
-  const formatShortPrice = (value: number) => {
-    if (value >= 1000000) {
-      return (value / 1000000).toFixed(1).replace(".0", "") + " млн ₽";
-    }
-    return Math.round(value / 1000) + " тыс ₽";
-  };
+  const ToggleButton = ({ 
+    selected, 
+    onClick, 
+    children 
+  }: { 
+    selected: boolean; 
+    onClick: () => void; 
+    children: React.ReactNode 
+  }) => (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-4 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap",
+        selected
+          ? "bg-foreground text-background"
+          : "bg-muted text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  );
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button 
           variant="outline" 
-          className="w-full h-14 rounded-2xl border-2 border-primary/30 bg-primary/5 text-primary font-medium hover:bg-primary/10 gap-3"
+          className="w-full h-14 rounded-2xl border-2 border-primary/30 bg-primary/5 text-primary font-medium hover:bg-primary/10"
         >
-          <Calculator className="w-5 h-5" />
           Ипотечный калькулятор
         </Button>
       </SheetTrigger>
       
-      <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0">
-        <div className="flex flex-col h-full">
-          <SheetHeader className="px-4 py-4 border-b border-border">
-            <div className="flex items-center justify-between">
-              <SheetTitle className="flex items-center gap-2">
-                <Calculator className="w-5 h-5 text-primary" />
-                Ипотечный калькулятор
-              </SheetTitle>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-          </SheetHeader>
+      <SheetContent side="bottom" className="h-[95vh] rounded-t-3xl p-0 flex flex-col">
+        {/* Header */}
+        <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
+          <div className="flex items-center">
+            <button onClick={() => setIsOpen(false)} className="p-1 -ml-1">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <SheetTitle className="flex-1 text-center pr-6">Подбор ипотеки</SheetTitle>
+          </div>
+        </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-            {/* Property Price */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label className="text-base">Стоимость недвижимости</Label>
-                <span className="text-lg font-bold text-primary">{formatShortPrice(propertyPrice)}</span>
-              </div>
-              <Slider
-                value={[propertyPrice]}
-                onValueChange={(v) => {
-                  setPropertyPrice(v[0]);
-                  if (downPayment > v[0] * 0.9) setDownPayment(v[0] * 0.1);
-                }}
-                min={1000000}
-                max={100000000}
-                step={500000}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>1 млн</span>
-                <span>100 млн</span>
-              </div>
-            </div>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
+          {/* Title */}
+          <div>
+            <h1 className="text-2xl font-bold mb-1">Ипотечный калькулятор</h1>
+            <p className="text-muted-foreground">Покажем программы с лучшими ставками и платежом.</p>
+          </div>
 
-            {/* Down Payment */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label className="text-base">Первоначальный взнос</Label>
-                <div className="text-right">
-                  <span className="text-lg font-bold text-primary">{formatShortPrice(downPayment)}</span>
-                  <span className="text-sm text-muted-foreground ml-2">({downPaymentPercent}%)</span>
-                </div>
-              </div>
-              <Slider
-                value={[downPayment]}
-                onValueChange={(v) => setDownPayment(v[0])}
-                min={propertyPrice * 0.1}
-                max={propertyPrice * 0.9}
-                step={100000}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>10%</span>
-                <span>90%</span>
-              </div>
-            </div>
-
-            {/* Term */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label className="text-base">Срок кредита</Label>
-                <span className="text-lg font-bold text-primary">{term} лет</span>
-              </div>
-              <Slider
-                value={[term]}
-                onValueChange={(v) => setTerm(v[0])}
-                min={1}
-                max={30}
-                step={1}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>1 год</span>
-                <span>30 лет</span>
-              </div>
-            </div>
-
-            {/* Interest Rate */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label className="text-base">Процентная ставка</Label>
-                <span className="text-lg font-bold text-primary">{rate}%</span>
-              </div>
-              <Slider
-                value={[rate]}
-                onValueChange={(v) => setRate(v[0])}
-                min={1}
-                max={30}
-                step={0.1}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>1%</span>
-                <span>30%</span>
-              </div>
-            </div>
-
-            {/* Payment Type */}
-            <div className="space-y-3">
-              <Label className="text-base">Тип платежа</Label>
-              <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as "annuity" | "differentiated")}>
-                <TabsList className="w-full">
-                  <TabsTrigger value="annuity" className="flex-1">Аннуитетный</TabsTrigger>
-                  <TabsTrigger value="differentiated" className="flex-1">Дифференцированный</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
-            {/* Results */}
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 space-y-4">
-              <h3 className="font-semibold text-lg">Результаты расчёта</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-background rounded-xl p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                    <Calendar className="w-4 h-4" />
-                    {paymentType === "annuity" ? "Ежемесячный платёж" : "Первый платёж"}
-                  </div>
-                  <p className="text-xl font-bold text-foreground">
-                    {formatPrice(calculations.monthlyPayment)}
-                  </p>
-                </div>
-                
-                {paymentType === "differentiated" && (
-                  <div className="bg-background rounded-xl p-4">
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                      <TrendingDown className="w-4 h-4" />
-                      Последний платёж
-                    </div>
-                    <p className="text-xl font-bold text-foreground">
-                      {formatPrice(calculations.lastPayment)}
-                    </p>
-                  </div>
-                )}
-                
-                <div className="bg-background rounded-xl p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-                    <PiggyBank className="w-4 h-4" />
-                    Сумма кредита
-                  </div>
-                  <p className="text-xl font-bold text-foreground">
-                    {formatShortPrice(loanAmount)}
-                  </p>
-                </div>
-                
-                <div className="bg-background rounded-xl p-4">
-                  <div className="flex items-center gap-2 text-destructive text-sm mb-1">
-                    <TrendingUp className="w-4 h-4" />
-                    Переплата
-                  </div>
-                  <p className="text-xl font-bold text-destructive">
-                    {formatShortPrice(calculations.overpayment)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-background rounded-xl p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm text-muted-foreground">Общая сумма выплат</span>
-                  <span className="text-lg font-bold">{formatShortPrice(calculations.totalPayment)}</span>
-                </div>
-                
-                {/* Visual breakdown */}
-                <div className="h-3 rounded-full bg-muted overflow-hidden flex">
-                  <div 
-                    className="h-full bg-primary" 
-                    style={{ width: `${(loanAmount / calculations.totalPayment) * 100}%` }}
-                  />
-                  <div 
-                    className="h-full bg-destructive" 
-                    style={{ width: `${(calculations.overpayment / calculations.totalPayment) * 100}%` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-2 text-xs">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-primary" />
-                    Основной долг
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-destructive" />
-                    Проценты
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Schedule Preview */}
-            <div className="space-y-3">
-              <h3 className="font-semibold">График платежей</h3>
-              <div className="bg-muted/50 rounded-xl overflow-hidden">
-                <div className="grid grid-cols-4 gap-2 p-3 bg-muted text-xs font-medium text-muted-foreground">
-                  <span>Месяц</span>
-                  <span>Платёж</span>
-                  <span>Осн. долг</span>
-                  <span>Проценты</span>
-                </div>
-                {calculations.schedule.map((item, idx) => (
-                  <div 
-                    key={item.month} 
-                    className={cn(
-                      "grid grid-cols-4 gap-2 p-3 text-sm",
-                      idx % 2 === 0 ? "bg-background" : "bg-muted/30"
-                    )}
-                  >
-                    <span className="font-medium">{item.month}</span>
-                    <span>{formatPrice(item.payment)}</span>
-                    <span className="text-primary">{formatPrice(item.principal)}</span>
-                    <span className="text-muted-foreground">{formatPrice(item.interest)}</span>
-                  </div>
+          {/* Region */}
+          <div className="space-y-2">
+            <Label className="text-base font-semibold">Регион покупки</Label>
+            <Select value={region} onValueChange={setRegion}>
+              <SelectTrigger className="h-12 rounded-xl bg-muted border-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border shadow-lg z-50">
+                {regions.map((r) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
                 ))}
-                {calculations.schedule.length < term * 12 && (
-                  <div className="p-3 text-center text-sm text-muted-foreground">
-                    ... ещё {term * 12 - 15} месяцев ...
-                  </div>
-                )}
-              </div>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Property Type */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Тип недвижимости</Label>
+            <div className="flex flex-wrap gap-2">
+              {propertyTypes.map((type) => (
+                <ToggleButton
+                  key={type.id}
+                  selected={propertyType === type.id}
+                  onClick={() => setPropertyType(type.id)}
+                >
+                  {type.label}
+                </ToggleButton>
+              ))}
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-border bg-background">
-            <Button className="w-full h-12 rounded-xl">
-              Оставить заявку на ипотеку
-            </Button>
+          {/* Property Price */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Стоимость жилья</Label>
+            <div className="h-12 px-4 rounded-xl bg-muted flex items-center">
+              <span className="text-base">{formatPrice(propertyPrice)}</span>
+            </div>
+            <Slider
+              value={[propertyPrice]}
+              onValueChange={(v) => setPropertyPrice(v[0])}
+              min={500000}
+              max={100000000}
+              step={100000}
+              className="py-1"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>500 тыс. ₽</span>
+              <span>100 млн. ₽</span>
+            </div>
+          </div>
+
+          {/* Down Payment */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Первоначальный взнос</Label>
+            <div className="h-12 px-4 rounded-xl bg-muted flex items-center justify-between">
+              <span className="text-base">{formatPrice(downPayment)}</span>
+              <span className="text-muted-foreground">{downPaymentPercent}%</span>
+            </div>
+            <Slider
+              value={[downPaymentPercent]}
+              onValueChange={(v) => setDownPaymentPercent(v[0])}
+              min={20}
+              max={90}
+              step={1}
+              className="py-1"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>20%</span>
+              <span>90%</span>
+            </div>
+            <div className="flex gap-2">
+              {downPaymentOptions.map((percent) => (
+                <ToggleButton
+                  key={percent}
+                  selected={downPaymentPercent === percent}
+                  onClick={() => setDownPaymentPercent(percent)}
+                >
+                  {percent}%
+                </ToggleButton>
+              ))}
+            </div>
+          </div>
+
+          {/* Term */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Срок кредита</Label>
+            <div className="h-12 px-4 rounded-xl bg-muted flex items-center">
+              <span className="text-base">{term} лет</span>
+            </div>
+            <Slider
+              value={[term]}
+              onValueChange={(v) => setTerm(v[0])}
+              min={1}
+              max={30}
+              step={1}
+              className="py-1"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>1 год</span>
+              <span>30 лет</span>
+            </div>
+            <div className="flex gap-2">
+              {termOptions.map((t) => (
+                <ToggleButton
+                  key={t}
+                  selected={term === t}
+                  onClick={() => setTerm(t)}
+                >
+                  {t}
+                </ToggleButton>
+              ))}
+            </div>
+          </div>
+
+          {/* Mortgage Program */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold">Ипотечная программа</Label>
+            <div className="grid grid-cols-2 gap-3">
+              {mortgagePrograms.map((program) => (
+                <button
+                  key={program.id}
+                  onClick={() => setSelectedProgram(program.id)}
+                  className={cn(
+                    "p-4 rounded-xl text-left border-2 transition-all",
+                    selectedProgram === program.id
+                      ? "border-foreground bg-muted"
+                      : "border-border bg-background"
+                  )}
+                >
+                  <div className="flex items-start justify-between mb-1">
+                    <span className="font-semibold">{program.name}</span>
+                    {selectedProgram === program.id && (
+                      <Check className="w-5 h-5" />
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">{program.description}</p>
+                  <span className="text-lg font-bold">от {program.rate}%</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Employment Section */}
+          <div className="pt-4 border-t border-border">
+            <button className="text-primary text-sm font-medium mb-4">
+              Какая мне подойдёт?
+            </button>
+            
+            <h2 className="text-xl font-bold mb-4">Занятость и доход</h2>
+
+            {/* Age */}
+            <div className="space-y-3 mb-5">
+              <Label className="font-semibold">Ваш возраст</Label>
+              <div className="flex gap-2">
+                {ageOptions.map((opt) => (
+                  <ToggleButton
+                    key={opt.id}
+                    selected={age === opt.id}
+                    onClick={() => setAge(opt.id)}
+                  >
+                    {opt.label}
+                  </ToggleButton>
+                ))}
+              </div>
+            </div>
+
+            {/* Employment Type */}
+            <div className="space-y-3 mb-5">
+              <Label className="font-semibold">Тип занятости</Label>
+              <div className="flex flex-wrap gap-2">
+                {employmentTypes.map((opt) => (
+                  <ToggleButton
+                    key={opt.id}
+                    selected={employment === opt.id}
+                    onClick={() => setEmployment(opt.id)}
+                  >
+                    {opt.label}
+                  </ToggleButton>
+                ))}
+              </div>
+            </div>
+
+            {/* Work Experience */}
+            <div className="space-y-3 mb-5">
+              <Label className="font-semibold">Общий трудовой стаж</Label>
+              <div className="flex flex-wrap gap-2">
+                {workExperience.map((opt) => (
+                  <ToggleButton
+                    key={opt.id}
+                    selected={experience === opt.id}
+                    onClick={() => setExperience(opt.id)}
+                  >
+                    {opt.label}
+                  </ToggleButton>
+                ))}
+              </div>
+            </div>
+
+            {/* Current Job Experience */}
+            <div className="space-y-3 mb-5">
+              <Label className="font-semibold">Стаж на текущей работе</Label>
+              <div className="flex gap-2">
+                {currentJobExperience.map((opt) => (
+                  <ToggleButton
+                    key={opt.id}
+                    selected={currentExp === opt.id}
+                    onClick={() => setCurrentExp(opt.id)}
+                  >
+                    {opt.label}
+                  </ToggleButton>
+                ))}
+              </div>
+            </div>
+
+            {/* Income Confirmation */}
+            <div className="space-y-3">
+              <Label className="font-semibold">Подтверждение дохода</Label>
+              <div className="flex flex-wrap gap-2">
+                {incomeConfirmation.map((opt) => (
+                  <ToggleButton
+                    key={opt.id}
+                    selected={incomeType === opt.id}
+                    onClick={() => setIncomeType(opt.id)}
+                  >
+                    {opt.label}
+                  </ToggleButton>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed Bottom Bar */}
+        <div className="shrink-0 border-t border-border bg-background px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Ставка</p>
+              <p className="text-lg font-bold">от {calculations.rate} %</p>
+            </div>
+            <div className="flex-1 mx-4">
+              <p className="text-xs text-muted-foreground">Платёж</p>
+              <p className="text-lg font-bold">от {formatPrice(calculations.monthlyPayment)}</p>
+              {/* Progress indicator */}
+              <div className="h-1 bg-muted rounded-full mt-1 overflow-hidden">
+                <div className="h-full bg-primary w-1/2" />
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">Банки</p>
+              <div className="flex -space-x-2">
+                <div className="w-8 h-8 rounded-full bg-yellow-400 border-2 border-background" />
+                <div className="w-8 h-8 rounded-full bg-green-500 border-2 border-background" />
+                <div className="w-8 h-8 rounded-full bg-red-500 border-2 border-background flex items-center justify-center text-white text-xs font-bold">
+                  +11
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </SheetContent>
