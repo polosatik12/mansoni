@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 
 const stories = [
   { id: "you", name: "Вы", avatar: null, isOwn: true },
-  { id: "1", name: "Алиса", avatar: "https://i.pravatar.cc/150?img=1", hasNew: true },
-  { id: "2", name: "Макс", avatar: "https://i.pravatar.cc/150?img=3", hasNew: true },
-  { id: "3", name: "Кира", avatar: "https://i.pravatar.cc/150?img=5", hasNew: true },
-  { id: "4", name: "Дэн", avatar: "https://i.pravatar.cc/150?img=8", hasNew: false },
-  { id: "5", name: "Софи", avatar: "https://i.pravatar.cc/150?img=9", hasNew: false },
-  { id: "6", name: "Иван", avatar: "https://i.pravatar.cc/150?img=12", hasNew: true },
+  { id: "1", name: "Алиса", avatar: "https://i.pravatar.cc/150?img=1" },
+  { id: "2", name: "Макс", avatar: "https://i.pravatar.cc/150?img=3" },
+  { id: "3", name: "Кира", avatar: "https://i.pravatar.cc/150?img=5" },
+  { id: "4", name: "Дэн", avatar: "https://i.pravatar.cc/150?img=8" },
+  { id: "5", name: "Софи", avatar: "https://i.pravatar.cc/150?img=9" },
+  { id: "6", name: "Иван", avatar: "https://i.pravatar.cc/150?img=12" },
 ];
 
 export function FeedHeader() {
@@ -101,60 +101,33 @@ export function FeedHeader() {
             {/* Avatar with border */}
             <div
               className={cn(
-                "rounded-full transition-all duration-200 flex-shrink-0",
-                story.hasNew
+                "rounded-full transition-all duration-200 flex-shrink-0 p-0.5",
+                story.isOwn
                   ? "bg-gradient-to-tr from-primary via-accent to-primary"
-                  : story.isOwn
-                  ? ""
                   : "bg-muted"
               )}
               style={{
                 width: `${styles.size + 4}px`,
                 height: `${styles.size + 4}px`,
-                padding: '2px',
               }}
             >
-              {story.isOwn ? (
-                <div className="w-full h-full rounded-full bg-muted flex items-center justify-center">
-                  <div
-                    className="rounded-full bg-secondary flex items-center justify-center"
+              <div className="w-full h-full rounded-full bg-card flex items-center justify-center">
+                {story.isOwn ? (
+                  <Plus
+                    className="text-primary"
                     style={{
-                      width: `${styles.size - 4}px`,
-                      height: `${styles.size - 4}px`,
+                      width: `${Math.max(styles.size * 0.4, 14)}px`,
+                      height: `${Math.max(styles.size * 0.4, 14)}px`,
                     }}
-                  >
-                    <Plus
-                      className="text-primary"
-                      style={{
-                        width: `${Math.max(styles.size * 0.35, 12)}px`,
-                        height: `${Math.max(styles.size * 0.35, 12)}px`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full h-full rounded-full bg-card p-0.5">
+                  />
+                ) : (
                   <img
                     src={story.avatar!}
                     alt={story.name}
                     className="w-full h-full rounded-full object-cover"
                   />
-                </div>
-              )}
-
-              {/* NEW badge */}
-              {story.hasNew && !story.isOwn && (
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-primary text-primary-foreground text-[9px] font-semibold rounded-full transition-all duration-200"
-                  style={{
-                    bottom: '-2px',
-                    opacity: styles.nameOpacity,
-                    transform: `translateX(-50%) scale(${1 - collapseProgress * 0.5})`,
-                  }}
-                >
-                  NEW
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Name */}
