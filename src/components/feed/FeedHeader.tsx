@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
 import { ServicesMenu } from "@/components/layout/ServicesMenu";
 import { cn } from "@/lib/utils";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
+import { StoryViewer } from "./StoryViewer";
 
 const stories = [
   { id: "you", name: "Вы", avatar: "https://i.pravatar.cc/150?img=32", isOwn: true },
@@ -17,14 +19,21 @@ const stories = [
 export function FeedHeader() {
   const { collapseProgress } = useScrollCollapse(100);
   const scrollContainerRef = useScrollContainer();
+  const [storyViewerOpen, setStoryViewerOpen] = useState(false);
+  const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
 
-  // Scroll to top when clicking on collapsed stories
-  const handleStoryClick = () => {
+  // Handle story click - either scroll to top or open viewer
+  const handleStoryClick = (index: number) => {
     if (collapseProgress > 0.1 && scrollContainerRef?.current) {
+      // If collapsed, scroll to top first
       scrollContainerRef.current.scrollTo({
         top: 0,
         behavior: 'smooth'
       });
+    } else {
+      // If expanded, open story viewer
+      setSelectedStoryIndex(index);
+      setStoryViewerOpen(true);
     }
   };
 
@@ -100,7 +109,7 @@ export function FeedHeader() {
         return (
           <button
             key={story.id}
-            onClick={handleStoryClick}
+            onClick={() => handleStoryClick(index)}
             className="absolute flex flex-col items-center transition-all duration-200 ease-out cursor-pointer"
             style={{
               left: 0,
@@ -160,6 +169,14 @@ export function FeedHeader() {
           </button>
         );
       })}
+
+      {/* Story Viewer */}
+      <StoryViewer
+        stories={stories}
+        initialStoryIndex={selectedStoryIndex}
+        isOpen={storyViewerOpen}
+        onClose={() => setStoryViewerOpen(false)}
+      />
     </div>
   );
 }
