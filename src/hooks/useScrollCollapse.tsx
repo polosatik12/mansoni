@@ -1,38 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 
 export function useScrollCollapse(threshold: number = 50) {
   const containerRef = useScrollContainer();
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-  const [, forceUpdate] = useState(0);
-
-  // Force update when container becomes available
-  useEffect(() => {
-    if (containerRef?.current) {
-      forceUpdate(n => n + 1);
-    }
-  }, [containerRef?.current]);
-
-  const handleScroll = useCallback(() => {
-    const container = containerRef?.current;
-    if (!container) return;
-    
-    const currentScrollY = container.scrollTop;
-    setScrollY(currentScrollY);
-    setIsCollapsed(currentScrollY > threshold);
-  }, [containerRef, threshold]);
 
   useEffect(() => {
     const container = containerRef?.current;
     if (!container) return;
+
+    const handleScroll = () => {
+      const currentScrollY = container.scrollTop;
+      setScrollY(currentScrollY);
+    };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Call once to get initial state
+    handleScroll(); // Get initial state
+    
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [containerRef?.current, handleScroll]);
+  }, [containerRef]);
 
-  // Returns a value from 0 to 1 representing collapse progress
+  const isCollapsed = scrollY > threshold;
   const collapseProgress = Math.min(scrollY / threshold, 1);
 
   return { isCollapsed, collapseProgress, scrollY };
