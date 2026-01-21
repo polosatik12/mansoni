@@ -285,7 +285,7 @@ export function InsurancePage() {
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate("/modules")} className="p-1 -ml-1">
+          <button onClick={() => navigate("/")} className="p-1 -ml-1">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <span className="font-semibold">Страхование</span>
