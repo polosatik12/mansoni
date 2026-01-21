@@ -328,8 +328,8 @@ export function UserProfilePage() {
               <div className="flex gap-4">
                 {user.highlights.map((highlight) => (
                   <div key={highlight.id} className="flex flex-col items-center gap-2 flex-shrink-0">
-                    <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-primary via-accent to-primary">
-                      <div className="w-full h-full rounded-full bg-card p-0.5">
+                    <div className="w-14 h-14 rounded-full p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400">
+                      <div className="w-full h-full rounded-full bg-background p-[2px]">
                         <img
                           src={highlight.image}
                           alt={highlight.name}

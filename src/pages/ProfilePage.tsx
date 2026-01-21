@@ -68,8 +68,8 @@ export function ProfilePage() {
         <div className="flex items-start gap-4">
           {/* Avatar with story ring */}
           <div className="relative">
-            <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-primary via-accent to-primary">
-              <div className="w-full h-full rounded-full bg-card p-0.5">
+            <div className="w-20 h-20 rounded-full p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400">
+              <div className="w-full h-full rounded-full bg-background p-[2px]">
                 <img
                   src="https://i.pravatar.cc/150?img=32"
                   alt="Profile"

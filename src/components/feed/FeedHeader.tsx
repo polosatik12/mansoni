@@ -101,32 +101,27 @@ export function FeedHeader() {
             {/* Avatar with border */}
             <div
               className={cn(
-                "rounded-full transition-all duration-200 flex-shrink-0 p-0.5",
+                "rounded-full transition-all duration-200 flex-shrink-0",
                 story.isOwn
-                  ? "bg-gradient-to-tr from-primary via-accent to-primary"
-                  : "bg-muted"
+                  ? "p-0.5 bg-muted"
+                  : "p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400"
               )}
               style={{
-                width: `${styles.size + 4}px`,
-                height: `${styles.size + 4}px`,
+                width: `${styles.size}px`,
+                height: `${styles.size}px`,
               }}
             >
-              <div className="w-full h-full rounded-full bg-card flex items-center justify-center">
-                {story.isOwn ? (
-                  <Plus
-                    className="text-primary"
-                    style={{
-                      width: `${Math.max(styles.size * 0.4, 14)}px`,
-                      height: `${Math.max(styles.size * 0.4, 14)}px`,
-                    }}
-                  />
-                ) : (
+              <div className="w-full h-full rounded-full bg-background p-[2px]">
+                <div className="w-full h-full rounded-full overflow-hidden">
                   <img
-                    src={story.avatar!}
+                    src={story.avatar || "/placeholder.svg"}
                     alt={story.name}
-                    className="w-full h-full rounded-full object-cover"
+                    className={cn(
+                      "w-full h-full object-cover rounded-full",
+                      story.isOwn && "opacity-80"
+                    )}
                   />
-                )}
+                </div>
               </div>
             </div>
 
