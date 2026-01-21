@@ -2,7 +2,6 @@ import { Plus } from "lucide-react";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
 import { ServicesMenu } from "@/components/layout/ServicesMenu";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 const stories = [
   { id: "you", name: "Вы", avatar: null, isOwn: true },
@@ -14,14 +13,8 @@ const stories = [
   { id: "6", name: "Иван", avatar: "https://i.pravatar.cc/150?img=12", hasNew: true },
 ];
 
-const tabs = [
-  { id: "foryou", label: "Рекомендации" },
-  { id: "following", label: "Подписки" },
-];
-
 export function FeedHeader() {
   const { collapseProgress } = useScrollCollapse(100);
-  const [activeTab, setActiveTab] = useState("foryou");
 
   // Animation parameters
   const expandedAvatarSize = 64;
@@ -80,38 +73,12 @@ export function FeedHeader() {
       className="sticky top-0 z-30 bg-background overflow-hidden"
       style={{ height: `${containerHeight}px` }}
     >
-      {/* Header row with menu and tabs */}
+      {/* Header row with menu */}
       <div 
-        className="absolute top-0 left-0 right-0 flex items-center justify-between px-4"
+        className="absolute top-0 left-0 right-0 flex items-center px-4"
         style={{ height: `${headerHeight}px` }}
       >
         <ServicesMenu />
-        
-        {/* Spacer for collapsed stories */}
-        <div 
-          className="transition-all duration-200"
-          style={{ 
-            width: `${(collapsedAvatarSize + (maxVisibleInStack - 1) * collapsedOverlap + 16) * collapseProgress}px` 
-          }} 
-        />
-
-        {/* Tabs */}
-        <div className="flex bg-muted rounded-full p-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "px-4 py-1.5 text-sm font-medium rounded-full transition-all",
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Stories - single set with animated positions */}
