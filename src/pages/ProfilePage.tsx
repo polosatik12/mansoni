@@ -1,4 +1,4 @@
-import { Settings, Grid3X3, Bookmark, Play, Plus, Menu, AtSign, Share2, Eye } from "lucide-react";
+import { Settings, Grid3X3, Bookmark, Play, Plus, AtSign, Share2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -61,7 +61,7 @@ export function ProfilePage() {
           <span className="text-primary">▾</span>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-          <Menu className="w-6 h-6" />
+          <Settings className="w-6 h-6" />
         </Button>
       </div>
 
