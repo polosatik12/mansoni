@@ -7,6 +7,7 @@ import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
 import { SettingsDrawer } from "@/components/profile/SettingsDrawer";
+import { AccountSwitcher } from "@/components/profile/AccountSwitcher";
 
 const highlights = [
   { id: "1", name: "..life?", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=150&q=80", hasEmoji: true },
@@ -56,10 +57,7 @@ export function ProfilePage() {
         <Button variant="ghost" size="icon" onClick={() => setShowCreateMenu(true)}>
           <Plus className="w-6 h-6" />
         </Button>
-        <div className="flex items-center gap-1">
-          <span className="font-semibold text-lg">alex_ivanov</span>
-          <span className="text-primary">▾</span>
-        </div>
+        <AccountSwitcher currentUsername="alex_ivanov" />
         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
           <Settings className="w-6 h-6" />
         </Button>
