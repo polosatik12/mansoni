@@ -9,13 +9,14 @@ import storyContent3 from "@/assets/story-content-3.jpg";
 import storyContent4 from "@/assets/story-content-4.jpg";
 import storyContent5 from "@/assets/story-content-5.jpg";
 
-const storyContentImages = [
-  storyContent1,
-  storyContent2,
-  storyContent3,
-  storyContent4,
-  storyContent5,
-];
+// Each user has 1-3 stories
+const userStoryContents: Record<string, string[]> = {
+  "you": [storyContent1],
+  "1": [storyContent3, storyContent1],
+  "2": [storyContent2],
+  "3": [storyContent4, storyContent5, storyContent2],
+  "5": [storyContent5, storyContent3],
+};
 
 interface Story {
   id: string;
@@ -33,7 +34,8 @@ interface StoryViewerProps {
 }
 
 export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: StoryViewerProps) {
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex);
+  const [currentUserIndex, setCurrentUserIndex] = useState(initialStoryIndex);
+  const [currentStoryInUser, setCurrentStoryInUser] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -45,14 +47,19 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
   const PROGRESS_INTERVAL = 50;
   const MIN_SWIPE_DISTANCE = 50;
 
-  // Filter only stories with content (not own story for now)
-  const viewableStories = stories.filter(s => s.hasStory || s.isOwn);
-  const currentStory = viewableStories[currentStoryIndex];
+  // Filter only users with stories
+  const usersWithStories = stories.filter(s => s.hasStory || s.isOwn);
+  const currentUser = usersWithStories[currentUserIndex];
+  
+  // Get stories for current user
+  const currentUserStories = currentUser ? (userStoryContents[currentUser.id] || [storyContent1]) : [];
+  const totalStoriesForUser = currentUserStories.length;
 
   // Reset when opening
   useEffect(() => {
     if (isOpen) {
-      setCurrentStoryIndex(initialStoryIndex);
+      setCurrentUserIndex(initialStoryIndex);
+      setCurrentStoryInUser(0);
       setProgress(0);
       setIsExiting(false);
     }
@@ -71,14 +78,21 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
       setProgress(prev => {
         const newProgress = prev + (100 / (STORY_DURATION / PROGRESS_INTERVAL));
         if (newProgress >= 100) {
-          // Move to next story
-          if (currentStoryIndex < viewableStories.length - 1) {
-            setCurrentStoryIndex(curr => curr + 1);
+          // Move to next story within user
+          if (currentStoryInUser < totalStoriesForUser - 1) {
+            setCurrentStoryInUser(curr => curr + 1);
             return 0;
           } else {
-            // End of all stories
-            handleClose();
-            return 100;
+            // Move to next user
+            if (currentUserIndex < usersWithStories.length - 1) {
+              setCurrentUserIndex(curr => curr + 1);
+              setCurrentStoryInUser(0);
+              return 0;
+            } else {
+              // End of all stories
+              handleClose();
+              return 100;
+            }
           }
         }
         return newProgress;
@@ -90,7 +104,7 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
         clearInterval(progressInterval.current);
       }
     };
-  }, [isOpen, isPaused, currentStoryIndex, viewableStories.length, isExiting]);
+  }, [isOpen, isPaused, currentUserIndex, currentStoryInUser, totalStoriesForUser, usersWithStories.length, isExiting]);
 
   const handleClose = useCallback(() => {
     setIsExiting(true);
@@ -101,23 +115,39 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
   }, [onClose]);
 
   const goToNextStory = useCallback(() => {
-    if (currentStoryIndex < viewableStories.length - 1) {
-      setCurrentStoryIndex(curr => curr + 1);
+    // If there are more stories for this user
+    if (currentStoryInUser < totalStoriesForUser - 1) {
+      setCurrentStoryInUser(curr => curr + 1);
       setProgress(0);
     } else {
-      handleClose();
+      // Move to next user
+      if (currentUserIndex < usersWithStories.length - 1) {
+        setCurrentUserIndex(curr => curr + 1);
+        setCurrentStoryInUser(0);
+        setProgress(0);
+      } else {
+        handleClose();
+      }
     }
-  }, [currentStoryIndex, viewableStories.length, handleClose]);
+  }, [currentStoryInUser, totalStoriesForUser, currentUserIndex, usersWithStories.length, handleClose]);
 
   const goToPrevStory = useCallback(() => {
-    if (progress > 20) {
-      // Restart current story if more than 20% watched
+    if (progress > 20 || currentStoryInUser > 0) {
+      // Go to previous story within user or restart current
+      if (currentStoryInUser > 0 && progress <= 20) {
+        setCurrentStoryInUser(curr => curr - 1);
+      }
       setProgress(0);
-    } else if (currentStoryIndex > 0) {
-      setCurrentStoryIndex(curr => curr - 1);
+    } else if (currentUserIndex > 0) {
+      // Go to previous user's last story
+      const prevUserIndex = currentUserIndex - 1;
+      const prevUser = usersWithStories[prevUserIndex];
+      const prevUserStories = userStoryContents[prevUser.id] || [storyContent1];
+      setCurrentUserIndex(prevUserIndex);
+      setCurrentStoryInUser(prevUserStories.length - 1);
       setProgress(0);
     }
-  }, [currentStoryIndex, progress]);
+  }, [currentUserIndex, currentStoryInUser, progress, usersWithStories]);
 
   // Touch handlers for swipe
   const onTouchStart = (e: React.TouchEvent) => {
@@ -175,7 +205,9 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, goToNextStory, goToPrevStory, handleClose]);
 
-  if (!isOpen || !currentStory) return null;
+  if (!isOpen || !currentUser) return null;
+
+  const currentImage = currentUserStories[currentStoryInUser] || storyContent1;
 
   return (
     <div 
@@ -201,17 +233,17 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
         {/* Story image/background */}
         <div className="absolute inset-0">
           <img 
-            src={storyContentImages[currentStoryIndex % storyContentImages.length]} 
-            alt={`${currentStory.name}'s story`}
+            src={currentImage} 
+            alt={`${currentUser.name}'s story`}
             className="w-full h-full object-cover"
           />
           {/* Subtle overlay for readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
         </div>
 
-        {/* Progress bars */}
+        {/* Progress bars - only for current user's stories */}
         <div className="absolute top-0 left-0 right-0 z-10 p-2 pt-3 flex gap-1">
-          {viewableStories.map((_, index) => (
+          {currentUserStories.map((_, index) => (
             <div 
               key={index} 
               className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden"
@@ -219,9 +251,9 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
               <div 
                 className="h-full bg-white rounded-full transition-all duration-100 ease-linear"
                 style={{ 
-                  width: index < currentStoryIndex 
+                  width: index < currentStoryInUser 
                     ? "100%" 
-                    : index === currentStoryIndex 
+                    : index === currentStoryInUser 
                       ? `${progress}%` 
                       : "0%" 
                 }}
@@ -233,12 +265,12 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
         {/* Header with user info */}
         <div className="absolute top-6 left-0 right-0 z-10 px-3 flex items-center gap-3">
           <img 
-            src={currentStory.avatar} 
-            alt={currentStory.name}
+            src={currentUser.avatar} 
+            alt={currentUser.name}
             className="w-9 h-9 rounded-full border-2 border-white/50 object-cover"
           />
           <div className="flex-1">
-            <p className="text-white font-semibold text-sm">{currentStory.name}</p>
+            <p className="text-white font-semibold text-sm">{currentUser.name}</p>
             <p className="text-white/60 text-xs">2ч назад</p>
           </div>
           <button 
@@ -253,7 +285,7 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
         </div>
 
         {/* Navigation arrows for desktop */}
-        {currentStoryIndex > 0 && (
+        {(currentUserIndex > 0 || currentStoryInUser > 0) && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -264,7 +296,7 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
             <ChevronLeft className="w-6 h-6" />
           </button>
         )}
-        {currentStoryIndex < viewableStories.length - 1 && (
+        {(currentUserIndex < usersWithStories.length - 1 || currentStoryInUser < totalStoriesForUser - 1) && (
           <button
             onClick={(e) => {
               e.stopPropagation();
