@@ -1,6 +1,7 @@
 import { useState, useRef, ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 
 interface PullToRefreshProps {
   children: ReactNode;
@@ -8,17 +9,19 @@ interface PullToRefreshProps {
 }
 
 export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
+  const scrollContainerRef = useScrollContainer();
   const [pulling, setPulling] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const threshold = 80;
   const maxPull = 120;
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (containerRef.current?.scrollTop === 0) {
+    const scrollContainer = scrollContainerRef?.current;
+    // Only allow pull when scroll is at the top
+    if (scrollContainer && scrollContainer.scrollTop === 0) {
       startY.current = e.touches[0].clientY;
       setPulling(true);
     }
@@ -62,8 +65,7 @@ export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
 
   return (
     <div
-      ref={containerRef}
-      className="relative overflow-auto h-full"
+      className="relative"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -93,13 +95,8 @@ export function PullToRefresh({ children, onRefresh }: PullToRefreshProps) {
         </div>
       </div>
 
-      {/* Content with pull offset */}
-      <div
-        className="transition-transform duration-200 ease-out"
-        style={{ transform: `translateY(${pullDistance}px)` }}
-      >
-        {children}
-      </div>
+      {/* Content - no transform wrapper needed */}
+      {children}
     </div>
   );
 }
