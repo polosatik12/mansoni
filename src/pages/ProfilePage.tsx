@@ -110,14 +110,14 @@ export function ProfilePage() {
 
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 mt-4">
-          <Button variant="secondary" className="flex-1 rounded-lg h-9">
-            Редактировать профиль
-          </Button>
-          <Button variant="secondary" className="flex-1 rounded-lg h-9">
-            Поделиться профилем
-          </Button>
-        </div>
+          <div className="flex items-center gap-1.5 mt-4">
+            <Button variant="secondary" className="flex-1 rounded-lg h-8 text-sm font-semibold px-3">
+              Редактировать профиль
+            </Button>
+            <Button variant="secondary" className="flex-1 rounded-lg h-8 text-sm font-semibold px-3">
+              Поделиться профилем
+            </Button>
+          </div>
       </div>
 
       {/* Highlights */}
