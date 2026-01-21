@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { FeedTabs } from "@/components/feed/FeedTabs";
-import { Stories } from "@/components/feed/Stories";
+import { FeedHeader } from "@/components/feed/FeedHeader";
 import { CreatePost } from "@/components/feed/CreatePost";
 import { PostCard } from "@/components/feed/PostCard";
 import { PullToRefresh } from "@/components/feed/PullToRefresh";
@@ -74,8 +73,7 @@ export function HomePage() {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="min-h-screen" key={refreshKey}>
-        <FeedTabs />
-        <Stories />
+        <FeedHeader />
         <CreatePost />
         
         <div className="space-y-0">
