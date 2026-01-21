@@ -4,13 +4,13 @@ import { ServicesMenu } from "@/components/layout/ServicesMenu";
 import { cn } from "@/lib/utils";
 
 const stories = [
-  { id: "you", name: "Вы", avatar: null, isOwn: true },
-  { id: "1", name: "Алиса", avatar: "https://i.pravatar.cc/150?img=1" },
-  { id: "2", name: "Макс", avatar: "https://i.pravatar.cc/150?img=3" },
-  { id: "3", name: "Кира", avatar: "https://i.pravatar.cc/150?img=5" },
-  { id: "4", name: "Дэн", avatar: "https://i.pravatar.cc/150?img=8" },
-  { id: "5", name: "Софи", avatar: "https://i.pravatar.cc/150?img=9" },
-  { id: "6", name: "Иван", avatar: "https://i.pravatar.cc/150?img=12" },
+  { id: "you", name: "Вы", avatar: "https://i.pravatar.cc/150?img=32", isOwn: true },
+  { id: "1", name: "Алиса", avatar: "https://i.pravatar.cc/150?img=1", hasStory: true },
+  { id: "2", name: "Макс", avatar: "https://i.pravatar.cc/150?img=3", hasStory: true },
+  { id: "3", name: "Кира", avatar: "https://i.pravatar.cc/150?img=5", hasStory: true },
+  { id: "4", name: "Дэн", avatar: "https://i.pravatar.cc/150?img=8", hasStory: false },
+  { id: "5", name: "Софи", avatar: "https://i.pravatar.cc/150?img=9", hasStory: true },
+  { id: "6", name: "Иван", avatar: "https://i.pravatar.cc/150?img=12", hasStory: false },
 ];
 
 export function FeedHeader() {
@@ -101,10 +101,12 @@ export function FeedHeader() {
             {/* Avatar with border */}
             <div
               className={cn(
-                "rounded-full transition-all duration-200 flex-shrink-0",
+                "rounded-full transition-all duration-200 flex-shrink-0 relative",
                 story.isOwn
                   ? "p-0.5 bg-muted"
-                  : "p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400"
+                  : story.hasStory
+                    ? "p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400"
+                    : "p-0.5 bg-muted"
               )}
               style={{
                 width: `${styles.size}px`,
@@ -114,15 +116,21 @@ export function FeedHeader() {
               <div className="w-full h-full rounded-full bg-background p-[2px]">
                 <div className="w-full h-full rounded-full overflow-hidden">
                   <img
-                    src={story.avatar || "/placeholder.svg"}
+                    src={story.avatar}
                     alt={story.name}
-                    className={cn(
-                      "w-full h-full object-cover rounded-full",
-                      story.isOwn && "opacity-80"
-                    )}
+                    className="w-full h-full object-cover rounded-full"
                   />
                 </div>
               </div>
+              {/* Plus icon for own story */}
+              {story.isOwn && collapseProgress < 0.5 && (
+                <div 
+                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center transition-opacity duration-200"
+                  style={{ opacity: 1 - collapseProgress * 2 }}
+                >
+                  <Plus className="w-3 h-3 text-primary-foreground" />
+                </div>
+              )}
             </div>
 
             {/* Name */}
