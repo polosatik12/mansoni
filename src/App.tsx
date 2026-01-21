@@ -7,7 +7,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HomePage } from "@/pages/HomePage";
 import { SearchPage } from "@/pages/SearchPage";
-import { ModulesPage } from "@/pages/ModulesPage";
 import { ChatsPage } from "@/pages/ChatsPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { UserProfilePage } from "@/pages/UserProfilePage";
@@ -33,7 +32,6 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/search" element={<SearchPage />} />
-              <Route path="/modules" element={<ModulesPage />} />
               <Route path="/chats" element={<ChatsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/user/:username" element={<UserProfilePage />} />
