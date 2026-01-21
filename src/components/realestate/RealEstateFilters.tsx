@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, Search, MapPin, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,14 @@ import {
 interface RealEstateFiltersProps {
   onShowResults: () => void;
   resultsCount?: number;
+  onFiltersChange?: (filters: {
+    propertyType: string;
+    dealType: string;
+    marketType: string;
+    rooms: string;
+    price: string;
+    city: string;
+  }) => void;
 }
 
 const propertyTypes = [
@@ -54,13 +62,27 @@ const priceOptions = [
   { value: "50m", label: "До 50 млн" },
 ];
 
-export function RealEstateFilters({ onShowResults, resultsCount = 1000 }: RealEstateFiltersProps) {
+export function RealEstateFilters({ onShowResults, resultsCount = 1000, onFiltersChange }: RealEstateFiltersProps) {
   const navigate = useNavigate();
   const [propertyType, setPropertyType] = useState("apartment");
   const [dealType, setDealType] = useState("buy");
   const [marketType, setMarketType] = useState("all");
   const [rooms, setRooms] = useState("");
   const [price, setPrice] = useState("");
+
+  // Notify parent when filters change
+  useEffect(() => {
+    if (onFiltersChange) {
+      onFiltersChange({
+        propertyType,
+        dealType,
+        marketType,
+        rooms,
+        price,
+        city: "Москва",
+      });
+    }
+  }, [propertyType, dealType, marketType, rooms, price, onFiltersChange]);
 
   const formatResultsCount = (count: number) => {
     if (count >= 1000) {
