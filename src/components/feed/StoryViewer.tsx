@@ -2,6 +2,21 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Import story content images
+import storyContent1 from "@/assets/story-content-1.jpg";
+import storyContent2 from "@/assets/story-content-2.jpg";
+import storyContent3 from "@/assets/story-content-3.jpg";
+import storyContent4 from "@/assets/story-content-4.jpg";
+import storyContent5 from "@/assets/story-content-5.jpg";
+
+const storyContentImages = [
+  storyContent1,
+  storyContent2,
+  storyContent3,
+  storyContent4,
+  storyContent5,
+];
+
 interface Story {
   id: string;
   name: string;
@@ -162,16 +177,6 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
 
   if (!isOpen || !currentStory) return null;
 
-  // Generate a random gradient for story background
-  const gradients = [
-    "from-purple-600 via-pink-500 to-orange-400",
-    "from-blue-600 via-cyan-500 to-teal-400",
-    "from-green-600 via-emerald-500 to-lime-400",
-    "from-rose-600 via-red-500 to-orange-400",
-    "from-indigo-600 via-violet-500 to-purple-400",
-  ];
-  const gradient = gradients[currentStoryIndex % gradients.length];
-
   return (
     <div 
       className={cn(
@@ -194,18 +199,14 @@ export function StoryViewer({ stories, initialStoryIndex, isOpen, onClose }: Sto
         onMouseLeave={() => setIsPaused(false)}
       >
         {/* Story image/background */}
-        <div className={cn("absolute inset-0 bg-gradient-to-br", gradient)}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-white">
-              <img 
-                src={currentStory.avatar} 
-                alt={currentStory.name}
-                className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white/30 object-cover"
-              />
-              <p className="text-2xl font-bold">{currentStory.name}</p>
-              <p className="text-white/70 mt-2">Это демо-сторис</p>
-            </div>
-          </div>
+        <div className="absolute inset-0">
+          <img 
+            src={storyContentImages[currentStoryIndex % storyContentImages.length]} 
+            alt={`${currentStory.name}'s story`}
+            className="w-full h-full object-cover"
+          />
+          {/* Subtle overlay for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
         </div>
 
         {/* Progress bars */}
