@@ -70,7 +70,7 @@ export function FeedHeader() {
 
   return (
     <div 
-      className="sticky top-0 z-30 bg-background overflow-hidden"
+      className="sticky top-0 z-30 bg-card overflow-hidden"
       style={{ height: `${containerHeight}px` }}
     >
       {/* Header row with menu */}
