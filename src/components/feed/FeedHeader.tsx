@@ -6,14 +6,20 @@ import { cn } from "@/lib/utils";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 import { StoryViewer } from "./StoryViewer";
 
+import storyAvatar1 from "@/assets/story-avatar-1.jpg";
+import storyAvatar2 from "@/assets/story-avatar-2.jpg";
+import storyAvatar3 from "@/assets/story-avatar-3.jpg";
+import storyAvatar4 from "@/assets/story-avatar-4.jpg";
+import storyAvatar5 from "@/assets/story-avatar-5.jpg";
+
 const stories = [
-  { id: "you", name: "Вы", avatar: "https://i.pravatar.cc/150?img=32", isOwn: true },
-  { id: "1", name: "Алиса", avatar: "https://i.pravatar.cc/150?img=1", hasStory: true },
-  { id: "2", name: "Макс", avatar: "https://i.pravatar.cc/150?img=3", hasStory: true },
-  { id: "3", name: "Кира", avatar: "https://i.pravatar.cc/150?img=5", hasStory: true },
-  { id: "4", name: "Дэн", avatar: "https://i.pravatar.cc/150?img=8", hasStory: false },
-  { id: "5", name: "Софи", avatar: "https://i.pravatar.cc/150?img=9", hasStory: true },
-  { id: "6", name: "Иван", avatar: "https://i.pravatar.cc/150?img=12", hasStory: false },
+  { id: "you", name: "Вы", avatar: storyAvatar1, isOwn: true },
+  { id: "1", name: "Алиса", avatar: storyAvatar3, hasStory: true },
+  { id: "2", name: "Макс", avatar: storyAvatar2, hasStory: true },
+  { id: "3", name: "Кира", avatar: storyAvatar4, hasStory: true },
+  { id: "4", name: "Дэн", avatar: storyAvatar5, hasStory: false },
+  { id: "5", name: "Софи", avatar: storyAvatar1, hasStory: true },
+  { id: "6", name: "Иван", avatar: storyAvatar2, hasStory: false },
 ];
 
 export function FeedHeader() {
