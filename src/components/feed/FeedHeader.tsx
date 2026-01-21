@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
 import { ServicesMenu } from "@/components/layout/ServicesMenu";
 import { cn } from "@/lib/utils";
+import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 
 const stories = [
   { id: "you", name: "Вы", avatar: "https://i.pravatar.cc/150?img=32", isOwn: true },
@@ -15,6 +16,17 @@ const stories = [
 
 export function FeedHeader() {
   const { collapseProgress } = useScrollCollapse(100);
+  const scrollContainerRef = useScrollContainer();
+
+  // Scroll to top when clicking on collapsed stories
+  const handleStoryClick = () => {
+    if (collapseProgress > 0.1 && scrollContainerRef?.current) {
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Animation parameters
   const expandedAvatarSize = 64;
@@ -86,9 +98,10 @@ export function FeedHeader() {
         const styles = getStoryStyles(index);
 
         return (
-          <div
+          <button
             key={story.id}
-            className="absolute flex flex-col items-center transition-all duration-200 ease-out"
+            onClick={handleStoryClick}
+            className="absolute flex flex-col items-center transition-all duration-200 ease-out cursor-pointer"
             style={{
               left: 0,
               top: 0,
@@ -144,7 +157,7 @@ export function FeedHeader() {
             >
               {story.name}
             </span>
-          </div>
+          </button>
         );
       })}
     </div>
