@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, MapPin, BedDouble, Bath, Square, Star, Heart, Phone, MessageCircle, ChevronLeft, Building2, Home, Castle, Building, CheckCircle, X, Plus, ShoppingCart, Key, Landmark, TreePine, Store, Calendar, Calculator, Shield, BarChart3, FileCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, MapPin, BedDouble, Bath, Square, Star, Heart, Phone, MessageCircle, ChevronLeft, Building2, Home, Castle, Building, CheckCircle, X, Plus, ShoppingCart, Key, Landmark, TreePine, Store, Calendar, Calculator, Shield, BarChart3, FileCheck, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,20 +8,15 @@ import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { RealEstateFilters } from "@/components/realestate/RealEstateFilters";
 import { PropertyAssistant } from "@/components/realestate/PropertyAssistant";
 import { MortgageCalculator } from "@/components/realestate/MortgageCalculator";
+import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
-// Main categories like Cian
-const mainCategories = [
-  { id: "buy", label: "Купить", icon: ShoppingCart },
-  { id: "rent", label: "Снять", icon: Key },
-  { id: "new", label: "Новостройки", icon: Landmark },
-  { id: "houses", label: "Дома, участки", icon: TreePine },
-  { id: "commercial", label: "Коммерческая", icon: Store },
-  { id: "daily", label: "Посуточно", icon: Calendar },
-];
+type Property = Tables<"properties"> & {
+  property_images?: Tables<"property_images">[];
+};
 
 // Services horizontal scroll
 const services = [
@@ -32,112 +27,35 @@ const services = [
   { id: "insurance", label: "Страхование", icon: Shield },
 ];
 
-const featuredProperties = [
-  {
-    id: "1",
-    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80",
-    type: "Продажа",
-    verified: true,
-    location: "Москва",
-    address: "Пресненская наб., 12",
-    title: "Современные апартаменты в Москва-Сити",
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 120,
-    price: "45.0 млн ₽",
-    rating: 4.9,
-  },
-  {
-    id: "2",
-    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80",
-    type: "Продажа",
-    verified: true,
-    location: "Дубай",
-    address: "Downtown Dubai",
-    title: "Пентхаус с видом на Бурдж-Халифа",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 280,
-    price: "85.0 млн ₽",
-    rating: 5.0,
-    reviews: 18,
-  },
-];
-
-const allProperties = [
-  {
-    id: "1",
-    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80",
-    type: "Продажа",
-    location: "Москва",
-    address: "Пресненская наб., 12",
-    title: "Современные апартаменты в Москва-Сити",
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 120,
-    price: "45.0 млн ₽",
-    rating: 4.9,
-    reviews: 24,
-    agent: {
-      name: "Александр Петров",
-      avatar: "https://i.pravatar.cc/150?img=12",
-    },
-  },
-  {
-    id: "2",
-    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80",
-    type: "Продажа",
-    location: "Дубай",
-    address: "Downtown Dubai",
-    title: "Пентхаус с видом на Бурдж-Халифа",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 280,
-    price: "85.0 млн ₽",
-    rating: 5.0,
-    reviews: 18,
-    agent: {
-      name: "Мария Иванова",
-      avatar: "https://i.pravatar.cc/150?img=5",
-    },
-  },
-  {
-    id: "3",
-    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80",
-    type: "Продажа",
-    location: "Дубай",
-    address: "Palm Jumeirah",
-    title: "Вилла на Palm Jumeirah",
-    bedrooms: 6,
-    bathrooms: 7,
-    area: 850,
-    price: "250.0 млн ₽",
-    rating: 5.0,
-    reviews: 8,
-    agent: {
-      name: "Елена Смирнова",
-      avatar: "https://i.pravatar.cc/150?img=9",
-    },
-  },
-];
-
 const roomOptions = [
-  { id: "studio", label: "Студия" },
-  { id: "1", label: "1" },
-  { id: "2", label: "2" },
-  { id: "3", label: "3" },
-  { id: "4+", label: "4+" },
+  { id: "studio", label: "Студия", value: 0 },
+  { id: "1", label: "1", value: 1 },
+  { id: "2", label: "2", value: 2 },
+  { id: "3", label: "3", value: 3 },
+  { id: "4+", label: "4+", value: 4 },
 ];
 
 export function RealEstatePage() {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [visibleCount, setVisibleCount] = useState(6);
   
-  // Filter states
-  const [priceRange, setPriceRange] = useState([0, 100]);
+  // Filter states from RealEstateFilters
+  const [filters, setFilters] = useState({
+    propertyType: "apartment",
+    dealType: "sale",
+    marketType: "all",
+    rooms: "",
+    price: "",
+    city: "Москва",
+  });
+
+  // Sheet filter states
+  const [priceRange, setPriceRange] = useState([0, 300]);
   const [areaRange, setAreaRange] = useState([0, 500]);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState("Москва");
@@ -151,7 +69,113 @@ export function RealEstatePage() {
     withFurniture: false,
   });
 
-  const toggleFavorite = (id: string) => {
+  // Fetch properties from database
+  useEffect(() => {
+    async function fetchProperties() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("properties")
+          .select(`
+            *,
+            property_images (*)
+          `)
+          .eq("status", "active")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setProperties(data || []);
+        setFilteredProperties(data || []);
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProperties();
+  }, []);
+
+  // Apply filters
+  useEffect(() => {
+    let result = [...properties];
+
+    // Filter by deal type
+    if (filters.dealType) {
+      const dealTypeMap: Record<string, string> = {
+        buy: "sale",
+        rent: "rent",
+        daily: "daily",
+      };
+      const dbDealType = dealTypeMap[filters.dealType] || filters.dealType;
+      result = result.filter(p => p.deal_type === dbDealType);
+    }
+
+    // Filter by property type
+    if (filters.propertyType) {
+      result = result.filter(p => p.property_type === filters.propertyType);
+    }
+
+    // Filter by city
+    if (selectedCity && selectedCity !== "Все") {
+      result = result.filter(p => 
+        p.city.toLowerCase().includes(selectedCity.toLowerCase())
+      );
+    }
+
+    // Filter by rooms
+    if (selectedRooms.length > 0) {
+      result = result.filter(p => {
+        if (!p.rooms) return selectedRooms.includes("studio");
+        if (p.rooms >= 4 && selectedRooms.includes("4+")) return true;
+        return selectedRooms.includes(String(p.rooms));
+      });
+    }
+
+    // Filter by price
+    if (filters.price && filters.price !== "any") {
+      const priceMap: Record<string, number> = {
+        "1m": 1000000,
+        "3m": 3000000,
+        "5m": 5000000,
+        "10m": 10000000,
+        "20m": 20000000,
+        "50m": 50000000,
+      };
+      const maxPrice = priceMap[filters.price];
+      if (maxPrice) {
+        result = result.filter(p => p.price <= maxPrice);
+      }
+    }
+
+    // Filter by market type
+    if (filters.marketType === "new") {
+      result = result.filter(p => p.is_new_building);
+    } else if (filters.marketType === "secondary") {
+      result = result.filter(p => !p.is_new_building);
+    }
+
+    // Additional filters
+    if (filterOptions.verified) {
+      result = result.filter(p => p.is_verified);
+    }
+    if (filterOptions.fromOwner) {
+      result = result.filter(p => p.is_from_owner);
+    }
+    if (filterOptions.withBalcony) {
+      result = result.filter(p => p.has_balcony);
+    }
+    if (filterOptions.withParking) {
+      result = result.filter(p => p.has_parking);
+    }
+    if (filterOptions.withFurniture) {
+      result = result.filter(p => p.has_furniture);
+    }
+
+    setFilteredProperties(result);
+  }, [properties, filters, selectedCity, selectedRooms, filterOptions]);
+
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setFavorites(prev => 
       prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
     );
@@ -164,7 +188,7 @@ export function RealEstatePage() {
   };
 
   const resetFilters = () => {
-    setPriceRange([0, 100]);
+    setPriceRange([0, 300]);
     setAreaRange([0, 500]);
     setSelectedRooms([]);
     setFilterOptions({
@@ -178,23 +202,48 @@ export function RealEstatePage() {
     });
   };
 
-  const handleCategoryClick = (catId: string) => {
-    setSelectedCategory(catId);
-    setFilterCategory(catId);
-    setShowFilters(true);
+  const formatPrice = (price: number, dealType: string) => {
+    if (dealType === "rent") {
+      return `${(price / 1000).toFixed(0)} тыс. ₽/мес`;
+    }
+    if (dealType === "daily") {
+      return `${price.toLocaleString()} ₽/сут`;
+    }
+    if (price >= 1000000) {
+      return `${(price / 1000000).toFixed(1)} млн ₽`;
+    }
+    return `${price.toLocaleString()} ₽`;
   };
 
-  const getCategoryTitle = () => {
-    const cat = mainCategories.find(c => c.id === filterCategory);
-    return cat ? cat.label : "Фильтры";
+  const getPropertyImage = (property: Property) => {
+    const primaryImage = property.property_images?.find(img => img.is_primary);
+    return primaryImage?.image_url || property.property_images?.[0]?.image_url || 
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80";
   };
+
+  const getDealTypeLabel = (dealType: string) => {
+    const labels: Record<string, string> = {
+      sale: "Продажа",
+      rent: "Аренда",
+      daily: "Посуточно",
+    };
+    return labels[dealType] || dealType;
+  };
+
+  const handleShowMore = () => {
+    setVisibleCount(prev => prev + 6);
+  };
+
+  const featuredProperties = filteredProperties.slice(0, 3);
+  const visibleProperties = filteredProperties.slice(0, visibleCount);
 
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Avito-style Filters Header */}
       <RealEstateFilters 
-        onShowResults={() => {}} 
-        resultsCount={allProperties.length * 350}
+        onShowResults={handleShowMore}
+        resultsCount={filteredProperties.length}
+        onFiltersChange={setFilters}
       />
 
       {/* Mortgage Calculator */}
@@ -238,156 +287,213 @@ export function RealEstatePage() {
         </ScrollArea>
       </div>
 
-      {/* Featured Properties */}
-      <div className="px-4 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-lg">Рекомендуемые</h3>
-          <button className="text-primary text-sm font-medium">Все</button>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-        <ScrollArea className="w-full">
-          <div className="flex gap-4">
-            {featuredProperties.map((property) => (
-              <div key={property.id} className="flex-shrink-0 w-[260px] cursor-pointer" onClick={() => navigate(`/realestate/${property.id}`)}>
-                <div className="relative rounded-2xl overflow-hidden mb-3">
-                  <img
-                    src={property.image}
-                    alt={property.title}
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                      {property.type}
-                    </span>
-                  </div>
-                  <button 
-                    onClick={() => toggleFavorite(property.id)}
-                    className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center"
-                  >
-                    <Heart className={cn("w-4 h-4", favorites.includes(property.id) ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
-                  </button>
-                  {property.verified && (
-                    <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
-                      <CheckCircle className="w-3 h-3" />
-                      <span>Проверено</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 text-muted-foreground text-sm mb-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>{property.location}</span>
-                </div>
-                <h4 className="font-semibold text-sm mb-2 line-clamp-2">{property.title}</h4>
-                <div className="flex items-center gap-3 text-muted-foreground text-xs mb-2">
-                  <span className="flex items-center gap-1">
-                    <BedDouble className="w-3.5 h-3.5" />
-                    {property.bedrooms}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Bath className="w-3.5 h-3.5" />
-                    {property.bathrooms}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Square className="w-3.5 h-3.5" />
-                    {property.area} м²
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-primary">{property.price}</span>
-                  <span className="flex items-center gap-1 text-sm">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    {property.rating}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" className="invisible" />
-        </ScrollArea>
-      </div>
-
-      {/* All Properties */}
-      <div className="px-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">{allProperties.length} объектов</h3>
-          <button className="text-muted-foreground text-sm flex items-center gap-1">
-            По популярности
-            <ChevronLeft className="w-4 h-4 -rotate-90" />
-          </button>
-        </div>
-        <div className="space-y-4">
-          {allProperties.map((property) => (
-            <div key={property.id} className="bg-card rounded-2xl overflow-hidden border border-border cursor-pointer" onClick={() => navigate(`/realestate/${property.id}`)}>
-              <div className="relative">
-                <img
-                  src={property.image}
-                  alt={property.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-3 left-3">
-                  <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                    {property.type}
-                  </span>
-                </div>
+      ) : (
+        <>
+          {/* Featured Properties */}
+          {featuredProperties.length > 0 && (
+            <div className="px-4 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg">Рекомендуемые</h3>
                 <button 
-                  onClick={() => toggleFavorite(property.id)}
-                  className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg"
+                  className="text-primary text-sm font-medium"
+                  onClick={() => setVisibleCount(filteredProperties.length)}
                 >
-                  <Heart className={cn("w-5 h-5", favorites.includes(property.id) ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+                  Все
                 </button>
               </div>
-              <div className="p-4">
-                <div className="flex items-center gap-1 text-primary text-sm mb-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>{property.address}, {property.location}</span>
+              <ScrollArea className="w-full">
+                <div className="flex gap-4">
+                  {featuredProperties.map((property) => (
+                    <div 
+                      key={property.id} 
+                      className="flex-shrink-0 w-[260px] cursor-pointer" 
+                      onClick={() => navigate(`/realestate/${property.id}`)}
+                    >
+                      <div className="relative rounded-2xl overflow-hidden mb-3">
+                        <img
+                          src={getPropertyImage(property)}
+                          alt={property.title}
+                          className="w-full h-40 object-cover"
+                        />
+                        <div className="absolute top-3 left-3">
+                          <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
+                            {getDealTypeLabel(property.deal_type)}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={(e) => toggleFavorite(property.id, e)}
+                          className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center"
+                        >
+                          <Heart className={cn("w-4 h-4", favorites.includes(property.id) ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+                        </button>
+                        {property.is_verified && (
+                          <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+                            <CheckCircle className="w-3 h-3" />
+                            <span>Проверено</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-muted-foreground text-sm mb-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        <span>{property.city}</span>
+                      </div>
+                      <h4 className="font-semibold text-sm mb-2 line-clamp-2">{property.title}</h4>
+                      <div className="flex items-center gap-3 text-muted-foreground text-xs mb-2">
+                        {property.rooms && (
+                          <span className="flex items-center gap-1">
+                            <BedDouble className="w-3.5 h-3.5" />
+                            {property.rooms}
+                          </span>
+                        )}
+                        {property.area_total && (
+                          <span className="flex items-center gap-1">
+                            <Square className="w-3.5 h-3.5" />
+                            {property.area_total} м²
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-primary">
+                          {formatPrice(Number(property.price), property.deal_type)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <h4 className="font-semibold mb-2">{property.title}</h4>
-                <div className="flex items-center gap-4 text-muted-foreground text-sm mb-3">
-                  <span className="flex items-center gap-1">
-                    <BedDouble className="w-4 h-4" />
-                    {property.bedrooms} спальни
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Bath className="w-4 h-4" />
-                    {property.bathrooms}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Square className="w-4 h-4" />
-                    {property.area} м²
-                  </span>
-                </div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-bold text-lg">{property.price}</span>
-                  <span className="flex items-center gap-1 text-sm">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    {property.rating} ({property.reviews})
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-3 border-t border-border">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={property.agent.avatar}
-                      alt={property.agent.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="font-medium text-sm">{property.agent.name}</p>
-                      <p className="text-xs text-muted-foreground">Агент</p>
+                <ScrollBar orientation="horizontal" className="invisible" />
+              </ScrollArea>
+            </div>
+          )}
+
+          {/* All Properties */}
+          <div className="px-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">{filteredProperties.length} объектов</h3>
+              <button className="text-muted-foreground text-sm flex items-center gap-1">
+                По популярности
+                <ChevronLeft className="w-4 h-4 -rotate-90" />
+              </button>
+            </div>
+            
+            {filteredProperties.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Ничего не найдено по заданным фильтрам</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={resetFilters}
+                >
+                  Сбросить фильтры
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {visibleProperties.map((property) => (
+                  <div 
+                    key={property.id} 
+                    className="bg-card rounded-2xl overflow-hidden border border-border cursor-pointer" 
+                    onClick={() => navigate(`/realestate/${property.id}`)}
+                  >
+                    <div className="relative">
+                      <img
+                        src={getPropertyImage(property)}
+                        alt={property.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
+                          {getDealTypeLabel(property.deal_type)}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={(e) => toggleFavorite(property.id, e)}
+                        className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg"
+                      >
+                        <Heart className={cn("w-5 h-5", favorites.includes(property.id) ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+                      </button>
+                      {property.is_verified && (
+                        <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Проверено</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-center gap-1 text-primary text-sm mb-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        <span>{property.address || property.district}, {property.city}</span>
+                      </div>
+                      <h4 className="font-semibold mb-2">{property.title}</h4>
+                      <div className="flex items-center gap-4 text-muted-foreground text-sm mb-3">
+                        {property.rooms && (
+                          <span className="flex items-center gap-1">
+                            <BedDouble className="w-4 h-4" />
+                            {property.rooms} комн.
+                          </span>
+                        )}
+                        {property.floor && property.total_floors && (
+                          <span className="flex items-center gap-1">
+                            {property.floor}/{property.total_floors} эт.
+                          </span>
+                        )}
+                        {property.area_total && (
+                          <span className="flex items-center gap-1">
+                            <Square className="w-4 h-4" />
+                            {property.area_total} м²
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="font-bold text-lg">
+                          {formatPrice(Number(property.price), property.deal_type)}
+                        </span>
+                        {property.metro_station && (
+                          <span className="text-sm text-muted-foreground">
+                            м. {property.metro_station}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-border">
+                        <div className="flex items-center gap-2 flex-wrap">
+                        {property.is_from_owner && (
+                            <span className="text-xs bg-muted px-2 py-1 rounded-full">Собственник</span>
+                          )}
+                          {property.is_new_building && (
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Новостройка</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button size="icon" variant="outline" className="rounded-full w-10 h-10">
+                            <Phone className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" className="rounded-full w-10 h-10">
+                            <MessageCircle className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="icon" variant="outline" className="rounded-full w-10 h-10">
-                      <Phone className="w-4 h-4" />
-                    </Button>
-                    <Button size="icon" className="rounded-full w-10 h-10">
-                      <MessageCircle className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+                ))}
+
+                {/* Show More Button */}
+                {visibleCount < filteredProperties.length && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-12 rounded-xl"
+                    onClick={handleShowMore}
+                  >
+                    Показать ещё {Math.min(6, filteredProperties.length - visibleCount)} из {filteredProperties.length - visibleCount}
+                  </Button>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Filters Sheet */}
       <Sheet open={showFilters} onOpenChange={setShowFilters}>
@@ -399,7 +505,7 @@ export function RealEstatePage() {
                 <button onClick={() => setShowFilters(false)}>
                   <X className="w-6 h-6" />
                 </button>
-                <SheetTitle className="text-lg font-semibold">{getCategoryTitle()}</SheetTitle>
+                <SheetTitle className="text-lg font-semibold">Фильтры</SheetTitle>
                 <button 
                   onClick={resetFilters}
                   className="text-primary text-sm font-medium"
@@ -432,34 +538,30 @@ export function RealEstatePage() {
                 </div>
               </div>
 
-              {/* Rooms - show for buy/rent/daily */}
-              {(filterCategory === "buy" || filterCategory === "rent" || filterCategory === "daily") && (
-                <div>
-                  <h3 className="font-semibold mb-3">Комнаты</h3>
-                  <div className="flex gap-2">
-                    {roomOptions.map((room) => (
-                      <button
-                        key={room.id}
-                        onClick={() => toggleRoom(room.id)}
-                        className={cn(
-                          "flex-1 py-3 rounded-xl text-sm font-medium transition-all",
-                          selectedRooms.includes(room.id)
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground"
-                        )}
-                      >
-                        {room.label}
-                      </button>
-                    ))}
-                  </div>
+              {/* Rooms */}
+              <div>
+                <h3 className="font-semibold mb-3">Комнаты</h3>
+                <div className="flex gap-2">
+                  {roomOptions.map((room) => (
+                    <button
+                      key={room.id}
+                      onClick={() => toggleRoom(room.id)}
+                      className={cn(
+                        "flex-1 py-3 rounded-xl text-sm font-medium transition-all",
+                        selectedRooms.includes(room.id)
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
+                      )}
+                    >
+                      {room.label}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
               {/* Price Range */}
               <div>
-                <h3 className="font-semibold mb-3">
-                  {filterCategory === "rent" || filterCategory === "daily" ? "Цена, ₽/мес" : "Цена, млн ₽"}
-                </h3>
+                <h3 className="font-semibold mb-3">Цена, млн ₽</h3>
                 <div className="flex items-center gap-4 mb-3">
                   <div className="flex-1">
                     <Input 
@@ -484,7 +586,7 @@ export function RealEstatePage() {
                 <Slider
                   value={priceRange}
                   onValueChange={setPriceRange}
-                  max={filterCategory === "rent" ? 500 : 300}
+                  max={300}
                   step={1}
                   className="w-full"
                 />
@@ -517,57 +619,16 @@ export function RealEstatePage() {
                 <Slider
                   value={areaRange}
                   onValueChange={setAreaRange}
-                  max={filterCategory === "houses" ? 2000 : 500}
+                  max={500}
                   step={10}
                   className="w-full"
                 />
               </div>
 
-              {/* Floor - for apartments */}
-              {(filterCategory === "buy" || filterCategory === "rent" || filterCategory === "new") && (
-                <div>
-                  <h3 className="font-semibold mb-3">Этаж</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Input 
-                        type="number" 
-                        placeholder="От" 
-                        className="h-11 rounded-xl"
-                      />
-                    </div>
-                    <div>
-                      <Input 
-                        type="number" 
-                        placeholder="До" 
-                        className="h-11 rounded-xl"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <button className="px-4 py-2 rounded-xl bg-muted text-sm font-medium">
-                      Не первый
-                    </button>
-                    <button className="px-4 py-2 rounded-xl bg-muted text-sm font-medium">
-                      Не последний
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Additional Options */}
               <div>
                 <h3 className="font-semibold mb-3">Дополнительно</h3>
                 <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
-                    <Checkbox 
-                      checked={filterOptions.withPhoto}
-                      onCheckedChange={(checked) => 
-                        setFilterOptions(prev => ({ ...prev, withPhoto: !!checked }))
-                      }
-                    />
-                    <span className="font-medium text-sm">С фото</span>
-                  </label>
-
                   <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
                     <Checkbox 
                       checked={filterOptions.verified}
@@ -588,17 +649,25 @@ export function RealEstatePage() {
                     <span className="font-medium text-sm">От собственника</span>
                   </label>
 
-                  {(filterCategory === "rent" || filterCategory === "daily") && (
-                    <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
-                      <Checkbox 
-                        checked={filterOptions.withFurniture}
-                        onCheckedChange={(checked) => 
-                          setFilterOptions(prev => ({ ...prev, withFurniture: !!checked }))
-                        }
-                      />
-                      <span className="font-medium text-sm">С мебелью</span>
-                    </label>
-                  )}
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                    <Checkbox 
+                      checked={filterOptions.newBuilding}
+                      onCheckedChange={(checked) => 
+                        setFilterOptions(prev => ({ ...prev, newBuilding: !!checked }))
+                      }
+                    />
+                    <span className="font-medium text-sm">Новостройка</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
+                    <Checkbox 
+                      checked={filterOptions.withFurniture}
+                      onCheckedChange={(checked) => 
+                        setFilterOptions(prev => ({ ...prev, withFurniture: !!checked }))
+                      }
+                    />
+                    <span className="font-medium text-sm">С мебелью</span>
+                  </label>
 
                   <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
                     <Checkbox 
@@ -619,18 +688,6 @@ export function RealEstatePage() {
                     />
                     <span className="font-medium text-sm">С парковкой</span>
                   </label>
-
-                  {filterCategory === "new" && (
-                    <label className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer">
-                      <Checkbox 
-                        checked={filterOptions.newBuilding}
-                        onCheckedChange={(checked) => 
-                          setFilterOptions(prev => ({ ...prev, newBuilding: !!checked }))
-                        }
-                      />
-                      <span className="font-medium text-sm">Сдача в этом году</span>
-                    </label>
-                  )}
                 </div>
               </div>
             </div>
@@ -641,7 +698,7 @@ export function RealEstatePage() {
                 className="w-full h-12 rounded-xl"
                 onClick={() => setShowFilters(false)}
               >
-                Показать {allProperties.length} объектов
+                Показать {filteredProperties.length} объектов
               </Button>
             </div>
           </div>
