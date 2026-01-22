@@ -37,10 +37,10 @@ export function AuthPage() {
     setPhone(formatted);
   };
 
-  // Convert phone to fake email for Supabase auth
+  // Convert phone to fake email for Supabase auth (using valid email format)
   const phoneToEmail = (phone: string) => {
     const digits = phone.replace(/\D/g, '');
-    return `${digits}@phone.local`;
+    return `user.${digits}@phoneauth.app`;
   };
 
   // Generate deterministic password from phone
