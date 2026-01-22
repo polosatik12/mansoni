@@ -126,24 +126,9 @@ export function UserProfilePage() {
     setIsCreatingChat(true);
 
     try {
-      // Step 1: Find profile by display_name (indexed query)
-      const { data: targetProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .eq("display_name", user.name)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-
-      if (!targetProfile) {
-        toast.info("Этот пользователь ещё не зарегистрирован");
-        setIsCreatingChat(false);
-        return;
-      }
-
-      // Step 2: Get or create conversation (atomic RPC, indexed)
+      // Single atomic RPC (DB handles profile lookup + get_or_create)
       const { data: conversationId, error: rpcError } = await supabase
-        .rpc("get_or_create_dm", { target_user_id: targetProfile.user_id });
+        .rpc("get_or_create_dm_by_display_name", { target_display_name: user.name });
 
       if (rpcError) throw rpcError;
 
@@ -151,7 +136,7 @@ export function UserProfilePage() {
       navigate("/chats", { 
         state: { 
           conversationId, 
-          chatName: targetProfile.display_name || "Пользователь" 
+          chatName: user.name || "Пользователь" 
         } 
       });
 
@@ -161,6 +146,8 @@ export function UserProfilePage() {
       
       if (msg.includes("Cannot message yourself")) {
         toast.error("Нельзя написать самому себе");
+      } else if (msg.includes("Target not registered")) {
+        toast.info("Этот пользователь ещё не зарегистрирован");
       } else {
         toast.error("Не удалось открыть чат", { description: msg });
       }
