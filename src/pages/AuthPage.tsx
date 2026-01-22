@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Phone, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Phone, User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,11 +12,9 @@ export function AuthPage() {
   const { signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [seeding, setSeeding] = useState(false);
   
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
 
   const formatPhoneNumber = (value: string) => {
@@ -46,6 +44,12 @@ export function AuthPage() {
     return `${digits}@phone.local`;
   };
 
+  // Generate deterministic password from phone
+  const phoneToPassword = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    return `ph_${digits}_secure`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -57,13 +61,14 @@ export function AuthPage() {
     
     setLoading(true);
     const fakeEmail = phoneToEmail(phone);
+    const password = phoneToPassword(phone);
 
     try {
       if (isLogin) {
         const { error } = await signIn(fakeEmail, password);
         if (error) {
           if (error.message.includes("Invalid login")) {
-            toast.error("Неверный номер или пароль");
+            toast.error("Номер не зарегистрирован");
           } else {
             toast.error(error.message);
           }
@@ -89,7 +94,7 @@ export function AuthPage() {
               display_name: name 
             }).eq('user_id', user.id);
           }
-          toast.success("Аккаунт создан! Добро пожаловать!");
+          toast.success("Аккаунт создан!");
           navigate("/");
         }
       }
@@ -103,9 +108,9 @@ export function AuthPage() {
     try {
       const { data, error } = await supabase.functions.invoke("create-test-user", {
         body: {
-          email: "dubaitech@test.local",
-          password: "12345678",
-          display_name: "Dubai Tech Hub",
+          email: "79991234567@phone.local",
+          password: "ph_79991234567_secure",
+          display_name: "Тестовый пользователь",
         },
       });
 
@@ -115,8 +120,11 @@ export function AuthPage() {
       }
 
       toast.success("Тестовый пользователь готов", {
-        description: "Email: dubaitech@test.local • Пароль: 12345678",
+        description: "Номер: +7 (999) 123-45-67",
       });
+
+      setPhone("+7 (999) 123-45-67");
+      setIsLogin(true);
     } finally {
       setSeeding(false);
     }
@@ -177,32 +185,6 @@ export function AuthPage() {
               />
             </div>
 
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="pl-10 pr-10 h-12 rounded-xl"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5 text-muted-foreground" />
-                ) : (
-                  <Eye className="w-5 h-5 text-muted-foreground" />
-                )}
-              </Button>
-            </div>
-
             <Button 
               type="submit" 
               className="w-full h-12 rounded-xl text-base font-semibold"
@@ -231,7 +213,7 @@ export function AuthPage() {
                   onClick={createTestUser}
                   disabled={seeding}
                 >
-                  {seeding ? "Создаю тестовый аккаунт..." : "Создать тестового пользователя"}
+                  {seeding ? "Создаю..." : "Создать тестового пользователя"}
                 </Button>
               </div>
             )}
