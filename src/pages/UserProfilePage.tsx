@@ -129,6 +129,26 @@ export function UserProfilePage() {
     }
   };
 
+  const retryQuery = async <T,>(
+    fn: () => Promise<T>,
+    maxRetries: number = 2,
+    delayMs: number = 500
+  ): Promise<T> => {
+    let lastError: Error | null = null;
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        return await fn();
+      } catch (err) {
+        lastError = err as Error;
+        console.log(`[Chat] Retry ${i + 1}/${maxRetries + 1} failed:`, lastError.message);
+        if (i < maxRetries) {
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
+      }
+    }
+    throw lastError;
+  };
+
   const handleMessage = async () => {
     if (!currentUser) {
       toast.error("Войдите, чтобы написать сообщение");
@@ -139,30 +159,24 @@ export function UserProfilePage() {
     setIsCreatingChat(true);
 
     try {
-      // Step 1: Find profile - use ilike for case-insensitive match
+      // Step 1: Find profile with retry and longer timeout
       console.log("[Chat] Searching for profile:", user.name);
       
-      const { data: targetProfiles, error: profileError } = await withTimeout(
-        supabase
-          .from("profiles")
-          .select("user_id, display_name")
-          .ilike("display_name", user.name),
-        8000,
-        "find_profile"
-      );
+      const findProfile = async () => {
+        const { data, error } = await withTimeout(
+          supabase
+            .from("profiles")
+            .select("user_id, display_name")
+            .eq("display_name", user.name)
+            .maybeSingle(),
+          15000,
+          "find_profile"
+        );
+        if (error) throw error;
+        return data;
+      };
 
-      if (profileError) {
-        console.error("[Chat] Error finding user:", profileError);
-        toast.error("Ошибка при поиске пользователя");
-        return;
-      }
-
-      console.log("[Chat] Found profiles:", targetProfiles);
-
-      // Get first match (exact or case-insensitive)
-      const targetProfile = targetProfiles?.find(
-        (p) => p.display_name?.toLowerCase() === user.name.toLowerCase()
-      ) || targetProfiles?.[0];
+      const targetProfile = await retryQuery(findProfile);
 
       if (!targetProfile) {
         toast.info("Этот пользователь ещё не зарегистрирован в системе", {
@@ -179,20 +193,20 @@ export function UserProfilePage() {
       console.log("[Chat] Target profile found:", targetProfile);
 
       // Step 2: Check if conversation already exists
-      const { data: existingConv, error: myConvError } = await withTimeout(
-        supabase
-          .from("conversation_participants")
-          .select("conversation_id")
-          .eq("user_id", currentUser.id),
-        8000,
-        "list_my_conversations"
-      );
+      const findMyConversations = async () => {
+        const { data, error } = await withTimeout(
+          supabase
+            .from("conversation_participants")
+            .select("conversation_id")
+            .eq("user_id", currentUser.id),
+          15000,
+          "list_my_conversations"
+        );
+        if (error) throw error;
+        return data;
+      };
 
-      if (myConvError) {
-        console.error("[Chat] Error listing my conversations:", myConvError);
-        throw myConvError;
-      }
-
+      const existingConv = await retryQuery(findMyConversations);
       console.log("[Chat] My conversations:", existingConv?.length || 0);
 
       let conversationId: string | null = null;
@@ -200,20 +214,21 @@ export function UserProfilePage() {
       if (existingConv && existingConv.length > 0) {
         const myConvIds = existingConv.map(c => c.conversation_id);
         
-        const { data: otherParticipant, error: sharedError } = await withTimeout(
-          supabase
-            .from("conversation_participants")
-            .select("conversation_id")
-            .eq("user_id", targetProfile.user_id)
-            .in("conversation_id", myConvIds),
-          8000,
-          "find_shared_conversation"
-        );
+        const findShared = async () => {
+          const { data, error } = await withTimeout(
+            supabase
+              .from("conversation_participants")
+              .select("conversation_id")
+              .eq("user_id", targetProfile.user_id)
+              .in("conversation_id", myConvIds),
+            15000,
+            "find_shared_conversation"
+          );
+          if (error) throw error;
+          return data;
+        };
 
-        if (sharedError) {
-          console.error("[Chat] Error finding shared conversation:", sharedError);
-          throw sharedError;
-        }
+        const otherParticipant = await retryQuery(findShared);
 
         if (otherParticipant && otherParticipant.length > 0) {
           conversationId = otherParticipant[0].conversation_id;
@@ -225,39 +240,39 @@ export function UserProfilePage() {
       if (!conversationId) {
         console.log("[Chat] Creating new conversation...");
         
-        const { data: newConv, error: convError } = await withTimeout(
-          supabase
-            .from("conversations")
-            .insert({})
-            .select()
-            .single(),
-          8000,
-          "create_conversation"
-        );
+        const createConv = async () => {
+          const { data, error } = await withTimeout(
+            supabase
+              .from("conversations")
+              .insert({})
+              .select()
+              .single(),
+            15000,
+            "create_conversation"
+          );
+          if (error) throw error;
+          return data;
+        };
 
-        if (convError) {
-          console.error("[Chat] Error creating conversation:", convError);
-          throw convError;
-        }
-
+        const newConv = await retryQuery(createConv);
         console.log("[Chat] Conversation created:", newConv.id);
 
         // Add both participants
-        const { error: partError } = await withTimeout(
-          supabase
-            .from("conversation_participants")
-            .insert([
-              { conversation_id: newConv.id, user_id: currentUser.id },
-              { conversation_id: newConv.id, user_id: targetProfile.user_id },
-            ]),
-          8000,
-          "add_participants"
-        );
+        const addParticipants = async () => {
+          const { error } = await withTimeout(
+            supabase
+              .from("conversation_participants")
+              .insert([
+                { conversation_id: newConv.id, user_id: currentUser.id },
+                { conversation_id: newConv.id, user_id: targetProfile.user_id },
+              ]),
+            15000,
+            "add_participants"
+          );
+          if (error) throw error;
+        };
 
-        if (partError) {
-          console.error("[Chat] Error adding participants:", partError);
-          throw partError;
-        }
+        await retryQuery(addParticipants);
 
         conversationId = newConv.id;
         toast.success("Чат создан!");
