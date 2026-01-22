@@ -3,6 +3,25 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "./useAuth";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+function getErrorMessage(err: unknown): string {
+  if (!err) return "Unknown error";
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  if (typeof err === "object") {
+    const anyErr = err as any;
+    // PostgREST errors
+    if (typeof anyErr.message === "string") return anyErr.message;
+    if (typeof anyErr.error_description === "string") return anyErr.error_description;
+    if (typeof anyErr.details === "string") return anyErr.details;
+    try {
+      return JSON.stringify(anyErr);
+    } catch {
+      return String(anyErr);
+    }
+  }
+  return String(err);
+}
+
 export interface ChatMessage {
   id: string;
   conversation_id: string;
@@ -59,10 +78,7 @@ export function useConversations() {
       console.log("[useConversations] start", { userId: user.id });
 
       // Step 1: conversation IDs for current user
-      const { data: participantData, error: partError } = await withTimeout<{
-        data: { conversation_id: string }[] | null;
-        error: any;
-      }>(
+      const { data: participantData, error: partError } = await withTimeout(
         "participants",
         supabase
           .from("conversation_participants")
@@ -169,8 +185,15 @@ export function useConversations() {
       console.log("[useConversations] done", { count: convs.length });
     } catch (error) {
       console.error("Error fetching conversations:", error);
-      const msg = error instanceof Error ? error.message : String(error);
-      setError(msg);
+      const msg = getErrorMessage(error);
+      // Helpful hint when the external project does not have the expected schema
+      if (msg.includes("schema cache") || msg.includes("Could not find the table")) {
+        setError(
+          "В вашем Supabase проекте не создана схема чатов (таблица conversation_participants не найдена). Выполните SQL-миграцию со схемой чатов/сообщений и обновите страницу."
+        );
+      } else {
+        setError(msg);
+      }
       setConversations([]);
     } finally {
       setLoading(false);
