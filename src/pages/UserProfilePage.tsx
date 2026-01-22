@@ -124,35 +124,60 @@ export function UserProfilePage() {
     }
 
     setIsCreatingChat(true);
+    console.log("[Chat] Step 1: Starting, looking for profile:", user.name);
+
+    // Timeout wrapper - 5 seconds max
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error("Timeout: операция заняла слишком много времени")), 5000)
+    );
 
     try {
-      // Step 1: Find profile by display_name (single fast query)
-      const { data: targetProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .eq("display_name", user.name)
-        .maybeSingle();
+      const result = await Promise.race([
+        (async () => {
+          // Step 1: Find profile
+          const { data: targetProfile, error: profileError } = await supabase
+            .from("profiles")
+            .select("user_id, display_name")
+            .eq("display_name", user.name)
+            .maybeSingle();
 
-      if (profileError) throw profileError;
+          console.log("[Chat] Step 2: Profile query done", { targetProfile, profileError });
 
-      if (!targetProfile) {
-        toast.info("Этот пользователь ещё не зарегистрирован", {
-          description: "Пока можно переписываться только с зарегистрированными пользователями"
-        });
+          if (profileError) throw profileError;
+
+          if (!targetProfile) {
+            return { type: "not_found" as const };
+          }
+
+          // Step 2: Get or create conversation
+          console.log("[Chat] Step 3: Calling get_or_create_dm for user_id:", targetProfile.user_id);
+          const { data: conversationId, error: rpcError } = await supabase
+            .rpc("get_or_create_dm", { target_user_id: targetProfile.user_id });
+
+          console.log("[Chat] Step 4: RPC done", { conversationId, rpcError });
+
+          if (rpcError) throw rpcError;
+
+          return { 
+            type: "success" as const, 
+            conversationId, 
+            displayName: targetProfile.display_name 
+          };
+        })(),
+        timeoutPromise
+      ]);
+
+      if (result.type === "not_found") {
+        toast.info("Этот пользователь ещё не зарегистрирован");
         return;
       }
 
-      // Step 2: Get or create conversation (single atomic RPC call)
-      const { data: conversationId, error: rpcError } = await supabase
-        .rpc("get_or_create_dm" as any, { target_user_id: targetProfile.user_id });
-
-      if (rpcError) throw rpcError;
-
       // Step 3: Navigate instantly
+      console.log("[Chat] Step 5: Navigating to conversation:", result.conversationId);
       navigate("/chats", { 
         state: { 
-          conversationId, 
-          chatName: targetProfile.display_name || "Пользователь" 
+          conversationId: result.conversationId, 
+          chatName: result.displayName || "Пользователь" 
         } 
       });
 
