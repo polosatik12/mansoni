@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Phone, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,28 +15,80 @@ export function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [seeding, setSeeding] = useState(false);
   
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
 
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    
+    if (digits.startsWith('7') || digits.startsWith('8')) {
+      const normalized = '7' + digits.slice(1);
+      let formatted = '+7';
+      if (normalized.length > 1) formatted += ' (' + normalized.slice(1, 4);
+      if (normalized.length > 4) formatted += ') ' + normalized.slice(4, 7);
+      if (normalized.length > 7) formatted += '-' + normalized.slice(7, 9);
+      if (normalized.length > 9) formatted += '-' + normalized.slice(9, 11);
+      return formatted;
+    }
+    
+    return '+' + digits;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhone(formatted);
+  };
+
+  // Convert phone to fake email for Supabase auth
+  const phoneToEmail = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    return `${digits}@phone.local`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 10) {
+      toast.error("Введите корректный номер телефона");
+      return;
+    }
+    
     setLoading(true);
+    const fakeEmail = phoneToEmail(phone);
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(fakeEmail, password);
         if (error) {
-          toast.error(error.message);
+          if (error.message.includes("Invalid login")) {
+            toast.error("Неверный номер или пароль");
+          } else {
+            toast.error(error.message);
+          }
         } else {
           toast.success("Добро пожаловать!");
           navigate("/");
         }
       } else {
-        const { error } = await signUp(email, password, displayName);
+        const name = displayName || phone;
+        const { error } = await signUp(fakeEmail, password, name);
         if (error) {
-          toast.error(error.message);
+          if (error.message.includes("already registered")) {
+            toast.error("Этот номер уже зарегистрирован");
+          } else {
+            toast.error(error.message);
+          }
         } else {
+          // Update profile with phone number
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from('profiles').update({ 
+              phone: phone,
+              display_name: name 
+            }).eq('user_id', user.id);
+          }
           toast.success("Аккаунт создан! Добро пожаловать!");
           navigate("/");
         }
@@ -63,12 +115,8 @@ export function AuthPage() {
       }
 
       toast.success("Тестовый пользователь готов", {
-        description: "Логин: dubaitech@test.local • Пароль: 12345678",
+        description: "Email: dubaitech@test.local • Пароль: 12345678",
       });
-
-      setEmail("dubaitech@test.local");
-      setPassword("12345678");
-      setIsLogin(true);
     } finally {
       setSeeding(false);
     }
@@ -96,8 +144,8 @@ export function AuthPage() {
             </h2>
             <p className="text-muted-foreground">
               {isLogin 
-                ? "Войдите, чтобы продолжить" 
-                : "Зарегистрируйтесь для доступа ко всем функциям"
+                ? "Войдите по номеру телефона" 
+                : "Зарегистрируйтесь по номеру телефона"
               }
             </p>
           </div>
@@ -109,7 +157,7 @@ export function AuthPage() {
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Имя"
+                  placeholder="Имя (необязательно)"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="pl-10 h-12 rounded-xl"
@@ -118,12 +166,12 @@ export function AuthPage() {
             )}
 
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="tel"
+                placeholder="+7 (999) 123-45-67"
+                value={phone}
+                onChange={handlePhoneChange}
                 required
                 className="pl-10 h-12 rounded-xl"
               />
@@ -183,7 +231,7 @@ export function AuthPage() {
                   onClick={createTestUser}
                   disabled={seeding}
                 >
-                  {seeding ? "Создаю тестовый аккаунт..." : "Создать тестового пользователя для чата"}
+                  {seeding ? "Создаю тестовый аккаунт..." : "Создать тестового пользователя"}
                 </Button>
               </div>
             )}
