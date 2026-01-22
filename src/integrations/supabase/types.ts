@@ -537,6 +537,10 @@ export type Database = {
     }
     Functions: {
       get_or_create_dm: { Args: { target_user_id: string }; Returns: string }
+      get_or_create_dm_by_display_name: {
+        Args: { target_display_name: string }
+        Returns: string
+      }
       get_user_conversation_ids: {
         Args: { user_uuid: string }
         Returns: string[]
