@@ -47,7 +47,7 @@ const usersData: Record<string, {
     ],
   },
   "dubaitech": {
-    name: "Duba Tech",
+    name: "Dubai Tech Hub",
     username: "dubaitech",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=dubaitech",
     cover: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80",
@@ -125,10 +125,13 @@ export function UserProfilePage() {
 
     setIsCreatingChat(true);
 
+    // Timeout protection to prevent infinite loading
+    const timeout = setTimeout(() => {
+      setIsCreatingChat(false);
+      toast.error("Превышено время ожидания");
+    }, 10000);
+
     try {
-      // For demo purposes, we'll show a toast since we don't have real user IDs
-      // In a real app, you would look up the target user's ID and create a conversation
-      
       // Check if the profile user exists in our database by username
       const { data: targetProfile, error: profileError } = await supabase
         .from("profiles")
@@ -138,10 +141,11 @@ export function UserProfilePage() {
 
       if (profileError) {
         console.error("Error finding user:", profileError);
+        toast.error("Ошибка при поиске пользователя");
+        return;
       }
 
       if (!targetProfile) {
-        // User doesn't exist in DB yet - show info toast
         toast.info("Этот пользователь ещё не зарегистрирован в системе", {
           description: "Пока можно переписываться только с зарегистрированными пользователями"
         });
@@ -176,7 +180,6 @@ export function UserProfilePage() {
       }
 
       if (existingConversationId) {
-        // Navigate to existing conversation
         toast.success("Открываем чат");
         navigate("/chats");
       } else {
@@ -206,6 +209,7 @@ export function UserProfilePage() {
       console.error("Error creating conversation:", error);
       toast.error("Не удалось создать чат");
     } finally {
+      clearTimeout(timeout);
       setIsCreatingChat(false);
     }
   };
