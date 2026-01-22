@@ -536,6 +536,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_or_create_dm: { Args: { target_user_id: string }; Returns: string }
       get_user_conversation_ids: {
         Args: { user_uuid: string }
         Returns: string[]

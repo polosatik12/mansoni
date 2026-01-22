@@ -116,39 +116,6 @@ export function UserProfilePage() {
 
   const user = username && usersData[username] ? usersData[username] : defaultUser;
 
-  const withTimeout = async <T,>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> => {
-    let timeoutId: number | undefined;
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = window.setTimeout(() => reject(new Error(`timeout:${label}`)), ms);
-    });
-    try {
-      const op = Promise.resolve(promise as unknown as Promise<T>);
-      return await Promise.race([op, timeoutPromise]);
-    } finally {
-      if (timeoutId) window.clearTimeout(timeoutId);
-    }
-  };
-
-  const retryQuery = async <T,>(
-    fn: () => Promise<T>,
-    maxRetries: number = 2,
-    delayMs: number = 500
-  ): Promise<T> => {
-    let lastError: Error | null = null;
-    for (let i = 0; i <= maxRetries; i++) {
-      try {
-        return await fn();
-      } catch (err) {
-        lastError = err as Error;
-        console.log(`[Chat] Retry ${i + 1}/${maxRetries + 1} failed:`, lastError.message);
-        if (i < maxRetries) {
-          await new Promise((r) => setTimeout(r, delayMs));
-        }
-      }
-    }
-    throw lastError;
-  };
-
   const handleMessage = async () => {
     if (!currentUser) {
       toast.error("Войдите, чтобы написать сообщение");
@@ -159,129 +126,29 @@ export function UserProfilePage() {
     setIsCreatingChat(true);
 
     try {
-      // Step 1: Find profile with retry and longer timeout
-      console.log("[Chat] Searching for profile:", user.name);
-      
-      const findProfile = async () => {
-        const { data, error } = await withTimeout(
-          supabase
-            .from("profiles")
-            .select("user_id, display_name")
-            .eq("display_name", user.name)
-            .maybeSingle(),
-          15000,
-          "find_profile"
-        );
-        if (error) throw error;
-        return data;
-      };
+      // Step 1: Find profile by display_name (single fast query)
+      const { data: targetProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .eq("display_name", user.name)
+        .maybeSingle();
 
-      const targetProfile = await retryQuery(findProfile);
+      if (profileError) throw profileError;
 
       if (!targetProfile) {
-        toast.info("Этот пользователь ещё не зарегистрирован в системе", {
+        toast.info("Этот пользователь ещё не зарегистрирован", {
           description: "Пока можно переписываться только с зарегистрированными пользователями"
         });
         return;
       }
 
-      if (targetProfile.user_id === currentUser.id) {
-        toast.error("Нельзя написать самому себе");
-        return;
-      }
+      // Step 2: Get or create conversation (single atomic RPC call)
+      const { data: conversationId, error: rpcError } = await supabase
+        .rpc("get_or_create_dm" as any, { target_user_id: targetProfile.user_id });
 
-      console.log("[Chat] Target profile found:", targetProfile);
+      if (rpcError) throw rpcError;
 
-      // Step 2: Check if conversation already exists
-      const findMyConversations = async () => {
-        const { data, error } = await withTimeout(
-          supabase
-            .from("conversation_participants")
-            .select("conversation_id")
-            .eq("user_id", currentUser.id),
-          15000,
-          "list_my_conversations"
-        );
-        if (error) throw error;
-        return data;
-      };
-
-      const existingConv = await retryQuery(findMyConversations);
-      console.log("[Chat] My conversations:", existingConv?.length || 0);
-
-      let conversationId: string | null = null;
-
-      if (existingConv && existingConv.length > 0) {
-        const myConvIds = existingConv.map(c => c.conversation_id);
-        
-        const findShared = async () => {
-          const { data, error } = await withTimeout(
-            supabase
-              .from("conversation_participants")
-              .select("conversation_id")
-              .eq("user_id", targetProfile.user_id)
-              .in("conversation_id", myConvIds),
-            15000,
-            "find_shared_conversation"
-          );
-          if (error) throw error;
-          return data;
-        };
-
-        const otherParticipant = await retryQuery(findShared);
-
-        if (otherParticipant && otherParticipant.length > 0) {
-          conversationId = otherParticipant[0].conversation_id;
-          console.log("[Chat] Found existing conversation:", conversationId);
-        }
-      }
-
-      // Step 3: Create new conversation if none exists
-      if (!conversationId) {
-        console.log("[Chat] Creating new conversation...");
-        
-        const createConv = async () => {
-          const { data, error } = await withTimeout(
-            supabase
-              .from("conversations")
-              .insert({})
-              .select()
-              .single(),
-            15000,
-            "create_conversation"
-          );
-          if (error) throw error;
-          return data;
-        };
-
-        const newConv = await retryQuery(createConv);
-        console.log("[Chat] Conversation created:", newConv.id);
-
-        // Add both participants
-        const addParticipants = async () => {
-          const { error } = await withTimeout(
-            supabase
-              .from("conversation_participants")
-              .insert([
-                { conversation_id: newConv.id, user_id: currentUser.id },
-                { conversation_id: newConv.id, user_id: targetProfile.user_id },
-              ]),
-            15000,
-            "add_participants"
-          );
-          if (error) throw error;
-        };
-
-        await retryQuery(addParticipants);
-
-        conversationId = newConv.id;
-        toast.success("Чат создан!");
-      } else {
-        toast.success("Открываем чат");
-      }
-
-      // Step 4: Navigate with conversationId in state
-      console.log("[Chat] Navigating to chats with conversationId:", conversationId);
+      // Step 3: Navigate instantly
       navigate("/chats", { 
         state: { 
           conversationId, 
@@ -292,11 +159,11 @@ export function UserProfilePage() {
     } catch (error) {
       console.error("[Chat] Error:", error);
       const msg = error instanceof Error ? error.message : String(error);
-      if (msg.startsWith("timeout:")) {
-        const step = msg.replace("timeout:", "");
-        toast.error("Превышено время ожидания", { description: `Шаг: ${step}` });
+      
+      if (msg.includes("Cannot message yourself")) {
+        toast.error("Нельзя написать самому себе");
       } else {
-        toast.error("Не удалось создать чат", { description: msg });
+        toast.error("Не удалось открыть чат", { description: msg });
       }
     } finally {
       setIsCreatingChat(false);
