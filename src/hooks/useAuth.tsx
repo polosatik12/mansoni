@@ -20,6 +20,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Ensure profile exists for the user
+  const ensureProfile = async (authUser: User) => {
+    const displayName = authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User';
+    try {
+      await supabase
+        .from("profiles")
+        .upsert({ 
+          user_id: authUser.id, 
+          display_name: displayName 
+        }, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: true
+        });
+    } catch (e) {
+      console.error("Error ensuring profile:", e);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -27,30 +45,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-
-        // Ensure the profile row exists for this user (server-side upsert)
+        
+        // Ensure profile exists
         if (session?.user) {
-          await supabase.functions.invoke("ensure-profile", {
-            body: {
-              display_name: session.user.user_metadata?.full_name || session.user.phone || session.user.email,
-            },
-          });
+          ensureProfile(session.user);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-
+      
       if (session?.user) {
-        await supabase.functions.invoke("ensure-profile", {
-          body: {
-            display_name: session.user.user_metadata?.full_name || session.user.phone || session.user.email,
-          },
-        });
+        ensureProfile(session.user);
       }
     });
 

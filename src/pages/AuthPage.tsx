@@ -85,13 +85,18 @@ export function AuthPage() {
         return;
       }
 
-      // Update profile with phone number (best-effort)
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      // Create profile for new user (upsert in case trigger didn't fire)
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      if (newUser) {
         await supabase
           .from("profiles")
-          .update({ phone, display_name: name })
-          .eq("user_id", user.id);
+          .upsert({ 
+            user_id: newUser.id, 
+            phone: digits, 
+            display_name: name 
+          }, { 
+            onConflict: 'user_id' 
+          });
       }
 
       toast.success("Аккаунт создан! Добро пожаловать!");
