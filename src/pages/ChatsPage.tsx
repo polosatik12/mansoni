@@ -20,7 +20,7 @@ export function ChatsPage() {
   const location = useLocation();
   const locationState = location.state as LocationState | null;
   const { user, loading: authLoading } = useAuth();
-  const { conversations, loading: chatsLoading, refetch } = useConversations();
+  const { conversations, loading: chatsLoading, error: chatsError, refetch } = useConversations();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -125,8 +125,21 @@ export function ChatsPage() {
         </div>
       )}
 
+      {/* Error */}
+      {!chatsLoading && chatsError && (
+        <div className="px-6 py-4">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="font-semibold text-foreground">Не удалось загрузить чаты</p>
+            <p className="mt-1 text-sm text-muted-foreground break-words">{chatsError}</p>
+            <div className="mt-3">
+              <Button variant="outline" onClick={() => refetch()}>Повторить</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Empty state */}
-      {!chatsLoading && filteredConversations.length === 0 && (
+      {!chatsLoading && !chatsError && filteredConversations.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center px-6">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
             <MessageCircle className="w-8 h-8 text-muted-foreground" />

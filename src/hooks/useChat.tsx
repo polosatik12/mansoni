@@ -31,8 +31,12 @@ export function useConversations() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchConversations = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
     if (!user) {
       setConversations([]);
       setLoading(false);
@@ -40,7 +44,7 @@ export function useConversations() {
     }
 
     try {
-      // Get conversations where user is participant
+      // Step 1: conversation IDs for current user
       const { data: participantData, error: partError } = await supabase
         .from("conversation_participants")
         .select("conversation_id")
@@ -48,58 +52,60 @@ export function useConversations() {
 
       if (partError) throw partError;
 
-      if (!participantData || participantData.length === 0) {
+      const conversationIds = (participantData || []).map((p) => p.conversation_id);
+      if (conversationIds.length === 0) {
         setConversations([]);
-        setLoading(false);
         return;
       }
 
-      const conversationIds = participantData.map((p) => p.conversation_id);
+      // Step 2: fetch conversations + participants + recent messages + unread in parallel
+      const [convRes, allPartRes, msgRes, unreadRes] = await Promise.all([
+        supabase
+          .from("conversations")
+          .select("*")
+          .in("id", conversationIds)
+          .order("updated_at", { ascending: false }),
+        supabase
+          .from("conversation_participants")
+          .select("conversation_id, user_id")
+          .in("conversation_id", conversationIds),
+        // NOTE: limit to keep this fast; we only need latest messages for list
+        supabase
+          .from("messages")
+          .select("*")
+          .in("conversation_id", conversationIds)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        supabase
+          .from("messages")
+          .select("conversation_id")
+          .in("conversation_id", conversationIds)
+          .neq("sender_id", user.id)
+          .eq("is_read", false)
+          .limit(1000),
+      ]);
 
-      // Get conversations with participants and profiles
-      const { data: convData, error: convError } = await supabase
-        .from("conversations")
-        .select("*")
-        .in("id", conversationIds)
-        .order("updated_at", { ascending: false });
+      if (convRes.error) throw convRes.error;
+      if (allPartRes.error) throw allPartRes.error;
+      if (msgRes.error) throw msgRes.error;
+      if (unreadRes.error) throw unreadRes.error;
 
-      if (convError) throw convError;
+      const convData = convRes.data || [];
+      const allParticipants = allPartRes.data || [];
+      const messages = msgRes.data || [];
+      const unreadData = unreadRes.data || [];
 
-      // Get all participants for these conversations
-      const { data: allParticipants, error: allPartError } = await supabase
-        .from("conversation_participants")
-        .select("conversation_id, user_id")
-        .in("conversation_id", conversationIds);
+      // Step 3: profiles for participants (can be empty for fresh mocks)
+      const userIds = [...new Set(allParticipants.map((p) => p.user_id))];
+      const profilesRes = userIds.length
+        ? await supabase
+            .from("profiles")
+            .select("user_id, display_name, avatar_url")
+            .in("user_id", userIds)
+        : { data: [], error: null };
 
-      if (allPartError) throw allPartError;
-
-      // Get profiles for all participants
-      const userIds = [...new Set(allParticipants?.map((p) => p.user_id) || [])];
-      const { data: profiles, error: profError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, avatar_url")
-        .in("user_id", userIds);
-
-      if (profError) throw profError;
-
-      // Get last message for each conversation
-      const { data: messages, error: msgError } = await supabase
-        .from("messages")
-        .select("*")
-        .in("conversation_id", conversationIds)
-        .order("created_at", { ascending: false });
-
-      if (msgError) throw msgError;
-
-      // Get unread counts
-      const { data: unreadData, error: unreadError } = await supabase
-        .from("messages")
-        .select("conversation_id")
-        .in("conversation_id", conversationIds)
-        .neq("sender_id", user.id)
-        .eq("is_read", false);
-
-      if (unreadError) throw unreadError;
+      if (profilesRes.error) throw profilesRes.error;
+      const profiles = profilesRes.data || [];
 
       const unreadCounts: Record<string, number> = {};
       unreadData?.forEach((msg) => {
@@ -130,6 +136,9 @@ export function useConversations() {
       setConversations(convs);
     } catch (error) {
       console.error("Error fetching conversations:", error);
+      const msg = error instanceof Error ? error.message : String(error);
+      setError(msg);
+      setConversations([]);
     } finally {
       setLoading(false);
     }
@@ -139,7 +148,7 @@ export function useConversations() {
     fetchConversations();
   }, [fetchConversations]);
 
-  return { conversations, loading, refetch: fetchConversations };
+  return { conversations, loading, error, refetch: fetchConversations };
 }
 
 export function useMessages(conversationId: string | null) {
