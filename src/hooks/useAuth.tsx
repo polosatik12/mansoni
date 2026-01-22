@@ -8,6 +8,8 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signInWithPhone: (phone: string) => Promise<{ error: Error | null }>;
+  verifyOtp: (phone: string, token: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -30,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           await supabase.functions.invoke("ensure-profile", {
             body: {
-              display_name: session.user.user_metadata?.full_name || session.user.email,
+              display_name: session.user.user_metadata?.full_name || session.user.phone || session.user.email,
             },
           });
         }
@@ -46,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         await supabase.functions.invoke("ensure-profile", {
           body: {
-            display_name: session.user.user_metadata?.full_name || session.user.email,
+            display_name: session.user.user_metadata?.full_name || session.user.phone || session.user.email,
           },
         });
       }
@@ -77,12 +79,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
+  const signInWithPhone = async (phone: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      phone,
+    });
+    return { error: error as Error | null };
+  };
+
+  const verifyOtp = async (phone: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({
+      phone,
+      token,
+      type: 'sms',
+    });
+    return { error: error as Error | null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signInWithPhone, verifyOtp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
