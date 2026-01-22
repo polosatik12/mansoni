@@ -33,6 +33,18 @@ export function useConversations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const withTimeout = async <T,>(label: string, p: PromiseLike<T>, ms = 12000): Promise<T> => {
+    let t: number | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      t = window.setTimeout(() => reject(new Error(`Timeout at step: ${label}`)), ms);
+    });
+    try {
+      return await Promise.race([p, timeout]);
+    } finally {
+      if (t) window.clearTimeout(t);
+    }
+  };
+
   const fetchConversations = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -44,11 +56,19 @@ export function useConversations() {
     }
 
     try {
+      console.log("[useConversations] start", { userId: user.id });
+
       // Step 1: conversation IDs for current user
-      const { data: participantData, error: partError } = await supabase
-        .from("conversation_participants")
-        .select("conversation_id")
-        .eq("user_id", user.id);
+      const { data: participantData, error: partError } = await withTimeout<{
+        data: { conversation_id: string }[] | null;
+        error: any;
+      }>(
+        "participants",
+        supabase
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("user_id", user.id)
+      );
 
       if (partError) throw partError;
 
@@ -59,31 +79,39 @@ export function useConversations() {
       }
 
       // Step 2: fetch conversations + participants + recent messages + unread in parallel
-      const [convRes, allPartRes, msgRes, unreadRes] = await Promise.all([
-        supabase
-          .from("conversations")
-          .select("*")
-          .in("id", conversationIds)
-          .order("updated_at", { ascending: false }),
-        supabase
-          .from("conversation_participants")
-          .select("conversation_id, user_id")
-          .in("conversation_id", conversationIds),
-        // NOTE: limit to keep this fast; we only need latest messages for list
-        supabase
-          .from("messages")
-          .select("*")
-          .in("conversation_id", conversationIds)
-          .order("created_at", { ascending: false })
-          .limit(200),
-        supabase
-          .from("messages")
-          .select("conversation_id")
-          .in("conversation_id", conversationIds)
-          .neq("sender_id", user.id)
-          .eq("is_read", false)
-          .limit(1000),
-      ]);
+      const [convRes, allPartRes, msgRes, unreadRes] = await withTimeout<[
+        { data: any[] | null; error: any },
+        { data: { conversation_id: string; user_id: string }[] | null; error: any },
+        { data: any[] | null; error: any },
+        { data: { conversation_id: string }[] | null; error: any }
+      ]>(
+        "batch",
+        Promise.all([
+          supabase
+            .from("conversations")
+            .select("*")
+            .in("id", conversationIds)
+            .order("updated_at", { ascending: false }),
+          supabase
+            .from("conversation_participants")
+            .select("conversation_id, user_id")
+            .in("conversation_id", conversationIds),
+          // NOTE: limit to keep this fast; we only need latest messages for list
+          supabase
+            .from("messages")
+            .select("*")
+            .in("conversation_id", conversationIds)
+            .order("created_at", { ascending: false })
+            .limit(200),
+          supabase
+            .from("messages")
+            .select("conversation_id")
+            .in("conversation_id", conversationIds)
+            .neq("sender_id", user.id)
+            .eq("is_read", false)
+            .limit(1000),
+        ])
+      );
 
       if (convRes.error) throw convRes.error;
       if (allPartRes.error) throw allPartRes.error;
@@ -97,12 +125,16 @@ export function useConversations() {
 
       // Step 3: profiles for participants (can be empty for fresh mocks)
       const userIds = [...new Set(allParticipants.map((p) => p.user_id))];
-      const profilesRes = userIds.length
-        ? await supabase
-            .from("profiles")
-            .select("user_id, display_name, avatar_url")
-            .in("user_id", userIds)
-        : { data: [], error: null };
+      const profilesRes: { data: { user_id: string; display_name: string | null; avatar_url: string | null }[] | null; error: any } =
+        userIds.length
+          ? await withTimeout(
+              "profiles",
+              supabase
+                .from("profiles")
+                .select("user_id, display_name, avatar_url")
+                .in("user_id", userIds)
+            )
+          : { data: [], error: null };
 
       if (profilesRes.error) throw profilesRes.error;
       const profiles = profilesRes.data || [];
@@ -134,6 +166,7 @@ export function useConversations() {
       });
 
       setConversations(convs);
+      console.log("[useConversations] done", { count: convs.length });
     } catch (error) {
       console.error("Error fetching conversations:", error);
       const msg = error instanceof Error ? error.message : String(error);
