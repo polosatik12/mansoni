@@ -262,10 +262,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setShowVideoRecorder(true)}>
-              <Circle className="w-5 h-5" />
-            </Button>
-
             <Button variant="ghost" size="icon">
               <Paperclip className="w-5 h-5" />
             </Button>
@@ -296,18 +292,28 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
                 <Send className="w-5 h-5" />
               </Button>
             ) : (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="rounded-full h-10 w-10"
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-                onMouseLeave={stopRecording}
-                onTouchStart={startRecording}
-                onTouchEnd={stopRecording}
-              >
-                <Mic className="w-5 h-5" />
-              </Button>
+              <>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full h-10 w-10"
+                  onClick={() => setShowVideoRecorder(true)}
+                >
+                  <Circle className="w-5 h-5" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full h-10 w-10"
+                  onMouseDown={startRecording}
+                  onMouseUp={stopRecording}
+                  onMouseLeave={stopRecording}
+                  onTouchStart={startRecording}
+                  onTouchEnd={stopRecording}
+                >
+                  <Mic className="w-5 h-5" />
+                </Button>
+              </>
             )}
           </div>
         )}
