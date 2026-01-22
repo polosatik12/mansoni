@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Phone, Video, MoreVertical, Send, Mic, Paperclip, Smile, X, Play, Pause } from "lucide-react";
+import { ArrowLeft, Phone, Video, MoreVertical, Send, Mic, Paperclip, Smile, X, Play, Pause, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import chatBackground from "@/assets/chat-background.jpg";
+import { VideoCircleRecorder } from "./VideoCircleRecorder";
+import { VideoCircleMessage } from "./VideoCircleMessage";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -21,6 +23,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -86,6 +89,19 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
     setPlayingVoice(playingVoice === messageId ? null : messageId);
   };
 
+  const handleVideoRecord = async (videoBlob: Blob, duration: number) => {
+    // Create a URL for the video (in a real app, upload to storage)
+    const videoUrl = URL.createObjectURL(videoBlob);
+    const formatDuration = (seconds: number) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, "0")}`;
+    };
+    // For now, send as placeholder text with video marker
+    await sendMessage(`🎬 Видео-кружок (${formatDuration(duration)})`);
+    setShowVideoRecorder(false);
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[60]">
       {/* Header - fixed */}
@@ -145,59 +161,76 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
         {messages.map((message) => {
           const isOwn = message.sender_id === user?.id;
           const isVoice = message.content.startsWith("🎤");
+          const isVideoCircle = message.content.startsWith("🎬");
 
           return (
             <div
               key={message.id}
               className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
             >
-              <div
-                className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                  isOwn
-                    ? "bg-primary text-primary-foreground rounded-br-md"
-                    : "bg-muted text-foreground rounded-bl-md"
-                }`}
-              >
-                {isVoice ? (
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={() => toggleVoicePlay(message.id)}
-                    >
-                      {playingVoice === message.id ? (
-                        <Pause className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <div className="flex-1">
-                      <div className="h-6 flex items-center gap-0.5">
-                        {Array.from({ length: 20 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`w-1 rounded-full ${
-                              isOwn ? "bg-primary-foreground/50" : "bg-foreground/30"
-                            }`}
-                            style={{ height: `${Math.random() * 16 + 8}px` }}
-                          />
-                        ))}
-                      </div>
+              {isVideoCircle ? (
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`w-36 h-36 rounded-full border-2 flex items-center justify-center ${
+                    isOwn ? "border-primary bg-primary/20" : "border-muted-foreground/30 bg-muted"
+                  }`}>
+                    <div className="text-center">
+                      <Circle className={`w-8 h-8 mx-auto mb-1 ${isOwn ? "text-primary" : "text-muted-foreground"}`} />
+                      <span className={`text-xs ${isOwn ? "text-primary" : "text-muted-foreground"}`}>
+                        {message.content.match(/\(([^)]+)\)/)?.[1] || "0:00"}
+                      </span>
                     </div>
-                    <span className={`text-xs ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                      {message.content.match(/\(([^)]+)\)/)?.[1] || "0:00"}
-                    </span>
                   </div>
-                ) : (
-                  <p className="text-sm">{message.content}</p>
-                )}
-                <div className={`flex items-center justify-end gap-1 mt-1 ${
-                  isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                }`}>
-                  <span className="text-[10px]">{formatMessageTime(message.created_at)}</span>
+                  <span className="text-[10px] text-muted-foreground">{formatMessageTime(message.created_at)}</span>
                 </div>
-              </div>
+              ) : (
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                    isOwn
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-muted text-foreground rounded-bl-md"
+                  }`}
+                >
+                  {isVoice ? (
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => toggleVoicePlay(message.id)}
+                      >
+                        {playingVoice === message.id ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <div className="flex-1">
+                        <div className="h-6 flex items-center gap-0.5">
+                          {Array.from({ length: 20 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-1 rounded-full ${
+                                isOwn ? "bg-primary-foreground/50" : "bg-foreground/30"
+                              }`}
+                              style={{ height: `${Math.random() * 16 + 8}px` }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <span className={`text-xs ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                        {message.content.match(/\(([^)]+)\)/)?.[1] || "0:00"}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-sm">{message.content}</p>
+                  )}
+                  <div className={`flex items-center justify-end gap-1 mt-1 ${
+                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                  }`}>
+                    <span className="text-[10px]">{formatMessageTime(message.created_at)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -229,6 +262,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
           </div>
         ) : (
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setShowVideoRecorder(true)}>
+              <Circle className="w-5 h-5" />
+            </Button>
+
             <Button variant="ghost" size="icon">
               <Paperclip className="w-5 h-5" />
             </Button>
@@ -275,6 +312,14 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
           </div>
         )}
       </div>
+
+      {/* Video Circle Recorder */}
+      {showVideoRecorder && (
+        <VideoCircleRecorder
+          onRecord={handleVideoRecord}
+          onCancel={() => setShowVideoRecorder(false)}
+        />
+      )}
     </div>
   );
 }
