@@ -139,22 +139,30 @@ export function UserProfilePage() {
     setIsCreatingChat(true);
 
     try {
-      // Check if the profile user exists in our database by username
-      const { data: targetProfile, error: profileError } = await withTimeout(
+      // Step 1: Find profile - use ilike for case-insensitive match
+      console.log("[Chat] Searching for profile:", user.name);
+      
+      const { data: targetProfiles, error: profileError } = await withTimeout(
         supabase
           .from("profiles")
           .select("user_id, display_name")
-          .eq("display_name", user.name)
-          .maybeSingle(),
+          .ilike("display_name", user.name),
         8000,
         "find_profile"
       );
 
       if (profileError) {
-        console.error("Error finding user:", profileError);
+        console.error("[Chat] Error finding user:", profileError);
         toast.error("Ошибка при поиске пользователя");
         return;
       }
+
+      console.log("[Chat] Found profiles:", targetProfiles);
+
+      // Get first match (exact or case-insensitive)
+      const targetProfile = targetProfiles?.find(
+        (p) => p.display_name?.toLowerCase() === user.name.toLowerCase()
+      ) || targetProfiles?.[0];
 
       if (!targetProfile) {
         toast.info("Этот пользователь ещё не зарегистрирован в системе", {
@@ -168,8 +176,10 @@ export function UserProfilePage() {
         return;
       }
 
-      // Check if conversation already exists between these users
-      const { data: existingConv } = await withTimeout(
+      console.log("[Chat] Target profile found:", targetProfile);
+
+      // Step 2: Check if conversation already exists
+      const { data: existingConv, error: myConvError } = await withTimeout(
         supabase
           .from("conversation_participants")
           .select("conversation_id")
@@ -178,12 +188,19 @@ export function UserProfilePage() {
         "list_my_conversations"
       );
 
-      let existingConversationId: string | null = null;
+      if (myConvError) {
+        console.error("[Chat] Error listing my conversations:", myConvError);
+        throw myConvError;
+      }
+
+      console.log("[Chat] My conversations:", existingConv?.length || 0);
+
+      let conversationId: string | null = null;
 
       if (existingConv && existingConv.length > 0) {
         const myConvIds = existingConv.map(c => c.conversation_id);
         
-        const { data: otherParticipant } = await withTimeout(
+        const { data: otherParticipant, error: sharedError } = await withTimeout(
           supabase
             .from("conversation_participants")
             .select("conversation_id")
@@ -193,16 +210,21 @@ export function UserProfilePage() {
           "find_shared_conversation"
         );
 
+        if (sharedError) {
+          console.error("[Chat] Error finding shared conversation:", sharedError);
+          throw sharedError;
+        }
+
         if (otherParticipant && otherParticipant.length > 0) {
-          existingConversationId = otherParticipant[0].conversation_id;
+          conversationId = otherParticipant[0].conversation_id;
+          console.log("[Chat] Found existing conversation:", conversationId);
         }
       }
 
-      if (existingConversationId) {
-        toast.success("Открываем чат");
-        navigate("/chats");
-      } else {
-        // Create new conversation
+      // Step 3: Create new conversation if none exists
+      if (!conversationId) {
+        console.log("[Chat] Creating new conversation...");
+        
         const { data: newConv, error: convError } = await withTimeout(
           supabase
             .from("conversations")
@@ -213,7 +235,12 @@ export function UserProfilePage() {
           "create_conversation"
         );
 
-        if (convError) throw convError;
+        if (convError) {
+          console.error("[Chat] Error creating conversation:", convError);
+          throw convError;
+        }
+
+        console.log("[Chat] Conversation created:", newConv.id);
 
         // Add both participants
         const { error: partError } = await withTimeout(
@@ -227,19 +254,34 @@ export function UserProfilePage() {
           "add_participants"
         );
 
-        if (partError) throw partError;
+        if (partError) {
+          console.error("[Chat] Error adding participants:", partError);
+          throw partError;
+        }
 
+        conversationId = newConv.id;
         toast.success("Чат создан!");
-        navigate("/chats");
+      } else {
+        toast.success("Открываем чат");
       }
+
+      // Step 4: Navigate with conversationId in state
+      console.log("[Chat] Navigating to chats with conversationId:", conversationId);
+      navigate("/chats", { 
+        state: { 
+          conversationId, 
+          chatName: targetProfile.display_name || "Пользователь" 
+        } 
+      });
+
     } catch (error) {
-      console.error("Error creating conversation:", error);
+      console.error("[Chat] Error:", error);
       const msg = error instanceof Error ? error.message : String(error);
       if (msg.startsWith("timeout:")) {
         const step = msg.replace("timeout:", "");
         toast.error("Превышено время ожидания", { description: `Шаг: ${step}` });
       } else {
-        toast.error("Не удалось создать чат");
+        toast.error("Не удалось создать чат", { description: msg });
       }
     } finally {
       setIsCreatingChat(false);
