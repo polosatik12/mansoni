@@ -536,6 +536,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_conversation_ids: {
+        Args: { user_uuid: string }
+        Returns: string[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
