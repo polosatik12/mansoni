@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import chatBackground from "@/assets/chat-background.jpg";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -119,8 +120,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
         </div>
       </div>
 
-      {/* Messages - scrollable */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 native-scroll">
+      {/* Messages - scrollable with Telegram-style background */}
+      <div 
+        className="flex-1 overflow-y-auto p-4 space-y-1 native-scroll"
+        style={{
+          backgroundImage: `url(${chatBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
         {loading && (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
