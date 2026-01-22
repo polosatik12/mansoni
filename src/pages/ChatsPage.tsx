@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Check, CheckCheck, LogIn, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,19 @@ import { useConversations, Conversation } from "@/hooks/useChat";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 
+interface LocationState {
+  conversationId?: string;
+  chatName?: string;
+}
+
 export function ChatsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as LocationState | null;
   const { user, loading: authLoading } = useAuth();
   const { conversations, loading: chatsLoading, refetch } = useConversations();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Get the other participant's info for display
@@ -22,6 +30,34 @@ export function ChatsPage() {
     const other = conv.participants.find((p) => p.user_id !== user?.id);
     return other?.profile || { display_name: "Пользователь", avatar_url: null };
   };
+
+  // Handle incoming conversationId from navigation state
+  useEffect(() => {
+    if (locationState?.conversationId) {
+      console.log("[ChatsPage] Received conversationId from navigation:", locationState.conversationId);
+      setPendingConversationId(locationState.conversationId);
+      // Clear the state to prevent re-opening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [locationState]);
+
+  // Auto-select conversation when data is loaded
+  useEffect(() => {
+    if (!pendingConversationId || chatsLoading || conversations.length === 0) return;
+    
+    const conv = conversations.find((c) => c.id === pendingConversationId);
+    if (conv) {
+      console.log("[ChatsPage] Auto-selecting conversation:", conv.id);
+      setSelectedConversation(conv);
+      setPendingConversationId(null);
+    } else {
+      console.log("[ChatsPage] Conversation not found in list, refetching...");
+      // Conversation might be newly created, refetch
+      refetch().then(() => {
+        setPendingConversationId(null);
+      });
+    }
+  }, [pendingConversationId, chatsLoading, conversations, refetch]);
 
   const formatTime = (dateStr: string) => {
     try {
