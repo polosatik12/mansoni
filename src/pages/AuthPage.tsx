@@ -10,7 +10,6 @@ import { toast } from "sonner";
 export function AuthPage() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [seeding, setSeeding] = useState(false);
   
@@ -64,40 +63,39 @@ export function AuthPage() {
     const password = phoneToPassword(phone);
 
     try {
-      if (isLogin) {
-        const { error } = await signIn(fakeEmail, password);
-        if (error) {
-          if (error.message.includes("Invalid login")) {
-            toast.error("Номер не зарегистрирован");
-          } else {
-            toast.error(error.message);
-          }
-        } else {
-          toast.success("Добро пожаловать!");
-          navigate("/");
-        }
-      } else {
-        const name = displayName || phone;
-        const { error } = await signUp(fakeEmail, password, name);
-        if (error) {
-          if (error.message.includes("already registered")) {
-            toast.error("Этот номер уже зарегистрирован");
-          } else {
-            toast.error(error.message);
-          }
-        } else {
-          // Update profile with phone number
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await supabase.from('profiles').update({ 
-              phone: phone,
-              display_name: name 
-            }).eq('user_id', user.id);
-          }
-          toast.success("Аккаунт создан!");
-          navigate("/");
-        }
+      // 1) Try sign in
+      const signInRes = await signIn(fakeEmail, password);
+      if (!signInRes.error) {
+        toast.success("Добро пожаловать!");
+        navigate("/");
+        return;
       }
+
+      // 2) If user doesn't exist, create account and auto-login
+      const msg = signInRes.error?.message ?? "";
+      if (!msg.toLowerCase().includes("invalid login")) {
+        toast.error(signInRes.error?.message ?? "Ошибка входа");
+        return;
+      }
+
+      const name = (displayName || phone).trim();
+      const signUpRes = await signUp(fakeEmail, password, name);
+      if (signUpRes.error) {
+        toast.error(signUpRes.error.message || "Ошибка регистрации");
+        return;
+      }
+
+      // Update profile with phone number (best-effort)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("profiles")
+          .update({ phone, display_name: name })
+          .eq("user_id", user.id);
+      }
+
+      toast.success("Аккаунт создан! Добро пожаловать!");
+      navigate("/");
     } finally {
       setLoading(false);
     }
@@ -106,25 +104,22 @@ export function AuthPage() {
   const createTestUser = async () => {
     setSeeding(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-test-user", {
-        body: {
-          email: "79991234567@phone.local",
-          password: "ph_79991234567_secure",
-          display_name: "Тестовый пользователь",
-        },
-      });
+      const testPhone = "+7 (999) 123-45-67";
+      const testEmail = phoneToEmail(testPhone);
+      const testPassword = phoneToPassword(testPhone);
 
-      if (error) {
-        toast.error(error.message);
-        return;
+      // Try to sign in; if doesn't exist, sign up
+      const si = await signIn(testEmail, testPassword);
+      if (si.error) {
+        const su = await signUp(testEmail, testPassword, "Тестовый пользователь");
+        if (su.error) {
+          toast.error(su.error.message);
+          return;
+        }
       }
 
-      toast.success("Тестовый пользователь готов", {
-        description: "Номер: +7 (999) 123-45-67",
-      });
-
-      setPhone("+7 (999) 123-45-67");
-      setIsLogin(true);
+      setPhone(testPhone);
+      toast.success("Тестовый пользователь готов", { description: testPhone });
     } finally {
       setSeeding(false);
     }
@@ -137,7 +132,7 @@ export function AuthPage() {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-lg font-semibold">{isLogin ? "Вход" : "Регистрация"}</h1>
+        <h1 className="text-lg font-semibold">Вход</h1>
       </div>
 
       <div className="flex-1 flex flex-col justify-center p-6">
@@ -148,30 +143,25 @@ export function AuthPage() {
               <span className="text-2xl font-bold text-primary-foreground">S</span>
             </div>
             <h2 className="text-2xl font-bold">
-              {isLogin ? "С возвращением!" : "Создать аккаунт"}
+              С возвращением!
             </h2>
             <p className="text-muted-foreground">
-              {isLogin 
-                ? "Войдите по номеру телефона" 
-                : "Зарегистрируйтесь по номеру телефона"
-              }
+              Войдите по номеру телефона
             </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Имя (необязательно)"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="pl-10 h-12 rounded-xl"
-                />
-              </div>
-            )}
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Имя (необязательно)"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="pl-10 h-12 rounded-xl"
+              />
+            </div>
 
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -190,19 +180,15 @@ export function AuthPage() {
               className="w-full h-12 rounded-xl text-base font-semibold"
               disabled={loading}
             >
-              {loading ? "Загрузка..." : isLogin ? "Войти" : "Создать аккаунт"}
+              {loading ? "Загрузка..." : "Войти"}
             </Button>
           </form>
 
           {/* Switch mode */}
           <div className="text-center space-y-3">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary font-medium"
-            >
-              {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войти"}
-            </button>
+            <p className="text-muted-foreground text-sm">
+              Если номера нет в системе — мы создадим аккаунт автоматически.
+            </p>
 
             {import.meta.env.DEV && (
               <div>
