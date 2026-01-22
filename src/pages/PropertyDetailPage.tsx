@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PropertyMap } from "@/components/maps/PropertyMap";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { Tables } from "@/integrations/supabase/types";
 
 type Property = Tables<"properties"> & {

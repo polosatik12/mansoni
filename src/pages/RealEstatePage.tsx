@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RealEstateFilters } from "@/components/realestate/RealEstateFilters";
 import { PropertyAssistant } from "@/components/realestate/PropertyAssistant";
 import { MortgageCalculator } from "@/components/realestate/MortgageCalculator";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { Tables } from "@/integrations/supabase/types";
 
 type Property = Tables<"properties"> & {
