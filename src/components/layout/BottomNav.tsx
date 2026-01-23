@@ -1,5 +1,5 @@
 import { useState, useEffect, forwardRef } from "react";
-import { Home, MessageCircle, Search, Heart, FileText, Headphones, User, LucideIcon, Play } from "lucide-react";
+import { Home, MessageCircle, Search, Heart, FileText, User, LucideIcon, Play } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
@@ -80,25 +80,49 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
     <nav 
       ref={ref as React.Ref<HTMLElement>}
       className={cn(
-        "fixed-nav fixed bottom-0 left-0 right-0 z-[100]",
+        "fixed bottom-0 left-0 right-0 z-[100]",
+        "touch-none select-none",
         isReelsPage 
           ? "bg-black/80 backdrop-blur-md border-t border-white/10" 
           : "bg-card border-t border-border",
-        keyboardOpen && "keyboard-open"
+        keyboardOpen && "pointer-events-none"
       )}
       style={{
-        // Inline styles for maximum stability on iOS
+        // Inline styles for maximum stability on all iPhones (11-17 Pro Max)
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
+        // Use padding-bottom for safe area instead of height adjustment
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        // GPU acceleration for smooth animations
         transform: keyboardOpen ? 'translate3d(0, 100%, 0)' : 'translate3d(0, 0, 0)',
         WebkitTransform: keyboardOpen ? 'translate3d(0, 100%, 0)' : 'translate3d(0, 0, 0)',
-        transition: 'transform 0.2s ease-out',
-        WebkitTransition: '-webkit-transform 0.2s ease-out',
+        transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        WebkitTransition: '-webkit-transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        // Prevent layout shift
+        willChange: 'transform',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+        // Ensure proper stacking
+        isolation: 'isolate',
       }}
     >
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto pb-[env(safe-area-inset-bottom)]">
+      {/* 
+        Inner container with fixed height - optimized for all iPhone models:
+        - iPhone 11/12/13/14/15/16/17: 390-430pt width
+        - iPhone Pro Max models: 428-440pt width  
+        - All have ~34pt safe area at bottom
+      */}
+      <div 
+        className="flex items-center justify-around max-w-lg mx-auto"
+        style={{
+          // Fixed height for nav content (excluding safe area)
+          height: '50px',
+          // Ensure touch targets are large enough (44pt minimum for iOS)
+          minHeight: '50px',
+        }}
+      >
         {navItems.map((item) => {
           // For action items (not real routes), use button
           if (item.isAction) {
@@ -106,14 +130,26 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
               <button
                 key={item.to}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
-                  isReelsPage ? "text-white/60 hover:text-white" : "text-muted-foreground hover:text-primary"
+                  "flex flex-col items-center justify-center flex-1 h-full",
+                  "transition-colors duration-150",
+                  "active:opacity-70",
+                  // Minimum touch target size for iOS (44x44pt)
+                  "min-w-[44px] min-h-[44px]",
+                  isReelsPage 
+                    ? "text-white/60 hover:text-white" 
+                    : "text-muted-foreground hover:text-foreground"
                 )}
+                style={{ 
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation',
+                }}
               >
-                <div className="relative">
-                  <item.icon className="w-6 h-6" />
+                <div className="relative flex items-center justify-center">
+                  <item.icon className="w-[22px] h-[22px]" strokeWidth={1.8} />
                 </div>
-                <span className="text-[11px] font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium mt-0.5 leading-tight">
+                  {item.label}
+                </span>
               </button>
             );
           }
@@ -124,29 +160,48 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
+                  "flex flex-col items-center justify-center flex-1 h-full",
+                  "transition-colors duration-150",
+                  "active:opacity-70",
+                  // Minimum touch target size for iOS (44x44pt)
+                  "min-w-[44px] min-h-[44px]",
                   isReelsPage
                     ? isActive ? "text-white" : "text-white/60"
                     : isActive ? "text-primary" : "text-muted-foreground"
                 )
               }
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation',
+              }}
             >
               {({ isActive }) => (
                 <>
-                  <div className="relative">
+                  <div className="relative flex items-center justify-center">
                     <item.icon
                       className={cn(
-                        "w-6 h-6 transition-all",
-                        isActive && "stroke-[2.5px]"
+                        "w-[22px] h-[22px] transition-all duration-150",
+                        isActive && "stroke-[2.2px]"
                       )}
+                      strokeWidth={isActive ? 2.2 : 1.8}
                     />
                     {item.hasBadge && unreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                      <span 
+                        className={cn(
+                          "absolute -top-1 -right-2.5",
+                          "bg-primary text-primary-foreground",
+                          "text-[10px] font-semibold leading-none",
+                          "rounded-full min-w-[16px] h-[16px]",
+                          "flex items-center justify-center px-1"
+                        )}
+                      >
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] font-medium">{item.label}</span>
+                  <span className="text-[10px] font-medium mt-0.5 leading-tight">
+                    {item.label}
+                  </span>
                 </>
               )}
             </NavLink>
