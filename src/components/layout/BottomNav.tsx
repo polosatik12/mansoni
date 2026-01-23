@@ -1,3 +1,4 @@
+import { useState, useEffect, forwardRef } from "react";
 import { Home, MessageCircle, Search, Heart, FileText, Headphones, User, LucideIcon, Play } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -35,9 +36,30 @@ const insuranceNavItems: NavItem[] = [
   { to: "/insurance/policies", icon: FileText, label: "Полисы" },
 ];
 
-export function BottomNav() {
+export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) {
   const location = useLocation();
   const { unreadCount } = useUnreadChats();
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  
+  // iOS Safari keyboard detection using visualViewport API
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    
+    const onResize = () => {
+      // Keyboard is considered open if viewport height is less than 75% of window height
+      const isKeyboardOpen = viewport.height < window.innerHeight * 0.75;
+      setKeyboardOpen(isKeyboardOpen);
+    };
+    
+    viewport.addEventListener('resize', onResize);
+    viewport.addEventListener('scroll', onResize);
+    
+    return () => {
+      viewport.removeEventListener('resize', onResize);
+      viewport.removeEventListener('scroll', onResize);
+    };
+  }, []);
   
   // Determine which nav items to show based on route
   const getNavItems = (): NavItem[] => {
@@ -56,20 +78,24 @@ export function BottomNav() {
 
   return (
     <nav 
+      ref={ref as React.Ref<HTMLElement>}
       className={cn(
-        "fixed-nav fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom",
+        "fixed-nav fixed bottom-0 left-0 right-0 z-[100]",
         isReelsPage 
           ? "bg-black/80 backdrop-blur-md border-t border-white/10" 
-          : "bg-card border-t border-border"
+          : "bg-card border-t border-border",
+        keyboardOpen && "keyboard-open"
       )}
       style={{
-        // Inline styles for maximum stability
+        // Inline styles for maximum stability on iOS
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        transform: 'translate3d(0, 0, 0)',
-        WebkitTransform: 'translate3d(0, 0, 0)',
+        transform: keyboardOpen ? 'translate3d(0, 100%, 0)' : 'translate3d(0, 0, 0)',
+        WebkitTransform: keyboardOpen ? 'translate3d(0, 100%, 0)' : 'translate3d(0, 0, 0)',
+        transition: 'transform 0.2s ease-out',
+        WebkitTransition: '-webkit-transform 0.2s ease-out',
       }}
     >
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto pb-[env(safe-area-inset-bottom)]">
@@ -129,4 +155,6 @@ export function BottomNav() {
       </div>
     </nav>
   );
-}
+});
+
+BottomNav.displayName = "BottomNav";
