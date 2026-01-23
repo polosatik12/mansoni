@@ -330,12 +330,14 @@ export function PostCard({
       </div>
 
       {/* Comments Sheet */}
-      <CommentsSheet
-        isOpen={showComments}
-        onClose={() => setShowComments(false)}
-        postId={author.username + "-post"}
-        commentsCount={comments}
-      />
+      {id && (
+        <CommentsSheet
+          isOpen={showComments}
+          onClose={() => setShowComments(false)}
+          postId={id}
+          commentsCount={comments}
+        />
+      )}
     </div>
   );
 }
