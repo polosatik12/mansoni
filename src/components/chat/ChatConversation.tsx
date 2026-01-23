@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useCalls } from "@/hooks/useCalls";
+import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import chatBackground from "@/assets/chat-background.jpg";
@@ -28,6 +29,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage } = useMessages(conversationId);
   const { activeCall, incomingCall, startCall, acceptCall, declineCall, endCall } = useCalls();
+  const { setIsChatOpen } = useChatOpen();
   
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -44,6 +46,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Mark chat as open/closed for hiding bottom nav
+  useEffect(() => {
+    setIsChatOpen(true);
+    return () => setIsChatOpen(false);
+  }, [setIsChatOpen]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

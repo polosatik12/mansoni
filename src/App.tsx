@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ChatOpenProvider } from "@/contexts/ChatOpenContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HomePage } from "@/pages/HomePage";
@@ -27,38 +28,40 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <CommandPalette />
-          <Routes>
-            {/* Public route - Auth page */}
-            <Route path="/auth" element={<AuthPage />} />
-            
-            {/* Protected routes - require authentication */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/explore/:postIndex" element={<ExploreFeedPage />} />
-                <Route path="/chats" element={<ChatsPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/profile/edit" element={<EditProfilePage />} />
-                <Route path="/user/:username" element={<UserProfilePage />} />
-                <Route path="/realestate" element={<RealEstatePage />} />
-                <Route path="/realestate/:id" element={<PropertyDetailPage />} />
-                <Route path="/insurance" element={<InsurancePage />} />
-                <Route path="/insurance/policies" element={<InsurancePoliciesPage />} />
-                <Route path="/reels" element={<ReelsPage />} />
+      <ChatOpenProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <CommandPalette />
+            <Routes>
+              {/* Public route - Auth page */}
+              <Route path="/auth" element={<AuthPage />} />
+              
+              {/* Protected routes - require authentication */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/explore/:postIndex" element={<ExploreFeedPage />} />
+                  <Route path="/chats" element={<ChatsPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/profile/edit" element={<EditProfilePage />} />
+                  <Route path="/user/:username" element={<UserProfilePage />} />
+                  <Route path="/realestate" element={<RealEstatePage />} />
+                  <Route path="/realestate/:id" element={<PropertyDetailPage />} />
+                  <Route path="/insurance" element={<InsurancePage />} />
+                  <Route path="/insurance/policies" element={<InsurancePoliciesPage />} />
+                  <Route path="/reels" element={<ReelsPage />} />
+                </Route>
               </Route>
-            </Route>
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+              
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ChatOpenProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
