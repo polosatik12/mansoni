@@ -7,8 +7,6 @@ import {
   Bookmark,
   Music2,
   Play,
-  ChevronUp,
-  ChevronDown,
   User,
   Loader2,
   Plus,
@@ -31,16 +29,15 @@ function formatNumber(num: number): string {
   return num.toString();
 }
 
-
 export function ReelsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { reels, loading, toggleLike, recordView } = useReels();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const viewedReels = useRef<Set<string>>(new Set());
 
   const currentReel = reels[currentIndex];
@@ -53,46 +50,59 @@ export function ReelsPage() {
     }
   }, [currentReel, recordView]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientY);
-  };
+  // Handle video play/pause based on current index
+  useEffect(() => {
+    videoRefs.current.forEach((video, index) => {
+      if (index === currentIndex && isPlaying) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }, [currentIndex, isPlaying]);
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStart === null) return;
-
-    const diff = touchStart - e.changedTouches[0].clientY;
-    const threshold = 50;
-
-    if (diff > threshold && currentIndex < reels.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else if (diff < -threshold && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+  // Handle scroll snap to detect current reel
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+    
+    const container = containerRef.current;
+    const scrollTop = container.scrollTop;
+    const itemHeight = container.clientHeight;
+    const newIndex = Math.round(scrollTop / itemHeight);
+    
+    if (newIndex !== currentIndex && newIndex >= 0 && newIndex < reels.length) {
+      setCurrentIndex(newIndex);
+      setIsPlaying(true);
     }
+  }, [currentIndex, reels.length]);
 
-    setTouchStart(null);
-  };
-
-  const handleLike = useCallback(() => {
+  const handleLike = useCallback((reelId: string) => {
     if (!user) {
       toast.error("Войдите, чтобы поставить лайк");
       navigate("/auth");
       return;
     }
-    if (currentReel) {
-      toggleLike(currentReel.id);
-    }
-  }, [user, currentReel, toggleLike, navigate]);
+    toggleLike(reelId);
+  }, [user, toggleLike, navigate]);
 
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-    }
   };
+
+  // Double tap to like
+  const lastTap = useRef<number>(0);
+  const handleDoubleTap = useCallback((reelId: string, isLiked: boolean) => {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      if (!isLiked) {
+        handleLike(reelId);
+        // Show heart animation
+      }
+    } else {
+      togglePlay();
+    }
+    lastTap.current = now;
+  }, [handleLike]);
 
   if (loading) {
     return (
@@ -126,136 +136,151 @@ export function ReelsPage() {
 
   return (
     <div
-      className="relative h-[calc(100vh-4rem)] bg-black overflow-hidden"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      ref={containerRef}
+      className="h-[calc(100vh-4rem)] bg-black overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+      onScroll={handleScroll}
+      style={{
+        scrollBehavior: 'smooth',
+        WebkitOverflowScrolling: 'touch',
+      }}
     >
-      {/* Video/Image Background */}
-      <div className="absolute inset-0" onClick={togglePlay}>
-        {currentReel.video_url.includes(".mp4") ||
-        currentReel.video_url.includes("video") ? (
-          <video
-            ref={videoRef}
-            src={currentReel.video_url}
-            className="w-full h-full object-cover"
-            loop
-            autoPlay={isPlaying}
-            muted
-            playsInline
-          />
-        ) : (
-          <img
-            src={currentReel.video_url}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        )}
-
-        {/* Play/Pause indicator */}
-        {!isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-black/40 flex items-center justify-center">
-              <Play className="w-10 h-10 text-white fill-white ml-1" />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Gradient overlays */}
-      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-
-
-      {/* Right sidebar actions */}
-      <div className="absolute right-3 bottom-8 flex flex-col items-center gap-4">
-        {/* Like */}
-        <button className="flex flex-col items-center gap-1" onClick={handleLike}>
-          <div
-            className={cn(
-              "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
-              currentReel.isLiked ? "bg-destructive/20" : "bg-white/10"
-            )}
-          >
-            <Heart
-              className={cn(
-                "w-7 h-7 transition-colors",
-                currentReel.isLiked ? "text-destructive fill-destructive" : "text-white"
-              )}
-            />
-          </div>
-          <span className="text-white text-xs font-medium">
-            {formatNumber(currentReel.likes_count)}
-          </span>
-        </button>
-
-        {/* Comments */}
-        <button className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-            <MessageCircle className="w-7 h-7 text-white" />
-          </div>
-          <span className="text-white text-xs font-medium">
-            {formatNumber(currentReel.comments_count)}
-          </span>
-        </button>
-
-        {/* Share */}
-        <button className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-            <Send className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-white text-xs font-medium">Отправить</span>
-        </button>
-
-        {/* Save */}
-        <button className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-            <Bookmark className="w-6 h-6 text-white" />
-          </div>
-        </button>
-
-        {/* Author avatar */}
-        <button
-          className="relative"
-          onClick={() => {
-            if (currentReel.author?.display_name) {
-              navigate(`/user/${currentReel.author.display_name}`);
-            }
-          }}
+      {reels.map((reel, index) => (
+        <div
+          key={reel.id}
+          className="relative h-[calc(100vh-4rem)] w-full snap-start snap-always"
+          onClick={() => handleDoubleTap(reel.id, reel.isLiked)}
         >
-          <Avatar className="w-11 h-11 border-2 border-white">
-            <AvatarImage src={currentReel.author?.avatar_url || undefined} />
-            <AvatarFallback className="bg-muted">
-              <User className="w-5 h-5" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground text-xs font-bold">+</span>
-          </div>
-        </button>
-      </div>
+          {/* Video/Image Background */}
+          <div className="absolute inset-0">
+            {reel.video_url.includes(".mp4") || reel.video_url.includes("video") ? (
+              <video
+                ref={(el) => {
+                  if (el) videoRefs.current.set(index, el);
+                }}
+                src={reel.video_url}
+                className="w-full h-full object-cover"
+                loop
+                muted
+                playsInline
+                preload="auto"
+              />
+            ) : (
+              <img
+                src={reel.video_url}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            )}
 
-      {/* Bottom info */}
-      <div className="absolute left-4 right-20 bottom-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-white font-semibold">
-            @{currentReel.author?.display_name || "user"}
-          </span>
-        </div>
-        {currentReel.description && (
-          <p className="text-white/90 text-sm line-clamp-2 mb-3">
-            {currentReel.description}
-          </p>
-        )}
-        {currentReel.music_title && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center animate-spin-slow">
-              <Music2 className="w-4 h-4 text-white" />
+            {/* Play/Pause indicator */}
+            {index === currentIndex && !isPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-20 h-20 rounded-full bg-black/40 flex items-center justify-center animate-scale-in">
+                  <Play className="w-10 h-10 text-white fill-white ml-1" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Gradient overlays */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+
+          {/* Right sidebar actions */}
+          <div className="absolute right-3 bottom-8 flex flex-col items-center gap-4 z-10">
+            {/* Like */}
+            <button 
+              className="flex flex-col items-center gap-1" 
+              onClick={(e) => { e.stopPropagation(); handleLike(reel.id); }}
+            >
+              <div
+                className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200",
+                  reel.isLiked ? "bg-destructive/20 scale-110" : "bg-white/10"
+                )}
+              >
+                <Heart
+                  className={cn(
+                    "w-7 h-7 transition-all duration-200",
+                    reel.isLiked ? "text-destructive fill-destructive scale-110" : "text-white"
+                  )}
+                />
+              </div>
+              <span className="text-white text-xs font-medium">
+                {formatNumber(reel.likes_count)}
+              </span>
+            </button>
+
+            {/* Comments */}
+            <button className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                <MessageCircle className="w-7 h-7 text-white" />
+              </div>
+              <span className="text-white text-xs font-medium">
+                {formatNumber(reel.comments_count)}
+              </span>
+            </button>
+
+            {/* Share */}
+            <button className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                <Send className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-white text-xs font-medium">Отправить</span>
+            </button>
+
+            {/* Save */}
+            <button className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                <Bookmark className="w-6 h-6 text-white" />
+              </div>
+            </button>
+
+            {/* Author avatar */}
+            <button
+              className="relative"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (reel.author?.display_name) {
+                  navigate(`/user/${reel.author.display_name}`);
+                }
+              }}
+            >
+              <Avatar className="w-11 h-11 border-2 border-white">
+                <AvatarImage src={reel.author?.avatar_url || undefined} />
+                <AvatarFallback className="bg-muted">
+                  <User className="w-5 h-5" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground text-xs font-bold">+</span>
+              </div>
+            </button>
+          </div>
+
+          {/* Bottom info */}
+          <div className="absolute left-4 right-20 bottom-4 z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-white font-semibold">
+                @{reel.author?.display_name || "user"}
+              </span>
             </div>
-            <span className="text-white/80 text-sm">{currentReel.music_title}</span>
+            {reel.description && (
+              <p className="text-white/90 text-sm line-clamp-2 mb-3">
+                {reel.description}
+              </p>
+            )}
+            {reel.music_title && (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center animate-spin-slow">
+                  <Music2 className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white/80 text-sm">{reel.music_title}</span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-
+        </div>
+      ))}
 
       <CreateReelSheet open={showCreateSheet} onOpenChange={setShowCreateSheet} />
     </div>
