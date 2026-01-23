@@ -25,7 +25,7 @@ export function CreateMenu({ isOpen, onClose, onSelect }: CreateMenuProps) {
       {/* Menu */}
       <div 
         className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl overflow-hidden animate-in slide-in-from-bottom duration-200"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}
+        style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom) + 16px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
