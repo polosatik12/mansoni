@@ -288,6 +288,141 @@ export type Database = {
           },
         ]
       }
+      post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_media: {
+        Row: {
+          created_at: string
+          id: string
+          media_type: string
+          media_url: string
+          post_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_type?: string
+          media_url: string
+          post_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_type?: string
+          media_url?: string
+          post_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_views: {
+        Row: {
+          id: string
+          post_id: string
+          session_id: string | null
+          user_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_views_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          author_id: string
+          comments_count: number
+          content: string | null
+          created_at: string
+          id: string
+          is_published: boolean
+          likes_count: number
+          shares_count: number
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          author_id: string
+          comments_count?: number
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          likes_count?: number
+          shares_count?: number
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          author_id?: string
+          comments_count?: number
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          likes_count?: number
+          shares_count?: number
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

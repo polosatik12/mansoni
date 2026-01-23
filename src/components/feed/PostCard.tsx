@@ -1,11 +1,13 @@
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { CommentsSheet } from "./CommentsSheet";
+import { usePostActions } from "@/hooks/usePosts";
 
 interface PostCardProps {
+  id?: string;
   author: {
     name: string;
     username: string;
@@ -19,11 +21,15 @@ interface PostCardProps {
   comments: number;
   shares: number;
   saves?: number;
+  views?: number;
   timeAgo: string;
   isRecommended?: boolean;
+  isLiked?: boolean;
+  onLikeChange?: (postId: string, liked: boolean) => void;
 }
 
 export function PostCard({
+  id,
   author,
   content,
   image,
@@ -32,30 +38,57 @@ export function PostCard({
   comments,
   shares,
   saves = 0,
+  views = 0,
   timeAgo,
   isRecommended = false,
+  isLiked = false,
+  onLikeChange,
 }: PostCardProps) {
   const navigate = useNavigate();
-  const [liked, setLiked] = useState(false);
+  const { recordView, toggleLike } = usePostActions();
+  const [liked, setLiked] = useState(isLiked);
   const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
+  const [viewCount] = useState(views);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [likeAnimation, setLikeAnimation] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; y: number }[]>([]);
   const heartIdRef = useRef(0);
+  const viewRecorded = useRef(false);
+
+  // Record view when post becomes visible
+  useEffect(() => {
+    if (id && !viewRecorded.current) {
+      viewRecorded.current = true;
+      recordView(id);
+    }
+  }, [id, recordView]);
 
   const allImages = images || (image ? [image] : []);
   const hasMultipleImages = allImages.length > 1;
 
-  const handleLike = () => {
+  const handleLike = async () => {
     if (!liked) {
       setLikeAnimation(true);
       setTimeout(() => setLikeAnimation(false), 300);
     }
-    setLiked(!liked);
+    
+    const newLiked = !liked;
+    setLiked(newLiked);
     setLikeCount(liked ? likeCount - 1 : likeCount + 1);
+    
+    if (id) {
+      const { error } = await toggleLike(id, liked);
+      if (error) {
+        // Revert on error
+        setLiked(!newLiked);
+        setLikeCount(newLiked ? likeCount - 1 : likeCount + 1);
+      } else {
+        onLikeChange?.(id, newLiked);
+      }
+    }
   };
 
   const handleDoubleTap = (e: React.MouseEvent) => {
@@ -240,13 +273,21 @@ export function PostCard({
             <span className="text-sm">{formatNumber(shares)}</span>
           </button>
         </div>
-        <button
-          onClick={() => setSaved(!saved)}
-          className="flex items-center gap-1.5 text-foreground"
-        >
-          <Bookmark className={cn("w-6 h-6", saved && "fill-current")} />
-          <span className="text-sm">{formatNumber(saves)}</span>
-        </button>
+        <div className="flex items-center gap-4">
+          {viewCount > 0 && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Eye className="w-5 h-5" />
+              <span className="text-sm">{formatNumber(viewCount)}</span>
+            </div>
+          )}
+          <button
+            onClick={() => setSaved(!saved)}
+            className="flex items-center gap-1.5 text-foreground"
+          >
+            <Bookmark className={cn("w-6 h-6", saved && "fill-current")} />
+            <span className="text-sm">{formatNumber(saves)}</span>
+          </button>
+        </div>
       </div>
 
       {/* Caption */}
