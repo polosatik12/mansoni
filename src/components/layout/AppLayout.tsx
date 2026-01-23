@@ -10,7 +10,13 @@ export function AppLayout() {
   const isReelsPage = location.pathname === "/reels";
 
   return (
-    <div className="h-full flex flex-col bg-background safe-area-top safe-area-left safe-area-right">
+    <div 
+      className="h-full flex flex-col bg-background safe-area-top safe-area-left safe-area-right"
+      style={{ 
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
       <ScrollContainerProvider value={mainRef}>
         <main 
           ref={mainRef}
@@ -18,6 +24,11 @@ export function AppLayout() {
             "flex-1 overflow-y-auto overflow-x-hidden max-w-lg mx-auto w-full native-scroll",
             !isReelsPage && "pb-20"
           )}
+          style={{
+            // Prevent scroll from affecting fixed elements
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+          }}
         >
           <Outlet />
         </main>
