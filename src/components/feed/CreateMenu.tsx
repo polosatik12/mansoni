@@ -60,15 +60,6 @@ export function CreateMenu({ isOpen, onClose, onSelect }: CreateMenuProps) {
           })}
         </div>
 
-        {/* Cancel */}
-        <div className="px-4 pb-6">
-          <button
-            onClick={onClose}
-            className="w-full py-4 rounded-2xl bg-muted text-[17px] font-medium text-foreground active:opacity-70 transition-opacity"
-          >
-            Отмена
-          </button>
-        </div>
       </div>
     </div>
   );
