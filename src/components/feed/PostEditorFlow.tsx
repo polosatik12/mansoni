@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, ChevronLeft, ChevronRight, Camera, Music, Type, Layers, Sparkles, SlidersHorizontal, Users, MapPin, MessageSquare, HelpCircle, Play, Eye } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, ChevronLeft, ChevronRight, Music, Type, Layers, Sparkles, SlidersHorizontal, Users, MapPin, MessageSquare, HelpCircle, Eye, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -10,8 +10,8 @@ interface PostEditorFlowProps {
   onClose: () => void;
 }
 
-// Mock gallery images
-const galleryImages = [
+// Mock gallery images (fallback when no device images)
+const mockGalleryImages = [
   { id: "1", src: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&q=80", isVideo: true, views: 175 },
   { id: "2", src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&q=80" },
   { id: "3", src: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=300&q=80" },
@@ -46,6 +46,21 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [caption, setCaption] = useState("");
   const [aiLabel, setAiLabel] = useState(false);
+  const [deviceImages, setDeviceImages] = useState<{ id: string; src: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newImages = files.map((file, index) => ({
+      id: `device-${Date.now()}-${index}`,
+      src: URL.createObjectURL(file),
+    }));
+    setDeviceImages(prev => [...newImages, ...prev]);
+  };
+
+  const allImages = deviceImages.length > 0 
+    ? deviceImages 
+    : mockGalleryImages;
 
   const handleSelectImage = (src: string) => {
     if (selectedImages.includes(src)) {
@@ -83,6 +98,9 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
     setStep("gallery");
     setSelectedImages([]);
     setCaption("");
+    // Clean up object URLs
+    deviceImages.forEach(img => URL.revokeObjectURL(img.src));
+    setDeviceImages([]);
     onClose();
   };
 
@@ -90,6 +108,16 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-background">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+
       {/* Step 1: Gallery */}
       {step === "gallery" && (
         <>
@@ -142,25 +170,27 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
               Недавние
               <ChevronRight className="w-5 h-5" />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-full">
-              <div className="w-5 h-5 rounded border-2 border-foreground flex items-center justify-center">
-                {selectedImages.length > 0 && (
-                  <span className="text-xs font-bold">{selectedImages.length}</span>
-                )}
-              </div>
-              <span className="text-sm font-medium">Выбрать</span>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="text-primary text-sm font-semibold"
+            >
+              Выбрать из галереи
             </button>
           </div>
 
           {/* Gallery Grid */}
           <div className="flex-1 overflow-y-auto">
             <div className="grid grid-cols-4 gap-[2px]">
-              {/* Camera button */}
-              <button className="aspect-square bg-muted flex items-center justify-center">
-                <Camera className="w-8 h-8 text-muted-foreground" />
+              {/* Add from gallery button */}
+              <button 
+                className="aspect-square bg-muted flex flex-col items-center justify-center gap-1"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">Галерея</span>
               </button>
               
-              {galleryImages.map((img) => (
+              {allImages.map((img) => (
                 <button
                   key={img.id}
                   onClick={() => handleSelectImage(img.src)}
@@ -171,10 +201,12 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
                     alt="" 
                     className="w-full h-full object-cover"
                   />
-                  {img.isVideo && (
+                  {'isVideo' in img && (img as { isVideo?: boolean }).isVideo && (
                     <div className="absolute bottom-1 left-1 flex items-center gap-1">
                       <Eye className="w-3 h-3 text-white" />
-                      <span className="text-white text-xs">{img.views}</span>
+                      <span className="text-white text-xs">
+                        {'views' in img ? String((img as { views?: number }).views) : ''}
+                      </span>
                     </div>
                   )}
                   {selectedImages.includes(img.src) && (
