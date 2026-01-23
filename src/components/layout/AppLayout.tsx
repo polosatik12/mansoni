@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useRef } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { ScrollContainerProvider } from "@/contexts/ScrollContainerContext";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
-import { useCalls } from "@/hooks/useCalls";
+import { useCallsContext } from "@/contexts/CallsContext";
+import { useAuth } from "@/hooks/useAuth";
 import { IncomingCallSheet } from "@/components/chat/IncomingCallSheet";
 import { CallScreen } from "@/components/chat/CallScreen";
 import { cn } from "@/lib/utils";
@@ -11,16 +12,14 @@ import { cn } from "@/lib/utils";
 export function AppLayout() {
   const mainRef = useRef<HTMLElement>(null);
   const location = useLocation();
-  const navigate = useNavigate();
   const { isChatOpen } = useChatOpen();
+  const { user } = useAuth();
   const isReelsPage = location.pathname === "/reels";
   
-  const { activeCall, incomingCall, acceptCall, declineCall, endCall } = useCalls();
-  const [isCallInitiator, setIsCallInitiator] = useState(false);
+  const { activeCall, incomingCall, acceptCall, declineCall, endCall } = useCallsContext();
 
   const handleAcceptCall = async () => {
     if (incomingCall) {
-      setIsCallInitiator(false);
       await acceptCall(incomingCall.id);
     }
   };
@@ -36,6 +35,9 @@ export function AppLayout() {
       await endCall(activeCall.id);
     }
   };
+
+  // Determine if current user is the call initiator
+  const isCallInitiator = activeCall ? activeCall.caller_id === user?.id : false;
 
   return (
     <div 
@@ -73,8 +75,8 @@ export function AppLayout() {
         />
       )}
 
-      {/* Global Active Call Handler - shows on any page when call is active but not in chat */}
-      {activeCall && !isChatOpen && ["calling", "ringing", "active"].includes(activeCall.status) && (
+      {/* Global Active Call Handler - shows on any page when call is active */}
+      {activeCall && ["calling", "ringing", "active"].includes(activeCall.status) && (
         <CallScreen
           call={activeCall}
           isInitiator={isCallInitiator}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -52,6 +52,7 @@ export function useCalls() {
     clearMissedCallTimer();
     
     missedCallTimerRef.current = setTimeout(async () => {
+      console.log("[Calls] Missed call timer expired for:", callId);
       try {
         // Check if call is still pending
         const { data } = await supabase
@@ -72,7 +73,7 @@ export function useCalls() {
           setActiveCall(null);
         }
       } catch (error) {
-        console.error("Error marking call as missed:", error);
+        console.error("[Calls] Error marking call as missed:", error);
       }
     }, CALL_TIMEOUT_MS);
   }, [clearMissedCallTimer]);
@@ -84,9 +85,8 @@ export function useCalls() {
     let channel: RealtimeChannel;
 
     const setupSubscription = () => {
-      // IMPORTANT: Use a user-scoped channel name so multiple mounted instances
-      // (e.g. AppLayout + ChatConversation) don't conflict and accidentally
-      // remove each other's subscriptions.
+      console.log("[Calls] Setting up realtime subscription for user:", user.id);
+      
       channel = supabase
         .channel(`calls-realtime:${user.id}`)
         // Listen for calls where user is the callee (incoming calls)
@@ -99,6 +99,8 @@ export function useCalls() {
             filter: `callee_id=eq.${user.id}`,
           },
           async (payload) => {
+            console.log("[Calls] Received callee event:", payload.eventType, payload.new);
+            
             if (payload.eventType === "INSERT") {
               const call = payload.new as Call;
               if (call.status === "calling") {
@@ -108,6 +110,8 @@ export function useCalls() {
                   .select("display_name, avatar_url")
                   .eq("user_id", call.caller_id)
                   .single();
+
+                console.log("[Calls] Incoming call from:", profile?.display_name);
 
                 setIncomingCall({
                   ...call,
@@ -153,18 +157,21 @@ export function useCalls() {
             filter: `caller_id=eq.${user.id}`,
           },
           (payload) => {
+            console.log("[Calls] Received caller event:", payload.eventType, payload.new);
             const call = payload.new as Call;
             
             if (call.status === "ended" || call.status === "declined" || call.status === "missed") {
               setActiveCall(null);
               clearMissedCallTimer();
             } else if (call.status === "ringing") {
+              console.log("[Calls] Call is now ringing");
               // Update status to ringing for initiator
               setActiveCall(prev => prev ? {
                 ...prev,
                 status: "ringing" as CallStatus,
               } : null);
             } else if (call.status === "active") {
+              console.log("[Calls] Call is now active");
               // Update status to active for initiator
               setActiveCall(prev => prev ? {
                 ...prev,
@@ -175,12 +182,15 @@ export function useCalls() {
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log("[Calls] Subscription status:", status);
+        });
     };
 
     setupSubscription();
 
     return () => {
+      console.log("[Calls] Cleaning up subscription");
       if (channel) {
         supabase.removeChannel(channel);
       }
@@ -191,6 +201,8 @@ export function useCalls() {
   const startCall = useCallback(
     async (conversationId: string, calleeId: string, callType: CallType): Promise<Call | null> => {
       if (!user) return null;
+
+      console.log("[Calls] Starting call:", { conversationId, calleeId, callType });
 
       try {
         const { data, error } = await supabase
@@ -221,6 +233,7 @@ export function useCalls() {
           callee_profile: profile || undefined,
         };
 
+        console.log("[Calls] Call created:", call.id);
         setActiveCall(call);
         
         // Start missed call timer
@@ -228,7 +241,7 @@ export function useCalls() {
         
         return call;
       } catch (error) {
-        console.error("Error starting call:", error);
+        console.error("[Calls] Error starting call:", error);
         return null;
       }
     },
@@ -238,6 +251,8 @@ export function useCalls() {
   const acceptCall = useCallback(
     async (callId: string) => {
       if (!user) return;
+
+      console.log("[Calls] Accepting call:", callId);
 
       try {
         await supabase
@@ -259,7 +274,7 @@ export function useCalls() {
         
         clearMissedCallTimer();
       } catch (error) {
-        console.error("Error accepting call:", error);
+        console.error("[Calls] Error accepting call:", error);
       }
     },
     [user, incomingCall, clearMissedCallTimer]
@@ -268,6 +283,8 @@ export function useCalls() {
   const declineCall = useCallback(
     async (callId: string) => {
       if (!user) return;
+
+      console.log("[Calls] Declining call:", callId);
 
       try {
         await supabase
@@ -281,7 +298,7 @@ export function useCalls() {
         setIncomingCall(null);
         clearMissedCallTimer();
       } catch (error) {
-        console.error("Error declining call:", error);
+        console.error("[Calls] Error declining call:", error);
       }
     },
     [user, clearMissedCallTimer]
@@ -290,6 +307,8 @@ export function useCalls() {
   const endCall = useCallback(
     async (callId: string) => {
       if (!user) return;
+
+      console.log("[Calls] Ending call:", callId);
 
       try {
         await supabase
@@ -303,7 +322,7 @@ export function useCalls() {
         setActiveCall(null);
         clearMissedCallTimer();
       } catch (error) {
-        console.error("Error ending call:", error);
+        console.error("[Calls] Error ending call:", error);
       }
     },
     [user, clearMissedCallTimer]
