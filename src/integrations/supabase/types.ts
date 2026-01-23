@@ -392,6 +392,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          actor_id: string
+          comment_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          post_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          comment_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          post_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          comment_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          post_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_likes: {
         Row: {
           created_at: string
@@ -534,6 +570,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          last_seen_at: string | null
           phone: string | null
           updated_at: string
           user_id: string
@@ -546,6 +583,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          last_seen_at?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -558,6 +596,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          last_seen_at?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -757,6 +796,106 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reel_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          reel_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          reel_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reel_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reel_likes_reel_id_fkey"
+            columns: ["reel_id"]
+            isOneToOne: false
+            referencedRelation: "reels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reel_views: {
+        Row: {
+          id: string
+          reel_id: string
+          session_id: string | null
+          user_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          reel_id: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          reel_id?: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reel_views_reel_id_fkey"
+            columns: ["reel_id"]
+            isOneToOne: false
+            referencedRelation: "reels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reels: {
+        Row: {
+          author_id: string
+          comments_count: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          likes_count: number | null
+          music_title: string | null
+          thumbnail_url: string | null
+          video_url: string
+          views_count: number | null
+        }
+        Insert: {
+          author_id: string
+          comments_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          likes_count?: number | null
+          music_title?: string | null
+          thumbnail_url?: string | null
+          video_url: string
+          views_count?: number | null
+        }
+        Update: {
+          author_id?: string
+          comments_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          likes_count?: number | null
+          music_title?: string | null
+          thumbnail_url?: string | null
+          video_url?: string
+          views_count?: number | null
+        }
+        Relationships: []
       }
       saved_posts: {
         Row: {
