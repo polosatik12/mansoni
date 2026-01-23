@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Phone, Video, MoreVertical, Send, Mic, Paperclip, Clock, X, Play, Pause } from "lucide-react";
+import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, Clock, X, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMessages } from "@/hooks/useChat";
@@ -248,9 +248,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           </Button>
           <Button variant="ghost" size="icon" onClick={handleStartVideoCall}>
             <Video className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="w-5 h-5" />
           </Button>
         </div>
       </div>
