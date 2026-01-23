@@ -109,8 +109,11 @@ export function ProfilePage() {
       {/* Profile Info Row */}
       <div className="px-4 py-4">
         <div className="flex items-start gap-4">
-          {/* Avatar with story ring */}
-          <div className="relative">
+          {/* Avatar with story ring - clickable to open create menu */}
+          <button 
+            className="relative cursor-pointer"
+            onClick={() => setShowCreateMenu(true)}
+          >
             <div className="w-20 h-20 rounded-full p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400">
               <div className="w-full h-full rounded-full bg-background p-[2px]">
                 <Avatar className="w-full h-full">
@@ -125,7 +128,7 @@ export function ProfilePage() {
             <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-card flex items-center justify-center">
               <Plus className="w-4 h-4 text-primary-foreground" />
             </div>
-          </div>
+          </button>
 
           {/* Stats */}
           <div className="flex-1">
