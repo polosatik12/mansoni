@@ -29,6 +29,9 @@ export interface ChatMessage {
   content: string;
   is_read: boolean;
   created_at: string;
+  media_url?: string | null;
+  media_type?: string | null; // 'voice', 'video_circle', 'image'
+  duration_seconds?: number | null;
 }
 
 export interface Conversation {
@@ -295,7 +298,52 @@ export function useMessages(conversationId: string | null) {
     }
   };
 
-  return { messages, loading, sendMessage, refetch: fetchMessages };
+  const sendMediaMessage = async (file: File, mediaType: 'voice' | 'video_circle' | 'image', durationSeconds?: number) => {
+    if (!conversationId || !user) return { error: 'Not authenticated' };
+
+    try {
+      // Upload to storage
+      const fileExt = file.name.split('.').pop() || 'webm';
+      const fileName = `${user.id}/${conversationId}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-media')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-media')
+        .getPublicUrl(fileName);
+
+      // Insert message with media
+      const { error: msgError } = await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content: mediaType === 'voice' ? '🎤 Голосовое сообщение' : 
+                 mediaType === 'video_circle' ? '🎬 Видео-кружок' : '📷 Изображение',
+        media_url: publicUrl,
+        media_type: mediaType,
+        duration_seconds: durationSeconds || null
+      });
+
+      if (msgError) throw msgError;
+
+      // Update conversation updated_at
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+
+      return { error: null };
+    } catch (error) {
+      console.error("Error sending media message:", error);
+      return { error: error instanceof Error ? error.message : 'Failed to send media' };
+    }
+  };
+
+  return { messages, loading, sendMessage, sendMediaMessage, refetch: fetchMessages };
 }
 
 export function useCreateConversation() {

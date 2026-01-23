@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface Post {
   id: string;
@@ -177,7 +178,53 @@ export function usePosts() {
     fetchPosts();
   }, [fetchPosts]);
 
-  return { posts, loading, error, refetch: fetchPosts };
+  // Subscribe to realtime updates for posts
+  useEffect(() => {
+    let channel: RealtimeChannel;
+
+    const setupSubscription = () => {
+      channel = supabase
+        .channel('posts-realtime')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'posts' },
+          () => {
+            fetchPosts();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'posts' },
+          (payload) => {
+            const updatedPost = payload.new as any;
+            setPosts(prev => prev.map(post => 
+              post.id === updatedPost.id 
+                ? { ...post, ...updatedPost }
+                : post
+            ));
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'posts' },
+          (payload) => {
+            const deletedPost = payload.old as any;
+            setPosts(prev => prev.filter(post => post.id !== deletedPost.id));
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [fetchPosts]);
+
+  return { posts, loading, error, refetch: fetchPosts, setPosts };
 }
 
 export function usePostActions() {

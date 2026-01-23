@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Phone, Video, MoreVertical, Send, Mic, Paperclip, Smile, X, Play, Pause, Circle } from "lucide-react";
+import { ArrowLeft, Phone, Video, MoreVertical, Send, Mic, Paperclip, Smile, X, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMessages } from "@/hooks/useChat";
@@ -18,7 +18,7 @@ interface ChatConversationProps {
 
 export function ChatConversation({ conversationId, chatName, chatAvatar, onBack }: ChatConversationProps) {
   const { user } = useAuth();
-  const { messages, loading, sendMessage } = useMessages(conversationId);
+  const { messages, loading, sendMessage, sendMediaMessage } = useMessages(conversationId);
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -26,6 +26,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,36 +72,79 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
     setInputText("");
   };
 
-  const startRecording = () => {
-    setIsRecording(true);
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+    }
   };
 
   const stopRecording = async () => {
-    if (recordingTime > 0) {
-      // For now, just send a text placeholder for voice messages
-      await sendMessage(`🎤 Голосовое сообщение (${formatTime(recordingTime)})`);
-    }
-    setIsRecording(false);
+    if (!mediaRecorderRef.current || !isRecording) return;
+
+    const duration = recordingTime;
+    
+    return new Promise<void>((resolve) => {
+      mediaRecorderRef.current!.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        if (duration > 0) {
+          const file = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+          await sendMediaMessage(file, 'voice', duration);
+        }
+
+        // Stop all tracks
+        mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+        resolve();
+      };
+
+      mediaRecorderRef.current!.stop();
+      setIsRecording(false);
+    });
   };
 
   const cancelRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current = null;
+    }
+    audioChunksRef.current = [];
     setIsRecording(false);
   };
 
-  const toggleVoicePlay = (messageId: string) => {
-    setPlayingVoice(playingVoice === messageId ? null : messageId);
+  const toggleVoicePlay = (messageId: string, mediaUrl?: string) => {
+    if (playingVoice === messageId) {
+      audioRef.current?.pause();
+      setPlayingVoice(null);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      if (mediaUrl) {
+        audioRef.current = new Audio(mediaUrl);
+        audioRef.current.onended = () => setPlayingVoice(null);
+        audioRef.current.play();
+        setPlayingVoice(messageId);
+      }
+    }
   };
 
   const handleVideoRecord = async (videoBlob: Blob, duration: number) => {
-    // Create a URL for the video (in a real app, upload to storage)
-    const videoUrl = URL.createObjectURL(videoBlob);
-    const formatDuration = (seconds: number) => {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${secs.toString().padStart(2, "0")}`;
-    };
-    // For now, send as placeholder text with video marker
-    await sendMessage(`🎬 Видео-кружок (${formatDuration(duration)})`);
+    const file = new File([videoBlob], `video_circle_${Date.now()}.webm`, { type: 'video/webm' });
+    await sendMediaMessage(file, 'video_circle', duration);
     setShowVideoRecorder(false);
   };
 
@@ -160,27 +206,38 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
 
         {messages.map((message) => {
           const isOwn = message.sender_id === user?.id;
-          const isVoice = message.content.startsWith("🎤");
-          const isVideoCircle = message.content.startsWith("🎬");
+          const isVoice = message.media_type === 'voice';
+          const isVideoCircle = message.media_type === 'video_circle';
+          const isImage = message.media_type === 'image';
 
           return (
             <div
               key={message.id}
               className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
             >
-              {isVideoCircle ? (
+              {isVideoCircle && message.media_url ? (
                 <div className="flex flex-col items-center gap-1">
-                  <div className={`w-36 h-36 rounded-full border-2 flex items-center justify-center ${
-                    isOwn ? "border-primary bg-primary/20" : "border-muted-foreground/30 bg-muted"
-                  }`}>
-                    <div className="text-center">
-                      <Circle className={`w-8 h-8 mx-auto mb-1 ${isOwn ? "text-primary" : "text-muted-foreground"}`} />
-                      <span className={`text-xs ${isOwn ? "text-primary" : "text-muted-foreground"}`}>
-                        {message.content.match(/\(([^)]+)\)/)?.[1] || "0:00"}
-                      </span>
-                    </div>
-                  </div>
+                  <VideoCircleMessage
+                    videoUrl={message.media_url}
+                    duration={String(message.duration_seconds || 0)}
+                    isOwn={isOwn}
+                  />
                   <span className="text-[10px] text-muted-foreground">{formatMessageTime(message.created_at)}</span>
+                </div>
+              ) : isImage && message.media_url ? (
+                <div className={`max-w-[75%] rounded-2xl overflow-hidden ${
+                  isOwn ? "rounded-br-md" : "rounded-bl-md"
+                }`}>
+                  <img 
+                    src={message.media_url} 
+                    alt="Изображение" 
+                    className="max-w-full h-auto"
+                  />
+                  <div className={`px-3 py-1 ${isOwn ? "bg-primary" : "bg-muted"}`}>
+                    <span className={`text-[10px] ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                      {formatMessageTime(message.created_at)}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div
@@ -196,7 +253,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 shrink-0"
-                        onClick={() => toggleVoicePlay(message.id)}
+                        onClick={() => toggleVoicePlay(message.id, message.media_url || undefined)}
                       >
                         {playingVoice === message.id ? (
                           <Pause className="w-4 h-4" />
@@ -218,7 +275,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
                         </div>
                       </div>
                       <span className={`text-xs ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                        {message.content.match(/\(([^)]+)\)/)?.[1] || "0:00"}
+                        {message.duration_seconds ? formatTime(message.duration_seconds) : "0:00"}
                       </span>
                     </div>
                   ) : (
@@ -299,7 +356,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
                   className="rounded-full h-10 w-10"
                   onClick={() => setShowVideoRecorder(true)}
                 >
-                  <Circle className="w-5 h-5" />
+                  <Video className="w-5 h-5" />
                 </Button>
                 <Button
                   size="icon"
@@ -307,7 +364,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
                   className="rounded-full h-10 w-10"
                   onMouseDown={startRecording}
                   onMouseUp={stopRecording}
-                  onMouseLeave={stopRecording}
+                  onMouseLeave={() => isRecording && cancelRecording()}
                   onTouchStart={startRecording}
                   onTouchEnd={stopRecording}
                 >
