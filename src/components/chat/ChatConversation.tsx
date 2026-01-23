@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Phone, Video, MoreVertical, Send, Mic, Paperclip, Smile, X, Play, Pause } from "lucide-react";
+import { ArrowLeft, Phone, Video, MoreVertical, Send, Mic, Paperclip, Clock, X, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMessages } from "@/hooks/useChat";
@@ -379,88 +379,76 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input - fixed */}
-      <div className="flex-shrink-0 border-t border-border bg-card p-3 safe-area-bottom">
+      {/* Input - Telegram style */}
+      <div className="flex-shrink-0 p-2 safe-area-bottom">
         {isRecording ? (
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={cancelRecording}>
-              <X className="w-5 h-5 text-destructive" />
-            </Button>
+          <div className="flex items-center gap-3 px-2">
+            <button 
+              onClick={cancelRecording}
+              className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shrink-0"
+            >
+              <X className="w-5 h-5 text-white/80" />
+            </button>
             
-            <div className="flex-1 flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-destructive animate-pulse" />
-              <span className="text-sm text-muted-foreground">
+            <div className="flex-1 flex items-center gap-3 h-11 px-4 rounded-full bg-black/60 backdrop-blur-sm">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-sm text-white/80">
                 Запись... {formatTime(recordingTime)}
               </span>
             </div>
             
-            <Button
-              size="icon"
-              className="rounded-full h-12 w-12 bg-primary"
+            <button
               onClick={stopRecording}
+              className="w-11 h-11 rounded-full bg-primary flex items-center justify-center shrink-0"
             >
-              <Send className="w-5 h-5" />
-            </Button>
+              <Send className="w-5 h-5 text-primary-foreground" />
+            </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon"
+            {/* Attachment button - circular */}
+            <button 
               onClick={() => setShowAttachmentSheet(true)}
+              className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shrink-0"
             >
-              <Paperclip className="w-5 h-5" />
-            </Button>
+              <Paperclip className="w-5 h-5 text-white/80" />
+            </button>
             
+            {/* Input field - pill shaped */}
             <div className="flex-1 relative">
-              <Input
-                placeholder="Сообщение..."
+              <input
+                type="text"
+                placeholder="Сообщение"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="pr-10 rounded-full bg-muted border-0"
+                className="w-full h-11 px-4 pr-12 rounded-full bg-black/60 backdrop-blur-sm text-white placeholder:text-white/50 border-0 outline-none focus:ring-1 focus:ring-white/20"
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-              >
-                <Smile className="w-5 h-5" />
-              </Button>
+              {/* Timer/Sticker icon inside input */}
+              <button className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Clock className="w-5 h-5 text-white/50" />
+              </button>
             </div>
             
+            {/* Send or Voice button - circular */}
             {inputText.trim() ? (
-              <Button
-                type="button"
-                size="icon"
-                className="rounded-full h-10 w-10"
+              <button
                 onClick={handleSendMessage}
+                className="w-11 h-11 rounded-full bg-primary flex items-center justify-center shrink-0"
               >
-                <Send className="w-5 h-5" />
-              </Button>
+                <Send className="w-5 h-5 text-primary-foreground" />
+              </button>
             ) : (
-              <>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="rounded-full h-10 w-10"
-                  onClick={() => setShowVideoRecorder(true)}
-                >
-                  <Video className="w-5 h-5" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="rounded-full h-10 w-10"
-                  onMouseDown={startRecording}
-                  onMouseUp={stopRecording}
-                  onMouseLeave={() => isRecording && cancelRecording()}
-                  onTouchStart={startRecording}
-                  onTouchEnd={stopRecording}
-                >
-                  <Mic className="w-5 h-5" />
-                </Button>
-              </>
+              <button
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+                onMouseLeave={() => isRecording && cancelRecording()}
+                onTouchStart={startRecording}
+                onTouchEnd={stopRecording}
+                className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shrink-0"
+              >
+                <Mic className="w-5 h-5 text-white/80" />
+              </button>
             )}
           </div>
         )}
