@@ -18,13 +18,14 @@ export function CreateMenu({ isOpen, onClose, onSelect }: CreateMenuProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200]" onClick={onClose}>
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-[999]" onClick={onClose}>
+      {/* Backdrop - covers everything including bottom nav */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       
       {/* Menu */}
       <div 
-        className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl overflow-hidden animate-in slide-in-from-bottom duration-200 pb-[env(safe-area-inset-bottom)]"
+        className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl overflow-hidden animate-in slide-in-from-bottom duration-200"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
