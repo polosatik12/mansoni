@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Shield, X, Minimize2 } from "lucide-react";
+import { Send, Bot, User, Shield, X, Minimize2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const suggestedQuestions = [
 export function InsuranceAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -114,6 +115,10 @@ export function InsuranceAssistant() {
     streamChat(input.trim());
   };
 
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
   if (!isOpen) {
     return (
       <Button
@@ -149,8 +154,14 @@ export function InsuranceAssistant() {
   }
 
   return (
-    <div className="fixed bottom-28 right-4 left-4 z-50 bg-card border rounded-2xl shadow-xl 
-                    flex flex-col max-h-[70vh] animate-fade-in overflow-hidden">
+    <div 
+      className={cn(
+        "fixed z-[60] bg-card border shadow-xl flex flex-col animate-fade-in overflow-hidden transition-all duration-300",
+        isFullscreen 
+          ? "inset-0 rounded-none max-h-full" 
+          : "bottom-28 right-4 left-4 rounded-2xl max-h-[70vh]"
+      )}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-emerald-500/10 to-teal-500/10">
         <div className="flex items-center gap-3">
@@ -163,10 +174,21 @@ export function InsuranceAssistant() {
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsMinimized(true)}>
-            <Minimize2 className="w-4 h-4" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8" 
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Свернуть" : "На весь экран"}
+          >
+            <Maximize2 className={cn("w-4 h-4", isFullscreen && "rotate-180")} />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+          {!isFullscreen && (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsMinimized(true)}>
+              <Minimize2 className="w-4 h-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsOpen(false); setIsFullscreen(false); }}>
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -246,7 +268,7 @@ export function InsuranceAssistant() {
       </ScrollArea>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
+      <form onSubmit={handleSubmit} className="p-4 border-t bg-background safe-area-bottom">
         <div className="flex gap-2">
           <Input
             value={input}
