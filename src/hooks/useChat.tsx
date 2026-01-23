@@ -277,16 +277,27 @@ export function useMessages(conversationId: string | null) {
   }, [conversationId]);
 
   const sendMessage = async (content: string) => {
-    if (!conversationId || !user || !content.trim()) return;
+    console.log("[sendMessage] called with:", { conversationId, userId: user?.id, content });
+    
+    if (!conversationId || !user || !content.trim()) {
+      console.log("[sendMessage] validation failed:", { conversationId, hasUser: !!user, trimmedContent: content.trim() });
+      return;
+    }
 
     try {
-      const { error } = await supabase.from("messages").insert({
+      console.log("[sendMessage] inserting message...");
+      const { data, error } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
         content: content.trim(),
-      });
+      }).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("[sendMessage] insert error:", error);
+        throw error;
+      }
+      
+      console.log("[sendMessage] success:", data);
 
       // Update conversation updated_at
       await supabase
@@ -294,7 +305,8 @@ export function useMessages(conversationId: string | null) {
         .update({ updated_at: new Date().toISOString() })
         .eq("id", conversationId);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("[sendMessage] error:", error);
+      throw error; // Re-throw to let caller handle
     }
   };
 
