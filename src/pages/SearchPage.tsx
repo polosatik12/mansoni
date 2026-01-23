@@ -41,7 +41,7 @@ export function SearchPage() {
   }, [query, searchUsers]);
 
   const handleUserClick = (displayName: string) => {
-    navigate(`/user/${displayName}`);
+    navigate(`/user/${encodeURIComponent(displayName)}`);
   };
 
   const handlePostClick = (index: number) => {

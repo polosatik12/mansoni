@@ -27,11 +27,14 @@ function formatNumber(num: number): string {
 }
 
 export function UserProfilePage() {
-  const { username } = useParams<{ username: string }>();
+  const { username: rawUsername } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+
+  // Decode URI component to handle spaces and special characters
+  const username = rawUsername ? decodeURIComponent(rawUsername) : undefined;
 
   const { profile, loading: profileLoading, error, follow, unfollow } = useProfileByUsername(username);
   const { posts, loading: postsLoading } = useUserPosts(profile?.user_id);
