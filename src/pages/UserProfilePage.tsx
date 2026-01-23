@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Grid3X3, Bookmark, Heart, Play, MoreHorizontal, BadgeCheck, MessageCircle, Loader2, User } from "lucide-react";
+import { ArrowLeft, Grid3X3, Bookmark, Heart, Play, MoreHorizontal, BadgeCheck, MessageCircle, Loader2, User, Eye, AtSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -12,8 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const tabs = [
   { id: "posts", icon: Grid3X3 },
-  { id: "saved", icon: Bookmark },
-  { id: "liked", icon: Heart },
+  { id: "reels", icon: Play },
+  { id: "tagged", icon: AtSign },
 ];
 
 function formatNumber(num: number): string {
@@ -109,7 +109,7 @@ export function UserProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background z-[60]">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -117,8 +117,9 @@ export function UserProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="fixed inset-0 flex flex-col bg-background z-[60]">
-        <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border bg-card safe-area-top">
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -126,7 +127,7 @@ export function UserProfilePage() {
             <h2 className="font-semibold text-foreground">Профиль</h2>
           </div>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center p-8">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 mt-20">
           <User className="w-16 h-16 text-muted-foreground mb-4" />
           <h2 className="text-lg font-semibold mb-2">Пользователь не найден</h2>
           <p className="text-muted-foreground text-center">
@@ -138,212 +139,196 @@ export function UserProfilePage() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background z-[60]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border bg-card safe-area-top">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h2 className="font-semibold text-foreground truncate">{profile.display_name}</h2>
-            {profile.verified && (
-              <BadgeCheck className="w-4 h-4 text-primary fill-primary stroke-primary-foreground" />
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">{profile.stats.postsCount} публикаций</p>
+        <div className="flex items-center gap-1.5">
+          <h2 className="font-semibold text-foreground">{profile.display_name}</h2>
+          {profile.verified && (
+            <BadgeCheck className="w-4 h-4 text-primary fill-primary stroke-primary-foreground" />
+          )}
         </div>
         <Button variant="ghost" size="icon">
           <MoreHorizontal className="w-5 h-5" />
         </Button>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto native-scroll">
-        {/* Cover Image */}
-        <div className="relative h-36 bg-muted">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20" />
-        </div>
-
-        {/* Avatar */}
-        <div className="relative z-10 -mt-12 ml-4 mb-4">
-          <div className="w-20 h-20 rounded-full border-4 border-card bg-card overflow-hidden shadow-lg">
-            <Avatar className="w-full h-full">
-              <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
-              <AvatarFallback className="bg-muted">
-                <User className="w-8 h-8 text-muted-foreground" />
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
-
-        {/* Profile Info */}
-        <div className="bg-card px-4 pb-4">
-          {/* Name & Verified */}
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-lg font-bold text-foreground">{profile.display_name || 'Пользователь'}</h1>
-            {profile.verified && (
-              <BadgeCheck className="w-5 h-5 text-primary fill-primary stroke-primary-foreground" />
-            )}
-          </div>
-          
-          <p className="text-muted-foreground text-sm mb-3">@{profile.display_name?.toLowerCase().replace(/\s+/g, '_') || 'user'}</p>
-
-          {/* Action Buttons - only show if not own profile */}
-          {!profile.isOwnProfile && (
-            <div className="flex items-center gap-3 mb-4">
-              <Button 
-                onClick={handleFollowToggle}
-                variant={profile.isFollowing ? "outline" : "default"}
-                className="rounded-full px-8 flex-1"
-              >
-                {profile.isFollowing ? "Отписаться" : "Подписаться"}
-              </Button>
-              <Button 
-                variant="outline" 
-                className="rounded-full px-6 gap-2"
-                onClick={handleMessage}
-                disabled={isCreatingChat}
-              >
-                {isCreatingChat ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <MessageCircle className="w-4 h-4" />
-                )}
-                Сообщение
-              </Button>
+      {/* Profile Info Row - Same layout as ProfilePage */}
+      <div className="px-4 py-4">
+        <div className="flex items-start gap-4">
+          {/* Avatar with gradient ring */}
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400">
+              <div className="w-full h-full rounded-full bg-background p-[2px]">
+                <Avatar className="w-full h-full">
+                  <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
+                  <AvatarFallback className="bg-muted">
+                    <User className="w-8 h-8 text-muted-foreground" />
+                  </AvatarFallback>
+                </Avatar>
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* Bio */}
-          {profile.bio && (
-            <p className="text-foreground mb-3 text-sm leading-relaxed">
-              {profile.bio}
-            </p>
-          )}
+          {/* Stats */}
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold mb-2">{profile.display_name || 'Пользователь'}</h1>
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <p className="font-bold text-foreground">{profile.stats.postsCount}</p>
+                <p className="text-xs text-muted-foreground">публикации</p>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-foreground">{formatNumber(profile.stats.followersCount)}</p>
+                <p className="text-xs text-muted-foreground">подписчики</p>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-foreground">{formatNumber(profile.stats.followingCount)}</p>
+                <p className="text-xs text-muted-foreground">подписки</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          {/* Website Link */}
+        {/* Bio */}
+        <div className="mt-3">
+          <p className="text-sm text-foreground">{profile.bio || ''}</p>
           {profile.website && (
-            <a 
-              href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary font-medium text-sm mb-4 block"
-            >
+            <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
+               target="_blank" 
+               rel="noopener noreferrer"
+               className="text-sm text-primary font-medium">
               {profile.website}
             </a>
           )}
-
-          {/* Stats */}
-          <div className="flex items-center gap-8 py-4 border-y border-border">
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">{profile.stats.postsCount}</p>
-              <p className="text-xs text-muted-foreground">Постов</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">{formatNumber(profile.stats.followersCount)}</p>
-              <p className="text-xs text-muted-foreground">Подписчиков</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">{formatNumber(profile.stats.followingCount)}</p>
-              <p className="text-xs text-muted-foreground">Подписок</p>
-            </div>
-          </div>
         </div>
 
-        {/* Content Tabs */}
-        <div className="bg-card sticky top-0 z-10">
-          <div className="flex">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "flex-1 flex items-center justify-center py-3 transition-all border-b-2",
-                    isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Posts Grid */}
-        <div className="bg-card">
-          {activeTab === "posts" && (
-            <>
-              {postsLoading ? (
-                <div className="p-12 flex justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : posts.length > 0 ? (
-                <div className="grid grid-cols-3 gap-[2px]">
-                  {posts.map((post) => {
-                    const imageUrl = getPostImage(post);
-                    const isVideo = post.post_media?.[0]?.media_type === 'video';
-                    return (
-                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-muted">
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={`Post ${post.id}`}
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Grid3X3 className="w-6 h-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        {isVideo && (
-                          <div className="absolute top-2 right-2">
-                            <div className="w-6 h-6 rounded-full bg-black/60 flex items-center justify-center">
-                              <Play className="w-3 h-3 text-white fill-white ml-0.5" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+        {/* Action Buttons - Follow + Message */}
+        {!profile.isOwnProfile && (
+          <div className="flex items-center gap-1.5 mt-4">
+            <Button 
+              onClick={handleFollowToggle}
+              variant={profile.isFollowing ? "secondary" : "default"}
+              className="flex-1 rounded-lg h-8 text-sm font-semibold px-3"
+            >
+              {profile.isFollowing ? "Отписаться" : "Подписаться"}
+            </Button>
+            <Button 
+              variant="secondary" 
+              className="flex-1 rounded-lg h-8 text-sm font-semibold px-3 gap-2"
+              onClick={handleMessage}
+              disabled={isCreatingChat}
+            >
+              {isCreatingChat ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
-                <div className="p-12 text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                    <Grid3X3 className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-1">Нет публикаций</h3>
-                  <p className="text-sm text-muted-foreground">Пользователь ещё ничего не опубликовал</p>
-                </div>
+                <MessageCircle className="w-4 h-4" />
               )}
-            </>
-          )}
+              Сообщение
+            </Button>
+          </div>
+        )}
+      </div>
 
-          {activeTab === "saved" && (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                <Bookmark className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground mb-1">Скрыто</h3>
-              <p className="text-sm text-muted-foreground">Сохранённые посты скрыты</p>
-            </div>
-          )}
-
-          {activeTab === "liked" && (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                <Heart className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground mb-1">Скрыто</h3>
-              <p className="text-sm text-muted-foreground">Понравившиеся посты скрыты</p>
-            </div>
-          )}
+      {/* Content Tabs */}
+      <div className="border-t border-border sticky top-0 z-10 bg-card">
+        <div className="flex">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex-1 flex items-center justify-center py-3 transition-all border-b-2",
+                  isActive
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className={cn("w-6 h-6", tab.id === "reels" && "fill-current")} />
+              </button>
+            );
+          })}
         </div>
+      </div>
+
+      {/* Posts Grid */}
+      <div className="pb-20">
+        {activeTab === "posts" && (
+          <>
+            {postsLoading ? (
+              <div className="p-12 flex justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : posts.length > 0 ? (
+              <div className="grid grid-cols-3 gap-[2px]">
+                {posts.map((post) => {
+                  const imageUrl = getPostImage(post);
+                  const isVideo = post.post_media?.[0]?.media_type === 'video';
+                  return (
+                    <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-muted">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={`Post ${post.id}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Grid3X3 className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      )}
+                      {isVideo && (
+                        <>
+                          <div className="absolute top-2 right-2">
+                            <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
+                          </div>
+                          <div className="absolute bottom-2 left-2 flex items-center gap-1">
+                            <Eye className="w-4 h-4 text-white drop-shadow-lg" />
+                            <span className="text-white text-xs font-medium drop-shadow-lg">{post.views_count}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                  <Grid3X3 className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-1">Нет публикаций</h3>
+                <p className="text-sm text-muted-foreground">Пользователь ещё ничего не опубликовал</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === "reels" && (
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+              <Play className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-foreground mb-1">Reels</h3>
+            <p className="text-sm text-muted-foreground">Видео Reels пользователя</p>
+          </div>
+        )}
+
+        {activeTab === "tagged" && (
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+              <AtSign className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-foreground mb-1">Отметки</h3>
+            <p className="text-sm text-muted-foreground">Публикации с отметками пользователя</p>
+          </div>
+        )}
       </div>
     </div>
   );
