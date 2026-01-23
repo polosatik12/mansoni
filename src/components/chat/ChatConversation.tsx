@@ -6,6 +6,7 @@ import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useCalls } from "@/hooks/useCalls";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import chatBackground from "@/assets/chat-background.jpg";
 import { VideoCircleRecorder } from "./VideoCircleRecorder";
 import { VideoCircleMessage } from "./VideoCircleMessage";
@@ -81,9 +82,18 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
-    await sendMessage(inputText);
-    setInputText("");
+    console.log("[handleSendMessage] inputText:", inputText);
+    if (!inputText.trim()) {
+      console.log("[handleSendMessage] empty input, skipping");
+      return;
+    }
+    try {
+      await sendMessage(inputText);
+      setInputText("");
+    } catch (error) {
+      console.error("[handleSendMessage] error:", error);
+      toast.error("Не удалось отправить сообщение");
+    }
   };
 
   const startRecording = async () => {
@@ -413,6 +423,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             
             {inputText.trim() ? (
               <Button
+                type="button"
                 size="icon"
                 className="rounded-full h-10 w-10"
                 onClick={handleSendMessage}
