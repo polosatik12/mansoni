@@ -35,6 +35,7 @@ export function useWebRTC({
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const pendingCandidatesRef = useRef<RTCIceCandidate[]>([]);
 
   // Get local media stream
   const getLocalStream = useCallback(async () => {
@@ -86,8 +87,14 @@ export function useWebRTC({
 
       // Connection state changes
       pc.onconnectionstatechange = () => {
+        console.log("[WebRTC] Connection state:", pc.connectionState);
         setIsConnected(pc.connectionState === "connected");
         onConnectionStateChange?.(pc.connectionState);
+      };
+
+      // ICE connection state changes
+      pc.oniceconnectionstatechange = () => {
+        console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
       };
 
       peerConnectionRef.current = pc;
@@ -95,6 +102,21 @@ export function useWebRTC({
     },
     [user, onRemoteStream, onConnectionStateChange]
   );
+
+  // Add pending ICE candidates
+  const addPendingCandidates = useCallback(async () => {
+    const pc = peerConnectionRef.current;
+    if (!pc || !pc.remoteDescription) return;
+
+    for (const candidate of pendingCandidatesRef.current) {
+      try {
+        await pc.addIceCandidate(candidate);
+      } catch (error) {
+        console.error("Error adding pending ICE candidate:", error);
+      }
+    }
+    pendingCandidatesRef.current = [];
+  }, []);
 
   // Setup signaling channel
   const setupSignaling = useCallback(
@@ -107,8 +129,12 @@ export function useWebRTC({
         .on("broadcast", { event: "sdp" }, async ({ payload }) => {
           if (payload.from === user.id) return;
 
+          console.log("[WebRTC] Received SDP:", payload.type);
+
           if (payload.type === "offer") {
             await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+            await addPendingCandidates();
+            
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
 
@@ -123,44 +149,64 @@ export function useWebRTC({
             });
           } else if (payload.type === "answer") {
             await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+            await addPendingCandidates();
           }
         })
         .on("broadcast", { event: "ice" }, async ({ payload }) => {
           if (payload.from === user.id) return;
 
+          const candidate = new RTCIceCandidate(payload.candidate);
+
+          // If remote description is not set yet, queue the candidate
+          if (!pc.remoteDescription) {
+            console.log("[WebRTC] Queueing ICE candidate");
+            pendingCandidatesRef.current.push(candidate);
+            return;
+          }
+
           try {
-            await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+            await pc.addIceCandidate(candidate);
           } catch (error) {
             console.error("Error adding ICE candidate:", error);
           }
         })
-        .subscribe();
+        .subscribe(async (status) => {
+          console.log("[WebRTC] Channel status:", status);
+          
+          if (status === "SUBSCRIBED" && isInitiator) {
+            // Wait a bit for the other peer to join the channel
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            console.log("[WebRTC] Creating offer...");
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            await channel.send({
+              type: "broadcast",
+              event: "sdp",
+              payload: {
+                type: "offer",
+                sdp: pc.localDescription,
+                from: user.id,
+              },
+            });
+          }
+        });
 
       channelRef.current = channel;
-
-      // If initiator, create and send offer
-      if (isInitiator) {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-
-        await channel.send({
-          type: "broadcast",
-          event: "sdp",
-          payload: {
-            type: "offer",
-            sdp: pc.localDescription,
-            from: user.id,
-          },
-        });
-      }
     },
-    [callId, user, isInitiator]
+    [callId, user, isInitiator, addPendingCandidates]
   );
 
   // Start the call
   const startCall = useCallback(async () => {
+    console.log("[WebRTC] Starting call...");
+    
     const stream = await getLocalStream();
-    if (!stream) return;
+    if (!stream) {
+      console.error("[WebRTC] Failed to get local stream");
+      return;
+    }
 
     const pc = initializePeerConnection(stream);
     await setupSignaling(pc);
@@ -222,6 +268,8 @@ export function useWebRTC({
 
   // End call and cleanup
   const endCall = useCallback(() => {
+    console.log("[WebRTC] Ending call...");
+    
     // Stop all local tracks
     localStream?.getTracks().forEach((track) => track.stop());
 
@@ -234,6 +282,9 @@ export function useWebRTC({
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
+
+    // Clear pending candidates
+    pendingCandidatesRef.current = [];
 
     setLocalStream(null);
     setRemoteStream(null);
