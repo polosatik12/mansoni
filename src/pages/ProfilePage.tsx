@@ -14,13 +14,8 @@ import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Highlights are still mock until we add a highlights table
-const highlights = [
-  { id: "1", name: "..life?", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=150&q=80", hasEmoji: true },
-  { id: "2", name: "🚗", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=150&q=80", hasEmoji: true },
-  { id: "3", name: "Travel", image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=150&q=80" },
-  { id: "4", name: "Food", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=150&q=80" },
-];
+// Highlights - empty by default, will be populated when user adds them
+const highlights: { id: string; name: string; image: string; hasEmoji?: boolean }[] = [];
 
 const tabs = [
   { id: "posts", icon: Grid3X3 },
