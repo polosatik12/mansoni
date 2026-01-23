@@ -11,12 +11,15 @@ import {
   ChevronDown,
   User,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useReels } from "@/hooks/useReels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { CreateReelSheet } from "@/components/reels/CreateReelSheet";
+import { Button } from "@/components/ui/button";
 
 function formatNumber(num: number): string {
   if (num >= 1000000) {
@@ -28,6 +31,7 @@ function formatNumber(num: number): string {
   return num.toString();
 }
 
+
 export function ReelsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -35,6 +39,7 @@ export function ReelsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewedReels = useRef<Set<string>>(new Set());
 
@@ -102,9 +107,19 @@ export function ReelsPage() {
       <div className="min-h-[calc(100vh-4rem)] bg-black flex flex-col items-center justify-center text-white">
         <Play className="w-16 h-16 mb-4 opacity-40" />
         <h2 className="text-lg font-semibold mb-2">Нет Reels</h2>
-        <p className="text-white/60 text-center px-8">
+        <p className="text-white/60 text-center px-8 mb-6">
           Пока нет видео для просмотра. Будьте первым!
         </p>
+        {user && (
+          <Button
+            onClick={() => setShowCreateSheet(true)}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Создать Reel
+          </Button>
+        )}
+        <CreateReelSheet open={showCreateSheet} onOpenChange={setShowCreateSheet} />
       </div>
     );
   }
@@ -278,6 +293,19 @@ export function ReelsPage() {
           <ChevronDown className="w-6 h-6 text-white" />
         </button>
       </div>
+
+      {/* Create button */}
+      {user && (
+        <button
+          onClick={() => setShowCreateSheet(true)}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center safe-area-top"
+        >
+          <Plus className="w-6 h-6 text-white" />
+        </button>
+      )}
+
+      {/* Create Sheet */}
+      <CreateReelSheet open={showCreateSheet} onOpenChange={setShowCreateSheet} />
     </div>
   );
 }

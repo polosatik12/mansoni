@@ -1,15 +1,27 @@
+import { useState } from "react";
 import { FeedHeader } from "@/components/feed/FeedHeader";
 import { CreatePost } from "@/components/feed/CreatePost";
 import { PostCard } from "@/components/feed/PostCard";
 import { PullToRefresh } from "@/components/feed/PullToRefresh";
-import { usePosts } from "@/hooks/usePosts";
+import { usePosts, FeedFilter } from "@/hooks/usePosts";
+import { usePresence } from "@/hooks/usePresence";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
+const feedTabs: { id: FeedFilter; label: string }[] = [
+  { id: "all", label: "Для вас" },
+  { id: "following", label: "Подписки" },
+];
 
 export function HomePage() {
-  const { posts, loading, refetch } = usePosts();
+  const [activeTab, setActiveTab] = useState<FeedFilter>("all");
+  const { posts, loading, refetch } = usePosts(activeTab);
+  
+  // Initialize presence tracking
+  usePresence();
 
   const handleRefresh = async () => {
     await refetch();
@@ -31,6 +43,27 @@ export function HomePage() {
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="min-h-screen">
         <FeedHeader />
+        
+        {/* Feed Tabs */}
+        <div className="flex justify-center px-4 py-3 border-b border-border">
+          <div className="flex bg-muted rounded-full p-1">
+            {feedTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "px-4 py-1.5 text-sm font-medium rounded-full transition-all",
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        
         <CreatePost />
         
         {loading && posts.length === 0 ? (
@@ -39,9 +72,15 @@ export function HomePage() {
           </div>
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-            <p className="text-muted-foreground text-lg">Пока нет публикаций</p>
+            <p className="text-muted-foreground text-lg">
+              {activeTab === "following" 
+                ? "Нет публикаций от подписок" 
+                : "Пока нет публикаций"}
+            </p>
             <p className="text-muted-foreground/70 text-sm mt-1">
-              Создайте первую запись или подпишитесь на авторов
+              {activeTab === "following"
+                ? "Подпишитесь на авторов, чтобы видеть их посты"
+                : "Создайте первую запись или подпишитесь на авторов"}
             </p>
           </div>
         ) : (
