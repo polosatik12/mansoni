@@ -541,8 +541,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         />
       )}
 
-      {/* Active Call */}
-      {activeCall && activeCall.status === "active" && (
+      {/* Active Call - show for calling, ringing, and active statuses */}
+      {activeCall && ["calling", "ringing", "active"].includes(activeCall.status) && (
         <CallScreen
           call={activeCall}
           isInitiator={isCallInitiator}

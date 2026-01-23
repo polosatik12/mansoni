@@ -8,6 +8,7 @@ import {
   VideoOff,
   SwitchCamera,
   Minimize2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWebRTC } from "@/hooks/useWebRTC";
@@ -25,11 +26,13 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [callDuration, setCallDuration] = useState(0);
   const [connectionState, setConnectionState] = useState<string>("connecting");
+  const [webrtcStarted, setWebrtcStarted] = useState(false);
 
   const otherUser = isInitiator ? call.callee_profile : call.caller_profile;
   const otherName = otherUser?.display_name || "Собеседник";
   const otherAvatar = otherUser?.avatar_url;
   const isVideoCall = call.call_type === "video";
+  const isCallActive = call.status === "active";
 
   const {
     localStream,
@@ -49,10 +52,17 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
     onConnectionStateChange: (state) => setConnectionState(state),
   });
 
-  // Start call on mount
+  // Start WebRTC only when call becomes active
   useEffect(() => {
-    startCall();
-  }, []);
+    if (isCallActive && !webrtcStarted) {
+      setWebrtcStarted(true);
+      // Small delay to ensure both peers are ready
+      const timer = setTimeout(() => {
+        startCall();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isCallActive, webrtcStarted, startCall]);
 
   // Attach streams to video elements
   useEffect(() => {
@@ -67,7 +77,7 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
     }
   }, [remoteStream]);
 
-  // Call duration timer
+  // Call duration timer - only count when connected
   useEffect(() => {
     if (!isConnected) return;
 
@@ -90,6 +100,15 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
   };
 
   const getStatusText = () => {
+    // Show call status based on call.status first
+    if (call.status === "calling") {
+      return "Вызов...";
+    }
+    if (call.status === "ringing") {
+      return "Звонок...";
+    }
+    
+    // For active calls, show connection state
     switch (connectionState) {
       case "connecting":
         return "Подключение...";
@@ -100,7 +119,7 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
       case "failed":
         return "Ошибка соединения";
       default:
-        return "Звонок...";
+        return "Соединение...";
     }
   };
 
@@ -137,22 +156,24 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
             )}
           </div>
 
-          {/* Local video (PiP) */}
-          <div className="absolute top-16 right-4 w-28 h-40 rounded-xl overflow-hidden shadow-lg border-2 border-white/20">
-            {localStream && !isVideoOff ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover scale-x-[-1]"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                <VideoOff className="w-6 h-6 text-white/50" />
-              </div>
-            )}
-          </div>
+          {/* Local video (PiP) - only show when call is active */}
+          {isCallActive && (
+            <div className="absolute top-16 right-4 w-28 h-40 rounded-xl overflow-hidden shadow-lg border-2 border-white/20">
+              {localStream && !isVideoOff ? (
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover scale-x-[-1]"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                  <VideoOff className="w-6 h-6 text-white/50" />
+                </div>
+              )}
+            </div>
+          )}
         </>
       ) : (
         /* Audio call layout */
@@ -202,52 +223,61 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
       {/* Controls */}
       <div className="absolute bottom-0 left-0 right-0 p-6 safe-area-bottom">
         <div className="flex items-center justify-center gap-4">
-          {/* Mute */}
-          <Button
-            size="icon"
-            onClick={toggleMute}
-            className={`w-14 h-14 rounded-full ${
-              isMuted ? "bg-white text-black" : "bg-white/20 text-white"
-            }`}
-          >
-            {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-          </Button>
+          {/* Show mute/video controls only when call is active */}
+          {isCallActive && (
+            <>
+              {/* Mute */}
+              <Button
+                size="icon"
+                onClick={toggleMute}
+                className={`w-14 h-14 rounded-full ${
+                  isMuted ? "bg-white text-black" : "bg-white/20 text-white"
+                }`}
+              >
+                {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+              </Button>
 
-          {/* Video toggle (only for video calls) */}
-          {isVideoCall && (
-            <Button
-              size="icon"
-              onClick={toggleVideo}
-              className={`w-14 h-14 rounded-full ${
-                isVideoOff ? "bg-white text-black" : "bg-white/20 text-white"
-              }`}
-            >
-              {isVideoOff ? (
-                <VideoOff className="w-6 h-6" />
-              ) : (
-                <Video className="w-6 h-6" />
+              {/* Video toggle (only for video calls) */}
+              {isVideoCall && (
+                <Button
+                  size="icon"
+                  onClick={toggleVideo}
+                  className={`w-14 h-14 rounded-full ${
+                    isVideoOff ? "bg-white text-black" : "bg-white/20 text-white"
+                  }`}
+                >
+                  {isVideoOff ? (
+                    <VideoOff className="w-6 h-6" />
+                  ) : (
+                    <Video className="w-6 h-6" />
+                  )}
+                </Button>
               )}
-            </Button>
+
+              {/* Switch camera (only for video calls) */}
+              {isVideoCall && (
+                <Button
+                  size="icon"
+                  onClick={switchCamera}
+                  className="w-14 h-14 rounded-full bg-white/20 text-white"
+                >
+                  <SwitchCamera className="w-6 h-6" />
+                </Button>
+              )}
+            </>
           )}
 
-          {/* Switch camera (only for video calls) */}
-          {isVideoCall && (
-            <Button
-              size="icon"
-              onClick={switchCamera}
-              className="w-14 h-14 rounded-full bg-white/20 text-white"
-            >
-              <SwitchCamera className="w-6 h-6" />
-            </Button>
-          )}
-
-          {/* End call */}
+          {/* End/Cancel call button */}
           <Button
             size="icon"
             onClick={handleEndCall}
             className="w-14 h-14 rounded-full bg-destructive hover:bg-destructive/90"
           >
-            <PhoneOff className="w-6 h-6" />
+            {isCallActive ? (
+              <PhoneOff className="w-6 h-6" />
+            ) : (
+              <X className="w-6 h-6" />
+            )}
           </Button>
         </div>
       </div>
