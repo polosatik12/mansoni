@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HomePage } from "@/pages/HomePage";
 import { SearchPage } from "@/pages/SearchPage";
@@ -30,19 +31,25 @@ const App = () => (
         <BrowserRouter>
           <CommandPalette />
           <Routes>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/explore/:postIndex" element={<ExploreFeedPage />} />
-              <Route path="/chats" element={<ChatsPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/user/:username" element={<UserProfilePage />} />
-              <Route path="/realestate" element={<RealEstatePage />} />
-              <Route path="/realestate/:id" element={<PropertyDetailPage />} />
-              <Route path="/insurance" element={<InsurancePage />} />
-              <Route path="/reels" element={<ReelsPage />} />
-            </Route>
+            {/* Public route - Auth page */}
             <Route path="/auth" element={<AuthPage />} />
+            
+            {/* Protected routes - require authentication */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="/explore/:postIndex" element={<ExploreFeedPage />} />
+                <Route path="/chats" element={<ChatsPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/user/:username" element={<UserProfilePage />} />
+                <Route path="/realestate" element={<RealEstatePage />} />
+                <Route path="/realestate/:id" element={<PropertyDetailPage />} />
+                <Route path="/insurance" element={<InsurancePage />} />
+                <Route path="/reels" element={<ReelsPage />} />
+              </Route>
+            </Route>
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
