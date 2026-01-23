@@ -57,11 +57,20 @@ export function BottomNav() {
   return (
     <nav 
       className={cn(
-        "fixed-nav fixed bottom-0 left-0 right-0 z-50 safe-area-bottom",
+        "fixed-nav fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom",
         isReelsPage 
           ? "bg-black/80 backdrop-blur-md border-t border-white/10" 
           : "bg-card border-t border-border"
       )}
+      style={{
+        // Inline styles for maximum stability
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        transform: 'translate3d(0, 0, 0)',
+        WebkitTransform: 'translate3d(0, 0, 0)',
+      }}
     >
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto pb-[env(safe-area-inset-bottom)]">
         {navItems.map((item) => {
