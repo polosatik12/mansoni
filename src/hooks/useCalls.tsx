@@ -33,6 +33,11 @@ export function useCalls() {
   const [activeCall, setActiveCall] = useState<Call | null>(null);
   const [incomingCall, setIncomingCall] = useState<Call | null>(null);
   const missedCallTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeCallIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    activeCallIdRef.current = activeCall?.id ?? null;
+  }, [activeCall?.id]);
 
   // Clear missed call timer
   const clearMissedCallTimer = useCallback(() => {
@@ -79,8 +84,11 @@ export function useCalls() {
     let channel: RealtimeChannel;
 
     const setupSubscription = () => {
+      // IMPORTANT: Use a user-scoped channel name so multiple mounted instances
+      // (e.g. AppLayout + ChatConversation) don't conflict and accidentally
+      // remove each other's subscriptions.
       channel = supabase
-        .channel("calls-realtime")
+        .channel(`calls-realtime:${user.id}`)
         // Listen for calls where user is the callee (incoming calls)
         .on(
           "postgres_changes",
@@ -118,7 +126,7 @@ export function useCalls() {
               const call = payload.new as Call;
               if (call.status === "ended" || call.status === "declined" || call.status === "missed") {
                 setIncomingCall(null);
-                if (activeCall?.id === call.id) {
+                if (activeCallIdRef.current === call.id) {
                   setActiveCall(null);
                   clearMissedCallTimer();
                 }
@@ -178,7 +186,7 @@ export function useCalls() {
       }
       clearMissedCallTimer();
     };
-  }, [user, activeCall?.id, clearMissedCallTimer]);
+  }, [user, clearMissedCallTimer]);
 
   const startCall = useCallback(
     async (conversationId: string, calleeId: string, callType: CallType): Promise<Call | null> => {
