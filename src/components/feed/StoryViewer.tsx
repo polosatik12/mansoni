@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { formatDistanceToNow } from "date-fns";
@@ -290,29 +290,6 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
           </div>
         )}
 
-        {/* Navigation arrows for desktop */}
-        {(currentUserIndex > 0 || currentStoryInUser > 0) && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              goToPrevStory();
-            }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/30 hover:bg-black/50 rounded-full text-white transition-colors hidden sm:block"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-        )}
-        {(currentUserIndex < activeUsers.length - 1 || currentStoryInUser < totalStoriesForUser - 1) && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              goToNextStory();
-            }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/30 hover:bg-black/50 rounded-full text-white transition-colors hidden sm:block"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        )}
 
         {/* Bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent" />
