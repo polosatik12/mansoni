@@ -211,7 +211,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background z-[60]">
+    <div className="fixed inset-0 flex flex-col bg-background z-[200]">
       {/* Header - fixed */}
       <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border bg-card safe-area-top">
         <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
