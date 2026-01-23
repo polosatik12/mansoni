@@ -175,7 +175,7 @@ All colors MUST be HSL.
   overscroll-behavior-y: contain;
 }
 
-/* Fixed positioning fix for Android WebView */
+/* Fixed positioning fix for iOS Safari & Android WebView */
 .fixed-nav {
   position: fixed !important;
   bottom: 0 !important;
@@ -193,6 +193,32 @@ All colors MUST be HSL.
   -webkit-perspective: 1000px;
   /* Prevent flickering on iOS */
   -webkit-overflow-scrolling: touch;
+  
+  /* iOS Safari specific fixes */
+  /* Disable tap delay for immediate response */
+  touch-action: manipulation;
+  /* Prevent scroll interference */
+  -webkit-touch-callout: none;
+  /* Ensure visibility above keyboard area */
+  padding-bottom: constant(safe-area-inset-bottom); /* iOS 11 */
+  padding-bottom: env(safe-area-inset-bottom); /* iOS 11.2+ */
+}
+
+/* iOS Safari: Hide nav when keyboard is open */
+.fixed-nav.keyboard-open {
+  transform: translate3d(0, 100%, 0) !important;
+  -webkit-transform: translate3d(0, 100%, 0) !important;
+  pointer-events: none;
+}
+
+/* Ensure clickable area is correct on iOS */
+.fixed-nav button,
+.fixed-nav a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* Increase touch target for iOS */
+  min-height: 44px;
+  min-width: 44px;
 }
 
 /* Prevent body scroll issues on Android */

@@ -28,6 +28,10 @@ export function AppLayout() {
             // Prevent scroll from affecting fixed elements
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
+            // iOS Safari: isolate scroll context from nav
+            touchAction: 'pan-y',
+            // Prevent rubber-band effect from reaching nav
+            isolation: 'isolate',
           }}
         >
           <Outlet />

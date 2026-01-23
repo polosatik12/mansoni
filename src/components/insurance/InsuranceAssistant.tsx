@@ -156,11 +156,15 @@ export function InsuranceAssistant() {
   return (
     <div 
       className={cn(
-        "fixed z-[60] bg-card border shadow-xl flex flex-col animate-fade-in overflow-hidden transition-all duration-300",
+        "fixed bg-card border shadow-xl flex flex-col animate-fade-in overflow-hidden transition-all duration-300",
         isFullscreen 
-          ? "inset-0 rounded-none max-h-full" 
-          : "bottom-28 right-4 left-4 rounded-2xl max-h-[70vh]"
+          ? "inset-0 rounded-none max-h-full z-[110] safe-area-top safe-area-bottom" 
+          : "bottom-28 right-4 left-4 rounded-2xl max-h-[70vh] z-[60]"
       )}
+      style={{
+        // iOS Safari: ensure proper layering above nav
+        touchAction: 'manipulation',
+      }}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-emerald-500/10 to-teal-500/10">
