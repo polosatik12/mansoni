@@ -1528,7 +1528,18 @@ export type Database = {
       calculation_status: "draft" | "sent" | "expired" | "converted"
       commission_status: "pending" | "confirmed" | "paid" | "cancelled"
       deal_type: "sale" | "rent" | "daily"
-      insurance_category: "auto" | "health" | "property" | "travel" | "life"
+      insurance_category:
+        | "auto"
+        | "health"
+        | "property"
+        | "travel"
+        | "life"
+        | "osago"
+        | "kasko"
+        | "mini_kasko"
+        | "mortgage"
+        | "dms"
+        | "osgop"
       payout_status: "pending" | "processing" | "completed" | "failed"
       policy_status: "pending" | "active" | "expired" | "cancelled"
       property_status: "active" | "sold" | "rented" | "inactive"
@@ -1665,7 +1676,19 @@ export const Constants = {
       calculation_status: ["draft", "sent", "expired", "converted"],
       commission_status: ["pending", "confirmed", "paid", "cancelled"],
       deal_type: ["sale", "rent", "daily"],
-      insurance_category: ["auto", "health", "property", "travel", "life"],
+      insurance_category: [
+        "auto",
+        "health",
+        "property",
+        "travel",
+        "life",
+        "osago",
+        "kasko",
+        "mini_kasko",
+        "mortgage",
+        "dms",
+        "osgop",
+      ],
       payout_status: ["pending", "processing", "completed", "failed"],
       policy_status: ["pending", "active", "expired", "cancelled"],
       property_status: ["active", "sold", "rented", "inactive"],
