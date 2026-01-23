@@ -1,102 +1,184 @@
-import { Search, Play, Hash } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, Play, Hash, User, BadgeCheck, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSearch } from "@/hooks/useSearch";
 
 const trends = [
-  { tag: "NFT2024", posts: "125K" },
-  { tag: "Dubai", posts: "89K" },
-  { tag: "Crypto", posts: "234K" },
-  { tag: "AI", posts: "456K" },
-];
-
-const explorePosts = [
-  { id: "1", image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&q=80", isVideo: false },
-  { id: "2", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&q=80", isVideo: true },
-  { id: "3", image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&q=80", isVideo: false },
-  { id: "4", image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&q=80", isVideo: false },
-  { id: "5", image: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&q=80", isVideo: true },
-  { id: "6", image: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&q=80", isVideo: false },
-  { id: "7", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=80", isVideo: false },
-  { id: "8", image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80", isVideo: true },
-  { id: "9", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80", isVideo: false },
-  { id: "10", image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&q=80", isVideo: false },
-  { id: "11", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80", isVideo: true },
-  { id: "12", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80", isVideo: false },
-  { id: "13", image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&q=80", isVideo: false },
-  { id: "14", image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400&q=80", isVideo: true },
-  { id: "15", image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80", isVideo: false },
-  { id: "16", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&q=80", isVideo: false },
-  { id: "17", image: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&q=80", isVideo: true },
-  { id: "18", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80", isVideo: false },
-  { id: "19", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80", isVideo: false },
-  { id: "20", image: "https://images.unsplash.com/photo-1573164713988-8665fc963095?w=400&q=80", isVideo: true },
-  { id: "21", image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80", isVideo: false },
-  { id: "22", image: "https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=400&q=80", isVideo: false },
-  { id: "23", image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&q=80", isVideo: true },
-  { id: "24", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&q=80", isVideo: false },
-  { id: "25", image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&q=80", isVideo: false },
-  { id: "26", image: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&q=80", isVideo: true },
-  { id: "27", image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=80", isVideo: false },
-  { id: "28", image: "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=400&q=80", isVideo: false },
-  { id: "29", image: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&q=80", isVideo: true },
-  { id: "30", image: "https://images.unsplash.com/photo-1460467820054-c87ab43e9b59?w=400&q=80", isVideo: false },
+  { tag: "новости", posts: "12.5K" },
+  { tag: "технологии", posts: "8.2K" },
+  { tag: "путешествия", posts: "5.1K" },
+  { tag: "еда", posts: "15.3K" },
+  { tag: "мода", posts: "9.7K" },
+  { tag: "спорт", posts: "6.8K" },
 ];
 
 export function SearchPage() {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<"explore" | "users">("explore");
+  const { users, explorePosts, loading, exploring, searchUsers, fetchExplorePosts, toggleFollow } = useSearch();
+
+  useEffect(() => {
+    fetchExplorePosts();
+  }, [fetchExplorePosts]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (query.trim()) {
+        setSearchMode("users");
+        searchUsers(query);
+      } else {
+        setSearchMode("explore");
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query, searchUsers]);
+
+  const handleUserClick = (displayName: string) => {
+    navigate(`/user/${displayName}`);
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen pb-20">
       {/* Search Bar */}
-      <div className="sticky top-0 z-10 bg-background p-3 pb-0">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 safe-area-top">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            placeholder="Поиск"
-            className="pl-10 h-11 rounded-xl bg-muted border-0"
+            placeholder="Поиск пользователей..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-10 pr-4 h-11 rounded-xl bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
           />
         </div>
       </div>
 
-      {/* Hashtags */}
-      <div className="px-3 py-3 flex items-center gap-2">
-        <div className="flex-1 overflow-x-auto scrollbar-hide">
-          <div className="flex gap-2">
-            {trends.map((trend) => (
-              <button
-                key={trend.tag}
-                className="flex items-center gap-1.5 px-4 py-2 bg-muted rounded-full flex-shrink-0 active:opacity-70 transition-opacity"
-              >
-                <Hash className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm">{trend.tag}</span>
-                <span className="text-xs text-muted-foreground">{trend.posts}</span>
-              </button>
-            ))}
-          </div>
+      {searchMode === "users" && query.trim() ? (
+        // User Search Results
+        <div className="px-4 py-2">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : users.length > 0 ? (
+            <div className="space-y-2">
+              {users.map((user) => (
+                <div
+                  key={user.user_id}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => handleUserClick(user.display_name)}
+                >
+                  <Avatar className="w-12 h-12">
+                    <AvatarImage src={user.avatar_url || undefined} />
+                    <AvatarFallback className="bg-muted">
+                      <User className="w-5 h-5 text-muted-foreground" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold text-foreground truncate">
+                        {user.display_name}
+                      </span>
+                      {user.verified && (
+                        <BadgeCheck className="w-4 h-4 text-primary fill-primary stroke-primary-foreground shrink-0" />
+                      )}
+                    </div>
+                    {user.bio && (
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {user.bio}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant={user.isFollowing ? "outline" : "default"}
+                    size="sm"
+                    className="rounded-full shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFollow(user.user_id);
+                    }}
+                  >
+                    {user.isFollowing ? "Отписаться" : "Подписаться"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <User className="w-12 h-12 mb-2 opacity-20" />
+              <p>Пользователи не найдены</p>
+            </div>
+          )}
         </div>
-        <button className="px-3 py-2 text-primary font-medium text-sm flex-shrink-0">
-          Все
-        </button>
-      </div>
+      ) : (
+        // Explore Mode
+        <>
+          {/* Trending Hashtags */}
+          <div className="px-4 py-3">
+            <ScrollArea className="w-full whitespace-nowrap">
+              <div className="flex gap-2">
+                {trends.map((trend) => (
+                  <button
+                    key={trend.tag}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                  >
+                    <Hash className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{trend.tag}</span>
+                    <span className="text-xs text-muted-foreground">{trend.posts}</span>
+                  </button>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" className="h-0" />
+            </ScrollArea>
+          </div>
 
-      {/* Explore Grid */}
-      <div className="grid grid-cols-3 gap-[1px]">
-        {explorePosts.map((post) => (
-          <div
-            key={post.id}
-            className="aspect-square relative cursor-pointer overflow-hidden"
-          >
-            <img
-              src={post.image}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-            {post.isVideo && (
-              <div className="absolute top-2 right-2">
-                <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
+          {/* Explore Grid */}
+          <div className="px-1">
+            {exploring ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : explorePosts.length > 0 ? (
+              <div className="grid grid-cols-3 gap-[2px]">
+                {explorePosts.map((post) => {
+                  const isVideo = post.media?.[0]?.media_type === "video";
+                  return (
+                    <div
+                      key={post.id}
+                      className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
+                    >
+                      <img
+                        src={post.media?.[0]?.media_url}
+                        alt=""
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      />
+                      {isVideo && (
+                        <div className="absolute top-2 right-2">
+                          <div className="w-6 h-6 rounded-full bg-black/60 flex items-center justify-center">
+                            <Play className="w-3 h-3 text-white fill-white ml-0.5" />
+                          </div>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Search className="w-12 h-12 mb-2 opacity-20" />
+                <p>Нет публикаций для просмотра</p>
               </div>
             )}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 }

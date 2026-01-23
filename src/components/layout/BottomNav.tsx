@@ -1,27 +1,29 @@
-import { Home, MessageCircle, Search, Heart, FileText, Headphones, User, LucideIcon } from "lucide-react";
+import { Home, MessageCircle, Search, Heart, FileText, Headphones, User, LucideIcon, Play } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useUnreadChats } from "@/hooks/useUnreadChats";
 
 interface NavItem {
   to: string;
   icon: LucideIcon;
   label: string;
-  badge?: number;
+  hasBadge?: boolean;
   isAction?: boolean;
 }
 
-// Default nav items (main pages) - without "Сервисы"
+// Default nav items (main pages)
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/search", icon: Search, label: "Поиск" },
-  { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
+  { to: "/reels", icon: Play, label: "Reels" },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "/profile", icon: User, label: "Профиль" },
 ];
 
 // Real estate service nav items
 const realEstateNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
-  { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "#search", icon: Search, label: "Поиск", isAction: true },
   { to: "#favorites", icon: Heart, label: "Избранное", isAction: true },
 ];
@@ -29,13 +31,14 @@ const realEstateNavItems: NavItem[] = [
 // Insurance service nav items
 const insuranceNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
-  { to: "/chats", icon: MessageCircle, label: "Чаты", badge: 5 },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "#policies", icon: FileText, label: "Полисы", isAction: true },
   { to: "#support", icon: Headphones, label: "Помощь", isAction: true },
 ];
 
 export function BottomNav() {
   const location = useLocation();
+  const { unreadCount } = useUnreadChats();
   
   // Determine which nav items to show based on route
   const getNavItems = (): NavItem[] => {
@@ -89,9 +92,9 @@ export function BottomNav() {
                         isActive && "stroke-[2.5px]"
                       )}
                     />
-                    {item.badge && (
+                    {item.hasBadge && unreadCount > 0 && (
                       <span className="absolute -top-1.5 -right-2 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                        {item.badge}
+                        {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
                   </div>
