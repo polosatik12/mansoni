@@ -165,18 +165,6 @@ export function ReelsPage() {
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
       <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
-      {/* Progress indicators */}
-      <div className="absolute top-4 left-4 right-16 flex gap-1 safe-area-top">
-        {reels.map((_, index) => (
-          <div
-            key={index}
-            className={cn(
-              "flex-1 h-1 rounded-full transition-colors",
-              index === currentIndex ? "bg-white" : "bg-white/30"
-            )}
-          />
-        ))}
-      </div>
 
       {/* Right sidebar actions */}
       <div className="absolute right-3 bottom-20 flex flex-col items-center gap-4">
@@ -294,17 +282,6 @@ export function ReelsPage() {
         </button>
       </div>
 
-      {/* Create button */}
-      {user && (
-        <button
-          onClick={() => setShowCreateSheet(true)}
-          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center safe-area-top"
-        >
-          <Plus className="w-6 h-6 text-white" />
-        </button>
-      )}
-
-      {/* Create Sheet */}
       <CreateReelSheet open={showCreateSheet} onOpenChange={setShowCreateSheet} />
     </div>
   );
