@@ -27,7 +27,10 @@ export function ChatsPage() {
   // Get the other participant's info for display
   const getOtherParticipant = (conv: Conversation) => {
     const other = conv.participants.find((p) => p.user_id !== user?.id);
-    return other?.profile || { display_name: "Пользователь", avatar_url: null };
+    return {
+      user_id: other?.user_id || "",
+      ...(other?.profile || { display_name: "Пользователь", avatar_url: null })
+    };
   };
 
   // Handle incoming conversationId from navigation state - IMMEDIATELY open chat
@@ -95,6 +98,7 @@ export function ChatsPage() {
         conversationId={selectedConversation.id}
         chatName={other.display_name || "Пользователь"}
         chatAvatar={other.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConversation.id}`}
+        otherUserId={other.user_id}
         onBack={() => {
           setSelectedConversation(null);
           refetch();

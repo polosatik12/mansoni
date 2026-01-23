@@ -4,26 +4,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
+import { useCalls } from "@/hooks/useCalls";
 import { format } from "date-fns";
 import chatBackground from "@/assets/chat-background.jpg";
 import { VideoCircleRecorder } from "./VideoCircleRecorder";
 import { VideoCircleMessage } from "./VideoCircleMessage";
+import { AttachmentSheet } from "./AttachmentSheet";
+import { ImageViewer } from "./ImageViewer";
+import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
+import { IncomingCallSheet } from "./IncomingCallSheet";
+import { CallScreen } from "./CallScreen";
 
 interface ChatConversationProps {
   conversationId: string;
   chatName: string;
   chatAvatar: string;
+  otherUserId: string;
   onBack: () => void;
 }
 
-export function ChatConversation({ conversationId, chatName, chatAvatar, onBack }: ChatConversationProps) {
+export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack }: ChatConversationProps) {
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage } = useMessages(conversationId);
+  const { activeCall, incomingCall, startCall, acceptCall, declineCall, endCall } = useCalls();
+  
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
+  const [showAttachmentSheet, setShowAttachmentSheet] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [viewingVideo, setViewingVideo] = useState<string | null>(null);
+  const [isCallInitiator, setIsCallInitiator] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -148,6 +162,44 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
     setShowVideoRecorder(false);
   };
 
+  const handleAttachment = async (file: File, type: "image" | "video") => {
+    if (type === "image") {
+      await sendMediaMessage(file, 'image');
+    } else {
+      // For video files, we can add a 'video' type or reuse 'video_circle'
+      await sendMediaMessage(file, 'video' as any);
+    }
+  };
+
+  const handleStartAudioCall = async () => {
+    setIsCallInitiator(true);
+    await startCall(conversationId, otherUserId, "audio");
+  };
+
+  const handleStartVideoCall = async () => {
+    setIsCallInitiator(true);
+    await startCall(conversationId, otherUserId, "video");
+  };
+
+  const handleAcceptCall = async () => {
+    if (incomingCall) {
+      setIsCallInitiator(false);
+      await acceptCall(incomingCall.id);
+    }
+  };
+
+  const handleDeclineCall = async () => {
+    if (incomingCall) {
+      await declineCall(incomingCall.id);
+    }
+  };
+
+  const handleEndCall = async () => {
+    if (activeCall) {
+      await endCall(activeCall.id);
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[60]">
       {/* Header - fixed */}
@@ -170,10 +222,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
         </div>
         
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={handleStartAudioCall}>
             <Phone className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={handleStartVideoCall}>
             <Video className="w-5 h-5" />
           </Button>
           <Button variant="ghost" size="icon">
@@ -209,6 +261,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
           const isVoice = message.media_type === 'voice';
           const isVideoCircle = message.media_type === 'video_circle';
           const isImage = message.media_type === 'image';
+          const isVideo = message.media_type === 'video';
 
           return (
             <div
@@ -225,9 +278,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
                   <span className="text-[10px] text-muted-foreground">{formatMessageTime(message.created_at)}</span>
                 </div>
               ) : isImage && message.media_url ? (
-                <div className={`max-w-[75%] rounded-2xl overflow-hidden ${
-                  isOwn ? "rounded-br-md" : "rounded-bl-md"
-                }`}>
+                <div 
+                  className={`max-w-[75%] rounded-2xl overflow-hidden cursor-pointer ${
+                    isOwn ? "rounded-br-md" : "rounded-bl-md"
+                  }`}
+                  onClick={() => setViewingImage(message.media_url!)}
+                >
                   <img 
                     src={message.media_url} 
                     alt="Изображение" 
@@ -238,6 +294,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
                       {formatMessageTime(message.created_at)}
                     </span>
                   </div>
+                </div>
+              ) : isVideo && message.media_url ? (
+                <div className="flex flex-col gap-1">
+                  <VideoPlayer
+                    src={message.media_url}
+                    isOwn={isOwn}
+                    onFullscreen={() => setViewingVideo(message.media_url!)}
+                  />
+                  <span className={`text-[10px] ${isOwn ? "text-right" : "text-left"} text-muted-foreground`}>
+                    {formatMessageTime(message.created_at)}
+                  </span>
                 </div>
               ) : (
                 <div
@@ -319,7 +386,11 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setShowAttachmentSheet(true)}
+            >
               <Paperclip className="w-5 h-5" />
             </Button>
             
@@ -381,6 +452,47 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, onBack 
         <VideoCircleRecorder
           onRecord={handleVideoRecord}
           onCancel={() => setShowVideoRecorder(false)}
+        />
+      )}
+
+      {/* Attachment Sheet */}
+      <AttachmentSheet
+        open={showAttachmentSheet}
+        onOpenChange={setShowAttachmentSheet}
+        onSelectFile={handleAttachment}
+      />
+
+      {/* Image Viewer */}
+      {viewingImage && (
+        <ImageViewer
+          src={viewingImage}
+          onClose={() => setViewingImage(null)}
+        />
+      )}
+
+      {/* Fullscreen Video Player */}
+      {viewingVideo && (
+        <FullscreenVideoPlayer
+          src={viewingVideo}
+          onClose={() => setViewingVideo(null)}
+        />
+      )}
+
+      {/* Incoming Call */}
+      {incomingCall && (
+        <IncomingCallSheet
+          call={incomingCall}
+          onAccept={handleAcceptCall}
+          onDecline={handleDeclineCall}
+        />
+      )}
+
+      {/* Active Call */}
+      {activeCall && activeCall.status === "active" && (
+        <CallScreen
+          call={activeCall}
+          isInitiator={isCallInitiator}
+          onEnd={handleEndCall}
         />
       )}
     </div>
