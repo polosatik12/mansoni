@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Heart, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,19 @@ interface CommentsSheetProps {
   commentsCount: number;
 }
 
+interface ReplyingTo {
+  commentId: string;
+  authorName: string;
+}
+
 export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: CommentsSheetProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { comments, loading, addComment, toggleLike } = useComments(postId);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<ReplyingTo | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const formatTimeAgo = (dateString: string) => {
     try {
@@ -39,15 +46,31 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
     await toggleLike(comment.id, comment.liked_by_user);
   };
 
+  const handleReply = (comment: Comment) => {
+    if (!user) return;
+    setReplyingTo({
+      commentId: comment.id,
+      authorName: comment.author.display_name,
+    });
+    setNewComment(`@${comment.author.display_name} `);
+    inputRef.current?.focus();
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+    setNewComment("");
+  };
+
   const handleSubmitComment = async () => {
     if (!newComment.trim() || submitting) return;
     
     setSubmitting(true);
-    const result = await addComment(newComment.trim());
+    const result = await addComment(newComment.trim(), replyingTo?.commentId);
     setSubmitting(false);
     
     if (!result.error) {
       setNewComment("");
+      setReplyingTo(null);
     }
   };
 
@@ -55,6 +78,13 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
     onClose();
     navigate(`/user/${userId}`);
   };
+
+  // Focus input when replying
+  useEffect(() => {
+    if (replyingTo && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [replyingTo]);
 
   if (!isOpen) return null;
 
@@ -101,6 +131,7 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
                 <CommentItem
                   comment={comment}
                   onLike={() => handleLikeComment(comment)}
+                  onReply={() => handleReply(comment)}
                   onGoToProfile={goToProfile}
                   formatTimeAgo={formatTimeAgo}
                 />
@@ -113,6 +144,7 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
                         key={reply.id}
                         comment={reply}
                         onLike={() => handleLikeComment(reply)}
+                        onReply={() => handleReply(comment)} // Reply to parent, not to reply
                         onGoToProfile={goToProfile}
                         formatTimeAgo={formatTimeAgo}
                         isReply
@@ -126,35 +158,53 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
         </div>
         
         {/* Input */}
-        <div className="border-t border-border p-3 flex items-center gap-3 safe-area-bottom">
-          <img
-            src={`https://i.pravatar.cc/150?u=${user?.id || 'guest'}`}
-            alt="You"
-            className="w-8 h-8 rounded-full object-cover"
-          />
-          <div className="flex-1 relative">
-            <Input
-              placeholder={user ? "Добавьте комментарий..." : "Войдите чтобы комментировать"}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
-              className="pr-10 rounded-full bg-muted border-0"
-              disabled={!user || submitting}
+        <div className="border-t border-border safe-area-bottom">
+          {/* Reply indicator */}
+          {replyingTo && (
+            <div className="flex items-center justify-between px-4 py-2 bg-muted/50 text-sm">
+              <span className="text-muted-foreground">
+                Ответ для <span className="font-medium text-foreground">{replyingTo.authorName}</span>
+              </span>
+              <button 
+                onClick={cancelReply}
+                className="text-primary font-medium"
+              >
+                Отмена
+              </button>
+            </div>
+          )}
+          
+          <div className="p-3 flex items-center gap-3">
+            <img
+              src={`https://i.pravatar.cc/150?u=${user?.id || 'guest'}`}
+              alt="You"
+              className="w-8 h-8 rounded-full object-cover"
             />
+            <div className="flex-1 relative">
+              <Input
+                ref={inputRef}
+                placeholder={user ? (replyingTo ? "Напишите ответ..." : "Добавьте комментарий...") : "Войдите чтобы комментировать"}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
+                className="pr-10 rounded-full bg-muted border-0"
+                disabled={!user || submitting}
+              />
+            </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-primary"
+              disabled={!newComment.trim() || submitting || !user}
+              onClick={handleSubmitComment}
+            >
+              {submitting ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </Button>
           </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="text-primary"
-            disabled={!newComment.trim() || submitting || !user}
-            onClick={handleSubmitComment}
-          >
-            {submitting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
-          </Button>
         </div>
       </div>
     </div>
@@ -164,12 +214,13 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
 interface CommentItemProps {
   comment: Comment;
   onLike: () => void;
+  onReply: () => void;
   onGoToProfile: (userId: string) => void;
   formatTimeAgo: (date: string) => string;
   isReply?: boolean;
 }
 
-function CommentItem({ comment, onLike, onGoToProfile, formatTimeAgo, isReply }: CommentItemProps) {
+function CommentItem({ comment, onLike, onReply, onGoToProfile, formatTimeAgo, isReply }: CommentItemProps) {
   const avatarUrl = comment.author.avatar_url || 
     `https://i.pravatar.cc/150?u=${comment.author.user_id}`;
 
@@ -198,7 +249,10 @@ function CommentItem({ comment, onLike, onGoToProfile, formatTimeAgo, isReply }:
             </span>
             <p className="text-sm text-foreground mt-0.5">{comment.content}</p>
             <div className="flex items-center gap-4 mt-1.5">
-              <button className="text-xs text-muted-foreground font-medium">
+              <button 
+                onClick={onReply}
+                className="text-xs text-muted-foreground font-medium hover:text-foreground transition-colors"
+              >
                 Ответить
               </button>
             </div>

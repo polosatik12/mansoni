@@ -37,7 +37,9 @@ const getSessionId = () => {
   return sessionId;
 };
 
-export function usePosts() {
+export type FeedFilter = 'all' | 'following';
+
+export function usePosts(filter: FeedFilter = 'all') {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,91 +48,67 @@ export function usePosts() {
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
+
+      // If filtering by following, first get the list of followed users
+      let followingIds: string[] = [];
+      if (filter === 'following' && user) {
+        const { data: followingData } = await supabase
+          .from('followers')
+          .select('following_id')
+          .eq('follower_id', user.id);
+        
+        followingIds = followingData?.map(f => f.following_id) || [];
+        
+        // If user doesn't follow anyone, return empty
+        if (followingIds.length === 0) {
+          setPosts([]);
+          setLoading(false);
+          return;
+        }
+      }
       
-      // Fetch posts with author info
+      // Fetch posts - first try with join
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select(`
-          *,
-          profiles!posts_author_id_fkey (
-            id,
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('is_published', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (postsError) {
-        // If foreign key doesn't exist, fetch without join
-        const { data: simplePostsData, error: simpleError } = await supabase
-          .from('posts')
-          .select('*')
-          .eq('is_published', true)
-          .order('created_at', { ascending: false })
-          .limit(50);
-        
-        if (simpleError) throw simpleError;
-        
-        // Fetch profiles separately
-        const authorIds = [...new Set(simplePostsData?.map(p => p.author_id) || [])];
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, avatar_url')
-          .in('user_id', authorIds);
-        
-        const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
-        
-        const postsWithAuthors = simplePostsData?.map(post => ({
-          ...post,
-          author: profilesMap.get(post.author_id) ? {
-            id: post.author_id,
-            display_name: profilesMap.get(post.author_id)?.display_name,
-            avatar_url: profilesMap.get(post.author_id)?.avatar_url
-          } : undefined
-        })) || [];
+      if (postsError) throw postsError;
 
-        // Fetch media for posts
-        const postIds = postsWithAuthors.map(p => p.id);
-        const { data: mediaData } = await supabase
-          .from('post_media')
-          .select('*')
-          .in('post_id', postIds)
-          .order('sort_order', { ascending: true });
-
-        const mediaMap = new Map<string, typeof mediaData>();
-        mediaData?.forEach(m => {
-          const existing = mediaMap.get(m.post_id) || [];
-          existing.push(m);
-          mediaMap.set(m.post_id, existing);
-        });
-
-        // Check if user liked posts
-        let likedPostIds: string[] = [];
-        if (user) {
-          const { data: likesData } = await supabase
-            .from('post_likes')
-            .select('post_id')
-            .eq('user_id', user.id)
-            .in('post_id', postIds);
-          likedPostIds = likesData?.map(l => l.post_id) || [];
-        }
-
-        const finalPosts = postsWithAuthors.map(post => ({
-          ...post,
-          media: mediaMap.get(post.id) || [],
-          is_liked: likedPostIds.includes(post.id)
-        }));
-
-        setPosts(finalPosts);
+      // Filter by following if needed
+      let filteredPosts = postsData || [];
+      if (filter === 'following' && followingIds.length > 0) {
+        filteredPosts = filteredPosts.filter(p => followingIds.includes(p.author_id));
+      }
+      
+      if (filteredPosts.length === 0) {
+        setPosts([]);
+        setLoading(false);
         return;
       }
-
-      // If join worked
-      const postIds = postsData?.map(p => p.id) || [];
+        
+      // Fetch profiles separately
+      const authorIds = [...new Set(filteredPosts.map(p => p.author_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', authorIds);
       
-      // Fetch media
+      const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
+      
+      const postsWithAuthors = filteredPosts.map(post => ({
+        ...post,
+        author: profilesMap.get(post.author_id) ? {
+          id: post.author_id,
+          display_name: profilesMap.get(post.author_id)?.display_name,
+          avatar_url: profilesMap.get(post.author_id)?.avatar_url
+        } : undefined
+      }));
+
+      // Fetch media for posts
+      const postIds = postsWithAuthors.map(p => p.id);
       const { data: mediaData } = await supabase
         .from('post_media')
         .select('*')
@@ -144,7 +122,7 @@ export function usePosts() {
         mediaMap.set(m.post_id, existing);
       });
 
-      // Check likes
+      // Check if user liked posts
       let likedPostIds: string[] = [];
       if (user) {
         const { data: likesData } = await supabase
@@ -155,16 +133,11 @@ export function usePosts() {
         likedPostIds = likesData?.map(l => l.post_id) || [];
       }
 
-      const finalPosts = postsData?.map(post => ({
+      const finalPosts = postsWithAuthors.map(post => ({
         ...post,
-        author: post.profiles ? {
-          id: post.author_id,
-          display_name: (post.profiles as any).display_name,
-          avatar_url: (post.profiles as any).avatar_url
-        } : undefined,
         media: mediaMap.get(post.id) || [],
         is_liked: likedPostIds.includes(post.id)
-      })) || [];
+      }));
 
       setPosts(finalPosts);
     } catch (err) {
@@ -172,7 +145,7 @@ export function usePosts() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, filter]);
 
   useEffect(() => {
     fetchPosts();
