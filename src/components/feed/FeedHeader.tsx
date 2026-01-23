@@ -1,43 +1,29 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
 import { ServicesMenu } from "@/components/layout/ServicesMenu";
 import { cn } from "@/lib/utils";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 import { StoryViewer } from "./StoryViewer";
-
-import storyAvatar1 from "@/assets/story-avatar-1.jpg";
-import storyAvatar2 from "@/assets/story-avatar-2.jpg";
-import storyAvatar3 from "@/assets/story-avatar-3.jpg";
-import storyAvatar4 from "@/assets/story-avatar-4.jpg";
-import storyAvatar5 from "@/assets/story-avatar-5.jpg";
-
-const stories = [
-  { id: "you", name: "Вы", avatar: storyAvatar1, isOwn: true },
-  { id: "1", name: "Алиса", avatar: storyAvatar3, hasStory: true },
-  { id: "2", name: "Макс", avatar: storyAvatar2, hasStory: true },
-  { id: "3", name: "Кира", avatar: storyAvatar4, hasStory: true },
-  { id: "4", name: "Дэн", avatar: storyAvatar5, hasStory: false },
-  { id: "5", name: "Софи", avatar: storyAvatar1, hasStory: true },
-  { id: "6", name: "Иван", avatar: storyAvatar2, hasStory: false },
-];
+import { useStories, type UserWithStories } from "@/hooks/useStories";
 
 export function FeedHeader() {
   const { collapseProgress } = useScrollCollapse(100);
   const scrollContainerRef = useScrollContainer();
+  const { usersWithStories, loading } = useStories();
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
 
   // Handle story click - either scroll to top or open viewer
-  const handleStoryClick = (index: number) => {
+  const handleStoryClick = (index: number, user: UserWithStories) => {
     if (collapseProgress > 0.1 && scrollContainerRef?.current) {
       // If collapsed, scroll to top first
       scrollContainerRef.current.scrollTo({
         top: 0,
         behavior: 'smooth'
       });
-    } else {
-      // If expanded, open story viewer
+    } else if (user.stories.length > 0) {
+      // If expanded and has stories, open story viewer
       setSelectedStoryIndex(index);
       setStoryViewerOpen(true);
     }
@@ -108,14 +94,29 @@ export function FeedHeader() {
         <ServicesMenu />
       </div>
 
+      {/* Loading state */}
+      {loading && usersWithStories.length === 0 && (
+        <div 
+          className="absolute flex items-center justify-center"
+          style={{ 
+            left: paddingLeft, 
+            top: headerHeight,
+            height: expandedAvatarSize 
+          }}
+        >
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
       {/* Stories - single set with animated positions */}
-      {stories.map((story, index) => {
+      {usersWithStories.map((user, index) => {
         const styles = getStoryStyles(index);
+        const hasStories = user.stories.length > 0;
 
         return (
           <button
-            key={story.id}
-            onClick={() => handleStoryClick(index)}
+            key={user.user_id}
+            onClick={() => handleStoryClick(index, user)}
             className="absolute flex flex-col items-center transition-all duration-200 ease-out cursor-pointer"
             style={{
               left: 0,
@@ -130,11 +131,13 @@ export function FeedHeader() {
             <div
               className={cn(
                 "rounded-full transition-all duration-200 flex-shrink-0 relative",
-                story.isOwn
+                user.isOwn && !hasStories
                   ? "p-0.5 bg-muted"
-                  : story.hasStory
+                  : user.hasNew
                     ? "p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400"
-                    : "p-0.5 bg-muted"
+                    : hasStories
+                      ? "p-0.5 bg-muted-foreground/30"
+                      : "p-0.5 bg-muted"
               )}
               style={{
                 width: `${styles.size}px`,
@@ -144,14 +147,14 @@ export function FeedHeader() {
               <div className="w-full h-full rounded-full bg-background p-[2px]">
                 <div className="w-full h-full rounded-full overflow-hidden">
                   <img
-                    src={story.avatar}
-                    alt={story.name}
+                    src={user.avatar_url || `https://i.pravatar.cc/150?u=${user.user_id}`}
+                    alt={user.display_name || ''}
                     className="w-full h-full object-cover rounded-full"
                   />
                 </div>
               </div>
-              {/* Plus icon for own story */}
-              {story.isOwn && collapseProgress < 0.5 && (
+              {/* Plus icon for own story without stories */}
+              {user.isOwn && !hasStories && collapseProgress < 0.5 && (
                 <div 
                   className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center transition-opacity duration-200"
                   style={{ opacity: 1 - collapseProgress * 2 }}
@@ -170,7 +173,7 @@ export function FeedHeader() {
                 marginTop: styles.nameOpacity > 0.1 ? '4px' : '0px',
               }}
             >
-              {story.name}
+              {user.isOwn ? 'Вы' : user.display_name}
             </span>
           </button>
         );
@@ -178,8 +181,8 @@ export function FeedHeader() {
 
       {/* Story Viewer */}
       <StoryViewer
-        stories={stories}
-        initialStoryIndex={selectedStoryIndex}
+        usersWithStories={usersWithStories}
+        initialUserIndex={selectedStoryIndex}
         isOpen={storyViewerOpen}
         onClose={() => setStoryViewerOpen(false)}
       />
