@@ -55,6 +55,8 @@ export function PostCard({
   const [showComments, setShowComments] = useState(false);
   const [likeAnimation, setLikeAnimation] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const heartIdRef = useRef(0);
   const viewRecorded = useRef(false);
   
@@ -79,6 +81,31 @@ export function PostCard({
 
   const allImages = images || (image ? [image] : []);
   const hasMultipleImages = allImages.length > 1;
+  const MIN_SWIPE_DISTANCE = 50;
+
+  // Swipe handlers for image navigation
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
+    const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
+
+    if (isLeftSwipe && currentImageIndex < allImages.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    } else if (isRightSwipe && currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    }
+  };
 
   const handleLike = async () => {
     if (!liked) {
@@ -190,6 +217,9 @@ export function PostCard({
         <div 
           className="relative aspect-square cursor-pointer select-none"
           onDoubleClick={handleDoubleTap}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           <img
             src={allImages[currentImageIndex]}
@@ -215,23 +245,6 @@ export function PostCard({
             </div>
           )}
 
-          {/* Navigation arrows */}
-          {hasMultipleImages && currentImageIndex > 0 && (
-            <button
-              onClick={() => setCurrentImageIndex(currentImageIndex - 1)}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-lg"
-            >
-              <span className="text-black font-bold">‹</span>
-            </button>
-          )}
-          {hasMultipleImages && currentImageIndex < allImages.length - 1 && (
-            <button
-              onClick={() => setCurrentImageIndex(currentImageIndex + 1)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-lg"
-            >
-              <span className="text-black font-bold">›</span>
-            </button>
-          )}
 
           {/* Dots indicator */}
           {hasMultipleImages && (
