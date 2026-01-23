@@ -1,18 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  Phone,
-  PhoneOff,
-  Mic,
-  MicOff,
+  ChevronLeft,
+  Volume2,
   Video,
   VideoOff,
-  SwitchCamera,
-  Minimize2,
+  Mic,
+  MicOff,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useWebRTC } from "@/hooks/useWebRTC";
-import type { Call, CallType } from "@/hooks/useCalls";
+import type { Call } from "@/hooks/useCalls";
 
 interface CallScreenProps {
   call: Call;
@@ -21,12 +18,13 @@ interface CallScreenProps {
   onMinimize?: () => void;
 }
 
-export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenProps) {
+export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [callDuration, setCallDuration] = useState(0);
   const [connectionState, setConnectionState] = useState<string>("connecting");
   const [webrtcStarted, setWebrtcStarted] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
 
   const otherUser = isInitiator ? call.callee_profile : call.caller_profile;
   const otherName = otherUser?.display_name || "Собеседник";
@@ -44,7 +42,6 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
     endCall,
     toggleMute,
     toggleVideo,
-    switchCamera,
   } = useWebRTC({
     callId: call.id,
     callType: call.call_type,
@@ -56,7 +53,6 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
   useEffect(() => {
     if (isCallActive && !webrtcStarted) {
       setWebrtcStarted(true);
-      // Small delay to ensure both peers are ready
       const timer = setTimeout(() => {
         startCall();
       }, 500);
@@ -77,7 +73,7 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
     }
   }, [remoteStream]);
 
-  // Call duration timer - only count when connected
+  // Call duration timer
   useEffect(() => {
     if (!isConnected) return;
 
@@ -91,7 +87,28 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return parts[0].charAt(0).toUpperCase() + parts[1].charAt(0).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
+
+  const getStatusText = () => {
+    if (call.status === "calling") {
+      return "Запрос";
+    }
+    if (call.status === "ringing") {
+      return "Звонок";
+    }
+    if (connectionState === "connected" || isConnected) {
+      return formatDuration(callDuration);
+    }
+    return "Соединение";
   };
 
   const handleEndCall = () => {
@@ -99,87 +116,105 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
     onEnd();
   };
 
-  const getStatusText = () => {
-    // Show call status based on call.status first
-    if (call.status === "calling") {
-      return "Вызов...";
-    }
-    if (call.status === "ringing") {
-      return "Звонок...";
-    }
-    
-    // For active calls, show connection state
-    switch (connectionState) {
-      case "connecting":
-        return "Подключение...";
-      case "connected":
-        return formatDuration(callDuration);
-      case "disconnected":
-        return "Отключено";
-      case "failed":
-        return "Ошибка соединения";
-      default:
-        return "Соединение...";
-    }
+  const toggleSpeaker = () => {
+    setIsSpeakerOn(!isSpeakerOn);
   };
 
-  return (
-    <div className="fixed inset-0 bg-black z-[100] flex flex-col">
-      {/* Video call layout */}
-      {isVideoCall ? (
-        <>
-          {/* Remote video (full screen) */}
-          <div className="absolute inset-0">
-            {remoteStream ? (
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-gray-800 to-gray-900">
-                {otherAvatar ? (
-                  <img
-                    src={otherAvatar}
-                    alt={otherName}
-                    className="w-32 h-32 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-gray-600 flex items-center justify-center">
-                    <span className="text-4xl text-white font-bold">
-                      {otherName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+  const showWaitingUI = !isConnected || call.status !== "active";
 
-          {/* Local video (PiP) - only show when call is active */}
-          {isCallActive && (
-            <div className="absolute top-16 right-4 w-28 h-40 rounded-xl overflow-hidden shadow-lg border-2 border-white/20">
-              {localStream && !isVideoOff ? (
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover scale-x-[-1]"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                  <VideoOff className="w-6 h-6 text-white/50" />
-                </div>
-              )}
-            </div>
+  // Video call with active connection - show video streams
+  if (isVideoCall && isConnected && !isVideoOff) {
+    return (
+      <div className="fixed inset-0 bg-black z-[100] flex flex-col">
+        {/* Remote video (full screen) */}
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* Local video (small overlay) */}
+        <video
+          ref={localVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute top-20 right-4 w-32 h-44 object-cover rounded-2xl border-2 border-white/30 z-10 scale-x-[-1]"
+        />
+
+        {/* Top bar */}
+        <div className="absolute top-0 left-0 right-0 p-4 pt-12 safe-area-top z-20 bg-gradient-to-b from-black/50 to-transparent">
+          <button onClick={handleEndCall} className="flex items-center text-white">
+            <ChevronLeft className="w-6 h-6" />
+            <span className="text-lg">Назад</span>
+          </button>
+        </div>
+
+        {/* Bottom controls */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 safe-area-bottom z-20 bg-gradient-to-t from-black/50 to-transparent">
+          <div className="flex items-center justify-around">
+            <ControlButton
+              icon={<Volume2 className="w-6 h-6" />}
+              label="динамик"
+              isActive={isSpeakerOn}
+              onClick={toggleSpeaker}
+            />
+            <ControlButton
+              icon={isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+              label="видео"
+              isActive={!isVideoOff}
+              onClick={toggleVideo}
+            />
+            <ControlButton
+              icon={isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+              label="убрать звук"
+              isActive={!isMuted}
+              onClick={toggleMute}
+            />
+            <ControlButton
+              icon={<X className="w-6 h-6" />}
+              label="завершить"
+              isEndButton
+              onClick={handleEndCall}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Audio call or waiting state - show gradient UI (Telegram style)
+  return (
+    <div className="fixed inset-0 bg-gradient-to-b from-purple-600 via-purple-500 to-blue-400 z-[100] flex flex-col">
+      {/* Top bar with back button */}
+      <div className="p-4 pt-12 safe-area-top">
+        <button onClick={handleEndCall} className="flex items-center text-white">
+          <ChevronLeft className="w-6 h-6" />
+          <span className="text-lg">Назад</span>
+        </button>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center -mt-16">
+        {/* Avatar with glow effect */}
+        <div className="relative">
+          {/* Outer glow */}
+          <div className="absolute -inset-4 rounded-full bg-white/10 blur-xl" />
+
+          {/* Pulsing ring animation when not connected */}
+          {showWaitingUI && (
+            <>
+              <div
+                className="absolute inset-0 w-40 h-40 rounded-full border-4 border-white/20 animate-ping"
+                style={{ animationDuration: "2s" }}
+              />
+              <div className="absolute inset-0 w-40 h-40 rounded-full border-2 border-white/30" />
+            </>
           )}
-        </>
-      ) : (
-        /* Audio call layout */
-        <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-primary/80 to-primary">
-          {/* Avatar */}
-          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/30 mb-6">
+
+          {/* Avatar container */}
+          <div className="relative w-40 h-40 rounded-full border-4 border-white/30 overflow-hidden bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center">
             {otherAvatar ? (
               <img
                 src={otherAvatar}
@@ -187,100 +222,109 @@ export function CallScreen({ call, isInitiator, onEnd, onMinimize }: CallScreenP
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                <span className="text-4xl text-white font-bold">
-                  {otherName.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              <span className="text-5xl text-white font-bold">
+                {getInitials(otherName)}
+              </span>
             )}
           </div>
-
-          <h2 className="text-2xl font-bold text-white mb-2">{otherName}</h2>
         </div>
-      )}
 
-      {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 safe-area-top">
-        <div className="flex flex-col">
-          {isVideoCall && (
-            <span className="text-white font-medium">{otherName}</span>
+        {/* Name */}
+        <h2 className="text-3xl font-semibold text-white mt-8 mb-3">{otherName}</h2>
+
+        {/* Status with animated dots */}
+        <div className="flex items-center h-7">
+          <span className="text-white/80 text-lg">{getStatusText()}</span>
+          {showWaitingUI && (
+            <span className="flex ml-0.5">
+              <span
+                className="animate-bounce text-white/80 text-lg"
+                style={{ animationDelay: "0ms", animationDuration: "1s" }}
+              >
+                .
+              </span>
+              <span
+                className="animate-bounce text-white/80 text-lg"
+                style={{ animationDelay: "200ms", animationDuration: "1s" }}
+              >
+                .
+              </span>
+              <span
+                className="animate-bounce text-white/80 text-lg"
+                style={{ animationDelay: "400ms", animationDuration: "1s" }}
+              >
+                .
+              </span>
+            </span>
           )}
-          <span className="text-white/70 text-sm">{getStatusText()}</span>
         </div>
-
-        {onMinimize && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onMinimize}
-            className="text-white hover:bg-white/20"
-          >
-            <Minimize2 className="w-5 h-5" />
-          </Button>
-        )}
       </div>
 
-      {/* Controls */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 safe-area-bottom">
-        <div className="flex items-center justify-center gap-4">
-          {/* Show mute/video controls only when call is active */}
-          {isCallActive && (
-            <>
-              {/* Mute */}
-              <Button
-                size="icon"
-                onClick={toggleMute}
-                className={`w-14 h-14 rounded-full ${
-                  isMuted ? "bg-white text-black" : "bg-white/20 text-white"
-                }`}
-              >
-                {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-              </Button>
+      {/* Hidden audio element for remote stream in audio calls */}
+      {!isVideoCall && <audio ref={remoteVideoRef as any} autoPlay playsInline />}
 
-              {/* Video toggle (only for video calls) */}
-              {isVideoCall && (
-                <Button
-                  size="icon"
-                  onClick={toggleVideo}
-                  className={`w-14 h-14 rounded-full ${
-                    isVideoOff ? "bg-white text-black" : "bg-white/20 text-white"
-                  }`}
-                >
-                  {isVideoOff ? (
-                    <VideoOff className="w-6 h-6" />
-                  ) : (
-                    <Video className="w-6 h-6" />
-                  )}
-                </Button>
-              )}
-
-              {/* Switch camera (only for video calls) */}
-              {isVideoCall && (
-                <Button
-                  size="icon"
-                  onClick={switchCamera}
-                  className="w-14 h-14 rounded-full bg-white/20 text-white"
-                >
-                  <SwitchCamera className="w-6 h-6" />
-                </Button>
-              )}
-            </>
-          )}
-
-          {/* End/Cancel call button */}
-          <Button
-            size="icon"
+      {/* Bottom controls */}
+      <div className="p-6 pb-10 safe-area-bottom">
+        <div className="flex items-center justify-around">
+          <ControlButton
+            icon={<Volume2 className="w-6 h-6" />}
+            label="динамик"
+            isActive={isSpeakerOn}
+            onClick={toggleSpeaker}
+          />
+          <ControlButton
+            icon={isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+            label="видео"
+            isActive={!isVideoOff}
+            onClick={toggleVideo}
+          />
+          <ControlButton
+            icon={isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+            label="убрать звук"
+            isActive={!isMuted}
+            onClick={toggleMute}
+          />
+          <ControlButton
+            icon={<X className="w-6 h-6" />}
+            label="завершить"
+            isEndButton
             onClick={handleEndCall}
-            className="w-14 h-14 rounded-full bg-destructive hover:bg-destructive/90"
-          >
-            {isCallActive ? (
-              <PhoneOff className="w-6 h-6" />
-            ) : (
-              <X className="w-6 h-6" />
-            )}
-          </Button>
+          />
         </div>
       </div>
     </div>
   );
 }
+
+// Control button component
+interface ControlButtonProps {
+  icon: React.ReactNode;
+  label: string;
+  isActive?: boolean;
+  isEndButton?: boolean;
+  onClick: () => void;
+}
+
+const ControlButton = ({
+  icon,
+  label,
+  isActive = true,
+  isEndButton = false,
+  onClick,
+}: ControlButtonProps) => (
+  <div className="flex flex-col items-center gap-2">
+    <button
+      onClick={onClick}
+      className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+        isEndButton
+          ? "bg-red-500 text-white"
+          : isActive
+            ? "bg-white/20 backdrop-blur-sm text-white"
+            : "bg-white text-gray-800"
+      }`}
+    >
+      {icon}
+    </button>
+    <span className="text-white/80 text-xs">{label}</span>
+  </div>
+);
