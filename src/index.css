@@ -195,3 +195,31 @@ html, body, #root {
   display: flex;
   flex-direction: column;
 }
+
+/* ============================================
+   GPU-ACCELERATED STORY ANIMATIONS
+   ============================================ */
+
+/* Story avatar button - GPU layer promotion */
+.story-avatar-btn {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Story avatar container - GPU compositing */
+.story-avatar {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Story name - simplified transitions */
+.story-name {
+  will-change: opacity;
+  transition: opacity 0.1s linear, height 0.1s linear, margin-top 0.1s linear;
+}

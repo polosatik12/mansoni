@@ -1,24 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 
 export function useScrollCollapse(threshold: number = 50) {
   const containerRef = useScrollContainer();
   const [scrollY, setScrollY] = useState(0);
+  const rafId = useRef<number | null>(null);
+  const lastScrollY = useRef(0);
+
+  const updateScroll = useCallback(() => {
+    setScrollY(lastScrollY.current);
+    rafId.current = null;
+  }, []);
 
   useEffect(() => {
     const container = containerRef?.current;
     if (!container) return;
 
     const handleScroll = () => {
-      const currentScrollY = container.scrollTop;
-      setScrollY(currentScrollY);
+      lastScrollY.current = container.scrollTop;
+      
+      // Use requestAnimationFrame to throttle updates to 60 FPS
+      if (rafId.current === null) {
+        rafId.current = requestAnimationFrame(updateScroll);
+      }
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll(); // Get initial state
     
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [containerRef]);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+      }
+    };
+  }, [containerRef, updateScroll]);
 
   const isCollapsed = scrollY > threshold;
   const collapseProgress = Math.min(scrollY / threshold, 1);
