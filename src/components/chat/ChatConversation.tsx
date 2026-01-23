@@ -40,6 +40,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [viewingVideo, setViewingVideo] = useState<string | null>(null);
   const [isCallInitiator, setIsCallInitiator] = useState(false);
+  const [recordMode, setRecordMode] = useState<'voice' | 'video'>('voice');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
@@ -422,23 +423,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="w-full h-[42px] px-4 pr-20 rounded-full border border-white/20 bg-black/40 backdrop-blur-md text-white placeholder:text-white/40 outline-none focus:border-white/30 transition-colors"
+                className="w-full h-[42px] px-4 pr-12 rounded-full border border-white/20 bg-black/40 backdrop-blur-md text-white placeholder:text-white/40 outline-none focus:border-white/30 transition-colors"
               />
-              {/* Icons inside input on the right */}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <button 
-                  onClick={() => setShowVideoRecorder(true)}
-                  className="p-1"
-                >
-                  <Video className="w-5 h-5 text-white/50" />
-                </button>
+              {/* Clock icon inside input on the right */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <button className="p-1">
                   <Clock className="w-5 h-5 text-white/50" />
                 </button>
               </div>
             </div>
             
-            {/* Send or Mic button - circular with border */}
+            {/* Send or toggleable Mic/Video button */}
             {inputText.trim() ? (
               <button
                 onClick={handleSendMessage}
@@ -448,14 +443,31 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               </button>
             ) : (
               <button
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-                onMouseLeave={() => isRecording && cancelRecording()}
-                onTouchStart={startRecording}
-                onTouchEnd={stopRecording}
-                className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0"
+                onClick={() => setRecordMode(prev => prev === 'voice' ? 'video' : 'voice')}
+                onMouseDown={() => {
+                  if (recordMode === 'voice') startRecording();
+                  else setShowVideoRecorder(true);
+                }}
+                onMouseUp={() => {
+                  if (recordMode === 'voice') stopRecording();
+                }}
+                onMouseLeave={() => {
+                  if (recordMode === 'voice' && isRecording) cancelRecording();
+                }}
+                onTouchStart={() => {
+                  if (recordMode === 'voice') startRecording();
+                  else setShowVideoRecorder(true);
+                }}
+                onTouchEnd={() => {
+                  if (recordMode === 'voice') stopRecording();
+                }}
+                className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0 transition-all"
               >
-                <Mic className="w-5 h-5 text-white/70" />
+                {recordMode === 'voice' ? (
+                  <Mic className="w-5 h-5 text-white/70" />
+                ) : (
+                  <Video className="w-5 h-5 text-white/70" />
+                )}
               </button>
             )}
           </div>
