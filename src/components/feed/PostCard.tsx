@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { CommentsSheet } from "./CommentsSheet";
 import { usePostActions } from "@/hooks/usePosts";
-
+import { useSavedPosts } from "@/hooks/useSavedPosts";
 interface PostCardProps {
   id?: string;
   author: {
@@ -46,8 +46,8 @@ export function PostCard({
 }: PostCardProps) {
   const navigate = useNavigate();
   const { recordView, toggleLike } = usePostActions();
+  const { isSaved, toggleSave } = useSavedPosts();
   const [liked, setLiked] = useState(isLiked);
-  const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
   const [viewCount] = useState(views);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -57,6 +57,17 @@ export function PostCard({
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; y: number }[]>([]);
   const heartIdRef = useRef(0);
   const viewRecorded = useRef(false);
+  
+  const saved = id ? isSaved(id) : false;
+  
+  const handleSave = async () => {
+    if (!id) return;
+    try {
+      await toggleSave(id);
+    } catch (err) {
+      console.error('Failed to toggle save:', err);
+    }
+  };
 
   // Record view when post becomes visible
   useEffect(() => {
@@ -281,8 +292,11 @@ export function PostCard({
             </div>
           )}
           <button
-            onClick={() => setSaved(!saved)}
-            className="flex items-center gap-1.5 text-foreground"
+            onClick={handleSave}
+            className={cn(
+              "flex items-center gap-1.5 transition-colors",
+              saved ? "text-primary" : "text-foreground"
+            )}
           >
             <Bookmark className={cn("w-6 h-6", saved && "fill-current")} />
             <span className="text-sm">{formatNumber(saves)}</span>
