@@ -19,6 +19,20 @@ export interface Comment {
   replies?: Comment[];
 }
 
+interface CommentRow {
+  id: string;
+  post_id: string;
+  author_id: string;
+  parent_id: string | null;
+  content: string;
+  likes_count: number;
+  created_at: string;
+}
+
+interface CommentLikeRow {
+  comment_id: string;
+  user_id: string;
+}
 
 export function useComments(postId: string) {
   const { user } = useAuth();
@@ -31,9 +45,9 @@ export function useComments(postId: string) {
     setError(null);
 
     try {
-      // Fetch comments with author profile
-      const { data: commentsData, error: commentsError } = await supabase
-        .from("comments")
+      // Fetch comments - using type assertion until types.ts is regenerated
+      const { data: commentsData, error: commentsError } = await (supabase
+        .from("comments" as any)
         .select(`
           id,
           post_id,
@@ -44,11 +58,11 @@ export function useComments(postId: string) {
           created_at
         `)
         .eq("post_id", postId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true }) as any);
 
       if (commentsError) throw commentsError;
 
-      const typedComments = commentsData || [];
+      const typedComments = (commentsData || []) as CommentRow[];
 
       if (typedComments.length === 0) {
         setComments([]);
@@ -74,17 +88,18 @@ export function useComments(postId: string) {
       // Check which comments the current user has liked
       let likedCommentIds: Set<string> = new Set();
       if (user) {
-        const { data: likes, error: likesError } = await supabase
-          .from("comment_likes")
+        const { data: likes, error: likesError } = await (supabase
+          .from("comment_likes" as any)
           .select("comment_id")
           .eq("user_id", user.id)
           .in(
             "comment_id",
             typedComments.map((c) => c.id)
-          );
+          ) as any);
 
         if (!likesError && likes) {
-          likedCommentIds = new Set(likes.map((l) => l.comment_id));
+          const typedLikes = likes as CommentLikeRow[];
+          likedCommentIds = new Set(typedLikes.map((l) => l.comment_id));
         }
       }
 
@@ -139,8 +154,8 @@ export function useComments(postId: string) {
     }
 
     try {
-      const { data, error } = await supabase
-        .from("comments")
+      const { data, error } = await (supabase
+        .from("comments" as any)
         .insert({
           post_id: postId,
           author_id: user.id,
@@ -148,7 +163,7 @@ export function useComments(postId: string) {
           content,
         })
         .select()
-        .single();
+        .single() as any);
 
       if (error) throw error;
 
@@ -168,18 +183,18 @@ export function useComments(postId: string) {
 
     try {
       if (isCurrentlyLiked) {
-        const { error } = await supabase
-          .from("comment_likes")
+        const { error } = await (supabase
+          .from("comment_likes" as any)
           .delete()
           .eq("comment_id", commentId)
-          .eq("user_id", user.id);
+          .eq("user_id", user.id) as any);
 
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("comment_likes").insert({
+        const { error } = await (supabase.from("comment_likes" as any).insert({
           comment_id: commentId,
           user_id: user.id,
-        });
+        }) as any);
 
         if (error) throw error;
       }
@@ -230,11 +245,11 @@ export function useComments(postId: string) {
     }
 
     try {
-      const { error } = await supabase
-        .from("comments")
+      const { error } = await (supabase
+        .from("comments" as any)
         .delete()
         .eq("id", commentId)
-        .eq("author_id", user.id);
+        .eq("author_id", user.id) as any);
 
       if (error) throw error;
 
