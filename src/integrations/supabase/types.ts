@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_profiles: {
+        Row: {
+          available_balance: number | null
+          bank_details: Json | null
+          commission_rate: number | null
+          company_name: string | null
+          created_at: string
+          id: string
+          inn: string | null
+          is_legal_entity: boolean | null
+          referral_code: string | null
+          referred_by: string | null
+          region: string | null
+          status: Database["public"]["Enums"]["agent_status"]
+          total_earned: number | null
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          available_balance?: number | null
+          bank_details?: Json | null
+          commission_rate?: number | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          inn?: string | null
+          is_legal_entity?: boolean | null
+          referral_code?: string | null
+          referred_by?: string | null
+          region?: string | null
+          status?: Database["public"]["Enums"]["agent_status"]
+          total_earned?: number | null
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          available_balance?: number | null
+          bank_details?: Json | null
+          commission_rate?: number | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          inn?: string | null
+          is_legal_entity?: boolean | null
+          referral_code?: string | null
+          referred_by?: string | null
+          region?: string | null
+          status?: Database["public"]["Enums"]["agent_status"]
+          total_earned?: number | null
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "agent_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calls: {
         Row: {
           call_type: string
@@ -203,6 +268,79 @@ export type Database = {
         }
         Relationships: []
       }
+      insurance_calculations: {
+        Row: {
+          agent_id: string | null
+          client_id: string | null
+          commission_amount: number | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          input_data: Json
+          product_type: string
+          results: Json | null
+          selected_company_id: string | null
+          selected_price: number | null
+          status: Database["public"]["Enums"]["calculation_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          client_id?: string | null
+          commission_amount?: number | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          input_data: Json
+          product_type: string
+          results?: Json | null
+          selected_company_id?: string | null
+          selected_price?: number | null
+          status?: Database["public"]["Enums"]["calculation_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          client_id?: string | null
+          commission_amount?: number | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          input_data?: Json
+          product_type?: string
+          results?: Json | null
+          selected_company_id?: string | null
+          selected_price?: number | null
+          status?: Database["public"]["Enums"]["calculation_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_calculations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_calculations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_calculations_selected_company_id_fkey"
+            columns: ["selected_company_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_claims: {
         Row: {
           claim_amount: number | null
@@ -250,35 +388,228 @@ export type Database = {
           },
         ]
       }
+      insurance_clients: {
+        Row: {
+          address: string | null
+          agent_id: string | null
+          birth_date: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          passport_number: string | null
+          passport_series: string | null
+          phone: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          agent_id?: string | null
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          passport_number?: string | null
+          passport_series?: string | null
+          phone?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          agent_id?: string | null
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          passport_number?: string | null
+          passport_series?: string | null
+          phone?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_clients_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_commissions: {
+        Row: {
+          agent_id: string
+          amount: number
+          calculation_id: string | null
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          paid_at: string | null
+          policy_id: string | null
+          rate: number
+          status: Database["public"]["Enums"]["commission_status"]
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          calculation_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          policy_id?: string | null
+          rate: number
+          status?: Database["public"]["Enums"]["commission_status"]
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          calculation_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          policy_id?: string | null
+          rate?: number
+          status?: Database["public"]["Enums"]["commission_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_commissions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_commissions_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_calculations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_commissions_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_companies: {
         Row: {
+          api_enabled: boolean | null
+          commission_rate: number | null
           created_at: string
+          description: string | null
           id: string
           is_verified: boolean | null
           logo_url: string | null
           name: string
+          phone: string | null
+          priority: number | null
           rating: number | null
+          regions: string[] | null
+          supported_products: string[] | null
+          website: string | null
         }
         Insert: {
+          api_enabled?: boolean | null
+          commission_rate?: number | null
           created_at?: string
+          description?: string | null
           id?: string
           is_verified?: boolean | null
           logo_url?: string | null
           name: string
+          phone?: string | null
+          priority?: number | null
           rating?: number | null
+          regions?: string[] | null
+          supported_products?: string[] | null
+          website?: string | null
         }
         Update: {
+          api_enabled?: boolean | null
+          commission_rate?: number | null
           created_at?: string
+          description?: string | null
           id?: string
           is_verified?: boolean | null
           logo_url?: string | null
           name?: string
+          phone?: string | null
+          priority?: number | null
           rating?: number | null
+          regions?: string[] | null
+          supported_products?: string[] | null
+          website?: string | null
         }
         Relationships: []
       }
+      insurance_payouts: {
+        Row: {
+          agent_id: string
+          amount: number
+          created_at: string
+          error_message: string | null
+          id: string
+          payment_details: Json | null
+          payment_method: string
+          processed_at: string | null
+          status: Database["public"]["Enums"]["payout_status"]
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payment_details?: Json | null
+          payment_method: string
+          processed_at?: string | null
+          status?: Database["public"]["Enums"]["payout_status"]
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payment_details?: Json | null
+          payment_method?: string
+          processed_at?: string | null
+          status?: Database["public"]["Enums"]["payout_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_payouts_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_policies: {
         Row: {
+          additional_data: Json | null
+          agent_id: string | null
+          calculation_id: string | null
+          client_id: string | null
+          commission_amount: number | null
           created_at: string
           document_url: string | null
           end_date: string
@@ -290,12 +621,20 @@ export type Database = {
           policy_number: string
           premium_amount: number
           product_id: string
+          property_data: Json | null
+          source: string | null
           start_date: string
           status: Database["public"]["Enums"]["policy_status"]
           updated_at: string
           user_id: string
+          vehicle_data: Json | null
         }
         Insert: {
+          additional_data?: Json | null
+          agent_id?: string | null
+          calculation_id?: string | null
+          client_id?: string | null
+          commission_amount?: number | null
           created_at?: string
           document_url?: string | null
           end_date: string
@@ -307,12 +646,20 @@ export type Database = {
           policy_number: string
           premium_amount: number
           product_id: string
+          property_data?: Json | null
+          source?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["policy_status"]
           updated_at?: string
           user_id: string
+          vehicle_data?: Json | null
         }
         Update: {
+          additional_data?: Json | null
+          agent_id?: string | null
+          calculation_id?: string | null
+          client_id?: string | null
+          commission_amount?: number | null
           created_at?: string
           document_url?: string | null
           end_date?: string
@@ -324,12 +671,36 @@ export type Database = {
           policy_number?: string
           premium_amount?: number
           product_id?: string
+          property_data?: Json | null
+          source?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["policy_status"]
           updated_at?: string
           user_id?: string
+          vehicle_data?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "insurance_policies_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_policies_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_calculations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_policies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "insurance_policies_product_id_fkey"
             columns: ["product_id"]
@@ -342,44 +713,62 @@ export type Database = {
       insurance_products: {
         Row: {
           badge: string | null
+          calculation_params: Json | null
           category: Database["public"]["Enums"]["insurance_category"]
           company_id: string
           coverage_amount: number | null
           created_at: string
           description: string | null
+          documents_required: string[] | null
           features: Json | null
           id: string
+          is_active: boolean | null
           is_popular: boolean | null
+          max_term_days: number | null
+          min_term_days: number | null
           name: string
           price_from: number
+          terms_url: string | null
           updated_at: string
         }
         Insert: {
           badge?: string | null
+          calculation_params?: Json | null
           category: Database["public"]["Enums"]["insurance_category"]
           company_id: string
           coverage_amount?: number | null
           created_at?: string
           description?: string | null
+          documents_required?: string[] | null
           features?: Json | null
           id?: string
+          is_active?: boolean | null
           is_popular?: boolean | null
+          max_term_days?: number | null
+          min_term_days?: number | null
           name: string
           price_from: number
+          terms_url?: string | null
           updated_at?: string
         }
         Update: {
           badge?: string | null
+          calculation_params?: Json | null
           category?: Database["public"]["Enums"]["insurance_category"]
           company_id?: string
           coverage_amount?: number | null
           created_at?: string
           description?: string | null
+          documents_required?: string[] | null
           features?: Json | null
           id?: string
+          is_active?: boolean | null
           is_popular?: boolean | null
+          max_term_days?: number | null
+          min_term_days?: number | null
           name?: string
           price_from?: number
+          terms_url?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -471,6 +860,67 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      policy_renewals: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          days_before: number
+          id: string
+          is_renewed: boolean | null
+          is_sent: boolean | null
+          new_policy_id: string | null
+          policy_id: string
+          reminder_date: string
+          sent_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          days_before: number
+          id?: string
+          is_renewed?: boolean | null
+          is_sent?: boolean | null
+          new_policy_id?: string | null
+          policy_id: string
+          reminder_date: string
+          sent_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          days_before?: number
+          id?: string
+          is_renewed?: boolean | null
+          is_sent?: boolean | null
+          new_policy_id?: string | null
+          policy_id?: string
+          reminder_date?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_renewals_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_renewals_new_policy_id_fkey"
+            columns: ["new_policy_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_policies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_renewals_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_policies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_likes: {
         Row: {
@@ -1073,9 +1523,13 @@ export type Database = {
       }
     }
     Enums: {
+      agent_status: "pending" | "active" | "suspended" | "blocked"
       app_role: "admin" | "moderator" | "user"
+      calculation_status: "draft" | "sent" | "expired" | "converted"
+      commission_status: "pending" | "confirmed" | "paid" | "cancelled"
       deal_type: "sale" | "rent" | "daily"
       insurance_category: "auto" | "health" | "property" | "travel" | "life"
+      payout_status: "pending" | "processing" | "completed" | "failed"
       policy_status: "pending" | "active" | "expired" | "cancelled"
       property_status: "active" | "sold" | "rented" | "inactive"
       property_type: "apartment" | "house" | "room" | "commercial" | "land"
@@ -1206,9 +1660,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_status: ["pending", "active", "suspended", "blocked"],
       app_role: ["admin", "moderator", "user"],
+      calculation_status: ["draft", "sent", "expired", "converted"],
+      commission_status: ["pending", "confirmed", "paid", "cancelled"],
       deal_type: ["sale", "rent", "daily"],
       insurance_category: ["auto", "health", "property", "travel", "life"],
+      payout_status: ["pending", "processing", "completed", "failed"],
       policy_status: ["pending", "active", "expired", "cancelled"],
       property_status: ["active", "sold", "rented", "inactive"],
       property_type: ["apartment", "house", "room", "commercial", "land"],
