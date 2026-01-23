@@ -11,7 +11,7 @@ export function AuthPage() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
+  
   
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -106,29 +106,6 @@ export function AuthPage() {
     }
   };
 
-  const createTestUser = async () => {
-    setSeeding(true);
-    try {
-      const testPhone = "+7 (999) 123-45-67";
-      const testEmail = phoneToEmail(testPhone);
-      const testPassword = phoneToPassword(testPhone);
-
-      // Try to sign in; if doesn't exist, sign up
-      const si = await signIn(testEmail, testPassword);
-      if (si.error) {
-        const su = await signUp(testEmail, testPassword, "Тестовый пользователь");
-        if (su.error) {
-          toast.error(su.error.message);
-          return;
-        }
-      }
-
-      setPhone(testPhone);
-      toast.success("Тестовый пользователь готов", { description: testPhone });
-    } finally {
-      setSeeding(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -195,19 +172,6 @@ export function AuthPage() {
               Если номера нет в системе — мы создадим аккаунт автоматически.
             </p>
 
-            {import.meta.env.DEV && (
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full rounded-xl"
-                  onClick={createTestUser}
-                  disabled={seeding}
-                >
-                  {seeding ? "Создаю..." : "Создать тестового пользователя"}
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </div>
