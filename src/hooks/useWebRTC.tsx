@@ -3,12 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { CallType } from "./useCalls";
 
-// ICE servers with TURN for NAT traversal between different networks
+// ICE servers with multiple TURN providers for better NAT traversal
+// Especially important for mobile LTE connections with symmetric NAT
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
+    // Google STUN servers
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-    // Free TURN servers for development (metered.ca)
+    { urls: "stun:stun2.l.google.com:19302" },
+    // Metered.ca free TURN servers (multiple ports for firewall bypass)
     {
       urls: "turn:openrelay.metered.ca:80",
       username: "openrelayproject",
@@ -24,8 +27,12 @@ const ICE_SERVERS: RTCConfiguration = {
       username: "openrelayproject",
       credential: "openrelayproject",
     },
+    // Twilio free STUN
+    { urls: "stun:global.stun.twilio.com:3478" },
   ],
   iceCandidatePoolSize: 10,
+  // Important for mobile: try all candidate types
+  iceTransportPolicy: "all",
 };
 
 interface UseWebRTCOptions {
@@ -53,20 +60,37 @@ export function useWebRTC({
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidate[]>([]);
-  const peerReadyRef = useRef(false);
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isConnectedRef = useRef(false);
+  const hasOfferSentRef = useRef(false);
+  const iceRestartAttemptRef = useRef(0);
 
-  // Get local media stream
+  // Track connection state with ref for timeout callback
+  useEffect(() => {
+    isConnectedRef.current = isConnected;
+  }, [isConnected]);
+
+  // Get local media stream with Safari-optimized constraints
   const getLocalStream = useCallback(async () => {
     try {
       console.log("[WebRTC] Requesting media access...");
       const constraints: MediaStreamConstraints = {
-        audio: true,
-        video: callType === "video" ? { facingMode: "user" } : false,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: callType === "video" 
+          ? { 
+              facingMode: "user",
+              width: { ideal: 640, max: 1280 },
+              height: { ideal: 480, max: 720 },
+            } 
+          : false,
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log("[WebRTC] Got local stream with tracks:", stream.getTracks().map(t => t.kind));
+      console.log("[WebRTC] Got local stream with tracks:", stream.getTracks().map(t => `${t.kind}:${t.readyState}`));
       setLocalStream(stream);
       return stream;
     } catch (error) {
@@ -75,10 +99,51 @@ export function useWebRTC({
     }
   }, [callType]);
 
+  // Send SDP offer
+  const sendOffer = useCallback(async (pc: RTCPeerConnection, channel: ReturnType<typeof supabase.channel>, isRestart = false) => {
+    if (!user) return;
+    
+    // Prevent duplicate offers
+    if (hasOfferSentRef.current && !isRestart) {
+      console.log("[WebRTC] Offer already sent, skipping...");
+      return;
+    }
+    
+    hasOfferSentRef.current = true;
+    console.log(`[WebRTC] Creating ${isRestart ? 'ICE restart ' : ''}SDP offer...`);
+    
+    try {
+      const offerOptions: RTCOfferOptions = {
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: callType === "video",
+        iceRestart: isRestart,
+      };
+      
+      const offer = await pc.createOffer(offerOptions);
+      await pc.setLocalDescription(offer);
+      console.log("[WebRTC] Local description set, sending offer...");
+
+      await channel.send({
+        type: "broadcast",
+        event: "sdp",
+        payload: {
+          type: "offer",
+          sdp: pc.localDescription,
+          from: user.id,
+          isRestart,
+        },
+      });
+      console.log("[WebRTC] Offer sent successfully");
+    } catch (error) {
+      console.error("[WebRTC] Error creating/sending offer:", error);
+      hasOfferSentRef.current = false;
+    }
+  }, [user, callType]);
+
   // Initialize WebRTC connection
   const initializePeerConnection = useCallback(
     (stream: MediaStream) => {
-      console.log("[WebRTC] Creating PeerConnection with TURN servers...");
+      console.log("[WebRTC] Creating PeerConnection with ICE servers...");
       const pc = new RTCPeerConnection(ICE_SERVERS);
 
       // Add local tracks
@@ -89,10 +154,12 @@ export function useWebRTC({
 
       // Handle incoming tracks
       pc.ontrack = (event) => {
-        console.log("[WebRTC] Received remote track:", event.track.kind);
+        console.log("[WebRTC] Received remote track:", event.track.kind, "streams:", event.streams.length);
         const [remote] = event.streams;
-        setRemoteStream(remote);
-        onRemoteStream?.(remote);
+        if (remote) {
+          setRemoteStream(remote);
+          onRemoteStream?.(remote);
+        }
       };
 
       // Handle ICE candidates
@@ -103,7 +170,7 @@ export function useWebRTC({
             : event.candidate.candidate.includes("srflx") 
               ? "STUN (srflx)" 
               : "host";
-          console.log(`[WebRTC] ICE candidate (${candidateType}):`, event.candidate.candidate.substring(0, 50) + "...");
+          console.log(`[WebRTC] ICE candidate (${candidateType})`);
           
           await channelRef.current.send({
             type: "broadcast",
@@ -113,6 +180,8 @@ export function useWebRTC({
               from: user?.id,
             },
           });
+        } else if (!event.candidate) {
+          console.log("[WebRTC] ICE gathering complete");
         }
       };
 
@@ -127,16 +196,37 @@ export function useWebRTC({
             clearTimeout(connectionTimeoutRef.current);
             connectionTimeoutRef.current = null;
           }
-        } else if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+        } else if (pc.connectionState === "failed") {
           setIsConnected(false);
+          console.error("[WebRTC] Connection FAILED");
+        } else if (pc.connectionState === "disconnected") {
+          console.warn("[WebRTC] Connection disconnected, may recover...");
         }
         
         onConnectionStateChange?.(pc.connectionState);
       };
 
-      // ICE connection state changes
+      // ICE connection state changes - critical for debugging
       pc.oniceconnectionstatechange = () => {
         console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
+        
+        // Handle ICE failure with restart attempt
+        if (pc.iceConnectionState === "failed") {
+          console.error("[WebRTC] ICE connection FAILED!");
+          
+          // Attempt ICE restart if we're the initiator and haven't tried too many times
+          if (isInitiator && iceRestartAttemptRef.current < 2 && channelRef.current) {
+            iceRestartAttemptRef.current++;
+            console.log(`[WebRTC] Attempting ICE restart (attempt ${iceRestartAttemptRef.current})...`);
+            pc.restartIce();
+            sendOffer(pc, channelRef.current, true);
+          }
+        }
+        
+        if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+          console.log("[WebRTC] ICE connected successfully!");
+          iceRestartAttemptRef.current = 0;
+        }
       };
 
       // ICE gathering state changes
@@ -152,7 +242,7 @@ export function useWebRTC({
       peerConnectionRef.current = pc;
       return pc;
     },
-    [user, onRemoteStream, onConnectionStateChange]
+    [user, isInitiator, onRemoteStream, onConnectionStateChange, sendOffer]
   );
 
   // Add pending ICE candidates
@@ -160,71 +250,48 @@ export function useWebRTC({
     const pc = peerConnectionRef.current;
     if (!pc || !pc.remoteDescription) return;
 
-    console.log(`[WebRTC] Adding ${pendingCandidatesRef.current.length} pending ICE candidates`);
-    for (const candidate of pendingCandidatesRef.current) {
-      try {
-        await pc.addIceCandidate(candidate);
-      } catch (error) {
-        console.error("[WebRTC] Error adding pending ICE candidate:", error);
+    const count = pendingCandidatesRef.current.length;
+    if (count > 0) {
+      console.log(`[WebRTC] Adding ${count} pending ICE candidates`);
+      for (const candidate of pendingCandidatesRef.current) {
+        try {
+          await pc.addIceCandidate(candidate);
+        } catch (error) {
+          console.error("[WebRTC] Error adding pending ICE candidate:", error);
+        }
       }
+      pendingCandidatesRef.current = [];
     }
-    pendingCandidatesRef.current = [];
   }, []);
 
-  // Send SDP offer (called when peer is ready)
-  const sendOffer = useCallback(async (pc: RTCPeerConnection, channel: ReturnType<typeof supabase.channel>) => {
-    if (!user) return;
-    
-    console.log("[WebRTC] Creating and sending SDP offer...");
-    try {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      console.log("[WebRTC] Local description set, sending offer...");
-
-      await channel.send({
-        type: "broadcast",
-        event: "sdp",
-        payload: {
-          type: "offer",
-          sdp: pc.localDescription,
-          from: user.id,
-        },
-      });
-      console.log("[WebRTC] Offer sent successfully");
-    } catch (error) {
-      console.error("[WebRTC] Error creating/sending offer:", error);
-    }
-  }, [user]);
-
-  // Setup signaling channel
+  // Setup signaling channel - simplified without ready mechanism
   const setupSignaling = useCallback(
     async (pc: RTCPeerConnection) => {
       if (!callId || !user) return;
 
       console.log(`[WebRTC] Setting up signaling channel for call:${callId}, isInitiator: ${isInitiator}`);
-      const channel = supabase.channel(`call:${callId}`);
+      const channel = supabase.channel(`call:${callId}`, {
+        config: {
+          broadcast: { self: false },
+        },
+      });
 
       channel
-        // Handle "ready" signal from peer
-        .on("broadcast", { event: "ready" }, async ({ payload }) => {
-          if (payload.from === user.id) return;
-          
-          console.log("[WebRTC] Peer is ready!");
-          peerReadyRef.current = true;
-          
-          // If we're the initiator and peer is ready, send offer
-          if (isInitiator) {
-            await sendOffer(pc, channel);
-          }
-        })
         // Handle SDP offer/answer
         .on("broadcast", { event: "sdp" }, async ({ payload }) => {
           if (payload.from === user.id) return;
 
-          console.log("[WebRTC] Received SDP:", payload.type);
+          console.log("[WebRTC] Received SDP:", payload.type, payload.isRestart ? "(ICE restart)" : "");
 
           try {
             if (payload.type === "offer") {
+              // If we already have a local description and this is not a restart, 
+              // we might need to rollback first (glare handling)
+              if (pc.signalingState !== "stable" && !payload.isRestart) {
+                console.log("[WebRTC] Rolling back local description due to incoming offer...");
+                await pc.setLocalDescription({ type: "rollback" });
+              }
+              
               console.log("[WebRTC] Setting remote description (offer)...");
               await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
               await addPendingCandidates();
@@ -245,10 +312,14 @@ export function useWebRTC({
               });
               console.log("[WebRTC] Answer sent successfully");
             } else if (payload.type === "answer") {
-              console.log("[WebRTC] Setting remote description (answer)...");
-              await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-              await addPendingCandidates();
-              console.log("[WebRTC] Answer processed successfully");
+              if (pc.signalingState === "have-local-offer") {
+                console.log("[WebRTC] Setting remote description (answer)...");
+                await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+                await addPendingCandidates();
+                console.log("[WebRTC] Answer processed successfully");
+              } else {
+                console.warn("[WebRTC] Received answer in wrong signaling state:", pc.signalingState);
+              }
             }
           } catch (error) {
             console.error("[WebRTC] Error handling SDP:", error);
@@ -278,19 +349,17 @@ export function useWebRTC({
           console.log("[WebRTC] Channel status:", status);
           
           if (status === "SUBSCRIBED") {
-            console.log("[WebRTC] Subscribed to channel, sending ready signal...");
+            console.log("[WebRTC] Subscribed to signaling channel");
             
-            // Signal that we're ready
-            await channel.send({
-              type: "broadcast",
-              event: "ready",
-              payload: { from: user.id },
-            });
-            
-            // If we're the initiator and peer was already ready, send offer
-            // This handles the case where peer subscribed before us
-            if (isInitiator && peerReadyRef.current) {
-              await sendOffer(pc, channel);
+            // If we're the initiator, send offer after a short delay
+            // This ensures the callee has time to subscribe
+            if (isInitiator) {
+              console.log("[WebRTC] Initiator will send offer in 1.5s...");
+              setTimeout(async () => {
+                if (peerConnectionRef.current && channelRef.current) {
+                  await sendOffer(peerConnectionRef.current, channelRef.current);
+                }
+              }, 1500);
             }
           }
         });
@@ -304,8 +373,10 @@ export function useWebRTC({
   const startCall = useCallback(async () => {
     console.log("[WebRTC] Starting call...", { callId, isInitiator });
     
-    // Reset peer ready state
-    peerReadyRef.current = false;
+    // Reset state
+    hasOfferSentRef.current = false;
+    iceRestartAttemptRef.current = 0;
+    pendingCandidatesRef.current = [];
     
     const stream = await getLocalStream();
     if (!stream) {
@@ -316,15 +387,18 @@ export function useWebRTC({
     const pc = initializePeerConnection(stream);
     await setupSignaling(pc);
     
-    // Set connection timeout (30 seconds)
+    // Set connection timeout (45 seconds for mobile networks)
     connectionTimeoutRef.current = setTimeout(() => {
-      if (!isConnected) {
-        console.error("[WebRTC] Connection timeout - could not establish connection within 30 seconds");
-        console.log("[WebRTC] Current ICE state:", pc.iceConnectionState);
-        console.log("[WebRTC] Current connection state:", pc.connectionState);
+      if (!isConnectedRef.current) {
+        console.error("[WebRTC] Connection timeout - could not establish connection within 45 seconds");
+        if (peerConnectionRef.current) {
+          console.log("[WebRTC] Final ICE state:", peerConnectionRef.current.iceConnectionState);
+          console.log("[WebRTC] Final connection state:", peerConnectionRef.current.connectionState);
+          console.log("[WebRTC] Final signaling state:", peerConnectionRef.current.signalingState);
+        }
       }
-    }, 30000);
-  }, [callId, isInitiator, getLocalStream, initializePeerConnection, setupSignaling, isConnected]);
+    }, 45000);
+  }, [callId, isInitiator, getLocalStream, initializePeerConnection, setupSignaling]);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
@@ -408,9 +482,10 @@ export function useWebRTC({
       channelRef.current = null;
     }
 
-    // Clear pending candidates
+    // Clear state
     pendingCandidatesRef.current = [];
-    peerReadyRef.current = false;
+    hasOfferSentRef.current = false;
+    iceRestartAttemptRef.current = 0;
 
     setLocalStream(null);
     setRemoteStream(null);
@@ -420,7 +495,22 @@ export function useWebRTC({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      endCall();
+      // Clear timeout
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+      }
+      // Stop tracks if any
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+      // Close peer connection
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+      }
+      // Remove channel
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
     };
   }, []);
 
