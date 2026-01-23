@@ -50,14 +50,15 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
   });
 
   // Start WebRTC only when call becomes active
-  // Callee starts faster to be ready to receive offer
-  // Initiator starts with slight delay to ensure callee is ready
+  // Callee starts quickly to be ready to receive offer
+  // Initiator waits longer to ensure callee has subscribed to signaling channel
   useEffect(() => {
     if (isCallActive && !webrtcStarted) {
       setWebrtcStarted(true);
       
-      // Callee starts quickly, initiator waits a bit
-      const delay = isInitiator ? 800 : 200;
+      // Callee: start quickly (300ms) to subscribe before initiator sends offer
+      // Initiator: wait longer (1500ms) to ensure callee is subscribed
+      const delay = isInitiator ? 1500 : 300;
       
       console.log(`[CallScreen] Starting WebRTC in ${delay}ms, isInitiator: ${isInitiator}`);
       const timer = setTimeout(() => {
