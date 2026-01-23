@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSearch } from "@/hooks/useSearch";
-import { PostModal } from "@/components/feed/PostModal";
 
 const trends = [
   { tag: "новости", posts: "12.5K" },
@@ -21,7 +20,6 @@ export function SearchPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [searchMode, setSearchMode] = useState<"explore" | "users">("explore");
-  const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const { users, explorePosts, loading, exploring, searchUsers, fetchExplorePosts, toggleFollow } = useSearch();
 
   useEffect(() => {
@@ -47,19 +45,8 @@ export function SearchPage() {
   };
 
   const handlePostClick = (index: number) => {
-    setSelectedPostIndex(index);
+    navigate(`/explore/${index}`);
   };
-
-  const handleNavigatePost = (direction: "prev" | "next") => {
-    if (selectedPostIndex === null) return;
-    if (direction === "prev" && selectedPostIndex > 0) {
-      setSelectedPostIndex(selectedPostIndex - 1);
-    } else if (direction === "next" && selectedPostIndex < explorePosts.length - 1) {
-      setSelectedPostIndex(selectedPostIndex + 1);
-    }
-  };
-
-  const selectedPost = selectedPostIndex !== null ? explorePosts[selectedPostIndex] : null;
 
   return (
     <div className="min-h-screen pb-20">
@@ -196,32 +183,6 @@ export function SearchPage() {
             )}
           </div>
         </>
-      )}
-
-      {/* Post Modal */}
-      {selectedPost && (
-        <PostModal
-          post={{
-            id: selectedPost.id,
-            author_id: selectedPost.author_id,
-            content: selectedPost.content,
-            likes_count: selectedPost.likes_count,
-            comments_count: selectedPost.comments_count,
-            shares_count: selectedPost.shares_count,
-            views_count: selectedPost.views_count,
-            created_at: selectedPost.created_at,
-            profile: selectedPost.profile ? {
-              display_name: selectedPost.profile.display_name,
-              avatar_url: selectedPost.profile.avatar_url,
-              verified: selectedPost.profile.verified
-            } : undefined,
-            media: selectedPost.media
-          }}
-          onClose={() => setSelectedPostIndex(null)}
-          onNavigate={handleNavigatePost}
-          hasPrev={selectedPostIndex !== null && selectedPostIndex > 0}
-          hasNext={selectedPostIndex !== null && selectedPostIndex < explorePosts.length - 1}
-        />
       )}
     </div>
   );

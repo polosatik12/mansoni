@@ -15,6 +15,7 @@ import { RealEstatePage } from "@/pages/RealEstatePage";
 import { PropertyDetailPage } from "@/pages/PropertyDetailPage";
 import { InsurancePage } from "@/pages/InsurancePage";
 import { AuthPage } from "@/pages/AuthPage";
+import { ExploreFeedPage } from "@/pages/ExploreFeedPage";
 import NotFound from "./pages/NotFound";
 import { CommandPalette } from "@/components/CommandPalette";
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/search" element={<SearchPage />} />
+              <Route path="/explore/:postIndex" element={<ExploreFeedPage />} />
               <Route path="/chats" element={<ChatsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/user/:username" element={<UserProfilePage />} />
