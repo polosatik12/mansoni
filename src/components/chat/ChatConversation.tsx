@@ -47,6 +47,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isHoldingRef = useRef(false);
 
   // Mark chat as open/closed for hiding bottom nav
   useEffect(() => {
@@ -443,25 +445,50 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               </button>
             ) : (
               <button
-                onClick={() => setRecordMode(prev => prev === 'voice' ? 'video' : 'voice')}
-                onMouseDown={() => {
-                  if (recordMode === 'voice') startRecording();
-                  else setShowVideoRecorder(true);
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  isHoldingRef.current = false;
+                  holdTimerRef.current = setTimeout(() => {
+                    isHoldingRef.current = true;
+                    if (recordMode === 'voice') startRecording();
+                    else setShowVideoRecorder(true);
+                  }, 200);
                 }}
                 onMouseUp={() => {
-                  if (recordMode === 'voice') stopRecording();
+                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+                  if (isHoldingRef.current) {
+                    if (recordMode === 'voice') stopRecording();
+                  } else {
+                    setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
+                  }
+                  isHoldingRef.current = false;
                 }}
                 onMouseLeave={() => {
-                  if (recordMode === 'voice' && isRecording) cancelRecording();
+                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+                  if (isHoldingRef.current && recordMode === 'voice' && isRecording) {
+                    cancelRecording();
+                  }
+                  isHoldingRef.current = false;
                 }}
-                onTouchStart={() => {
-                  if (recordMode === 'voice') startRecording();
-                  else setShowVideoRecorder(true);
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  isHoldingRef.current = false;
+                  holdTimerRef.current = setTimeout(() => {
+                    isHoldingRef.current = true;
+                    if (recordMode === 'voice') startRecording();
+                    else setShowVideoRecorder(true);
+                  }, 200);
                 }}
                 onTouchEnd={() => {
-                  if (recordMode === 'voice') stopRecording();
+                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+                  if (isHoldingRef.current) {
+                    if (recordMode === 'voice') stopRecording();
+                  } else {
+                    setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
+                  }
+                  isHoldingRef.current = false;
                 }}
-                className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0 transition-all"
+                className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0 transition-all touch-none"
               >
                 {recordMode === 'voice' ? (
                   <Mic className="w-5 h-5 text-white/70" />
