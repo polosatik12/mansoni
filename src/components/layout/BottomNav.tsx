@@ -32,8 +32,7 @@ const realEstateNavItems: NavItem[] = [
 const insuranceNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
-  { to: "#policies", icon: FileText, label: "Полисы", isAction: true },
-  { to: "#support", icon: Headphones, label: "Помощь", isAction: true },
+  { to: "/insurance/policies", icon: FileText, label: "Полисы" },
 ];
 
 export function BottomNav() {
