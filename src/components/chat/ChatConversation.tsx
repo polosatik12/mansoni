@@ -211,7 +211,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background z-[200]">
+    <div className="fixed top-0 left-0 right-0 bottom-16 flex flex-col bg-background z-[200]">
+      {/*
+        IMPORTANT: BottomNav is a persistent fixed element.
+        On some mobile browsers, full-screen fixed overlays can end up visually behind it.
+        We reserve space for BottomNav by setting bottom offset.
+      */}
       {/* Header - fixed */}
       <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border bg-card safe-area-top">
         <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
