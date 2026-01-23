@@ -126,12 +126,12 @@ export function ReelsPage() {
 
   return (
     <div
-      className="relative min-h-[calc(100vh-4rem)] bg-black overflow-hidden"
+      className="relative h-[calc(100vh-4rem)] bg-black overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Video/Image Background */}
-      <div className="absolute inset-0 bottom-16" onClick={togglePlay}>
+      <div className="absolute inset-0" onClick={togglePlay}>
         {currentReel.video_url.includes(".mp4") ||
         currentReel.video_url.includes("video") ? (
           <video
@@ -163,7 +163,7 @@ export function ReelsPage() {
 
       {/* Gradient overlays */}
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-      <div className="absolute inset-x-0 bottom-16 h-48 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
       {/* Progress indicators */}
       <div className="absolute top-4 left-4 right-16 flex gap-1 safe-area-top">
@@ -179,7 +179,7 @@ export function ReelsPage() {
       </div>
 
       {/* Right sidebar actions */}
-      <div className="absolute right-3 bottom-24 flex flex-col items-center gap-5">
+      <div className="absolute right-3 bottom-20 flex flex-col items-center gap-4">
         {/* Like */}
         <button className="flex flex-col items-center gap-1" onClick={handleLike}>
           <div
@@ -247,7 +247,7 @@ export function ReelsPage() {
       </div>
 
       {/* Bottom info */}
-      <div className="absolute left-4 right-20 bottom-20">
+      <div className="absolute left-4 right-20 bottom-16">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-white font-semibold">
             @{currentReel.author?.display_name || "user"}
