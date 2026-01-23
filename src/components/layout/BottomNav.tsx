@@ -53,8 +53,17 @@ export function BottomNav() {
 
   const navItems = getNavItems();
 
+  const isReelsPage = location.pathname === "/reels";
+
   return (
-    <nav className="fixed-nav fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
+    <nav 
+      className={cn(
+        "fixed-nav fixed bottom-0 left-0 right-0 z-50 safe-area-bottom",
+        isReelsPage 
+          ? "bg-black/80 backdrop-blur-md border-t border-white/10" 
+          : "bg-card border-t border-border"
+      )}
+    >
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto pb-[env(safe-area-inset-bottom)]">
         {navItems.map((item) => {
           // For action items (not real routes), use button
@@ -62,7 +71,10 @@ export function BottomNav() {
             return (
               <button
                 key={item.to}
-                className="flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors text-muted-foreground hover:text-primary"
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
+                  isReelsPage ? "text-white/60 hover:text-white" : "text-muted-foreground hover:text-primary"
+                )}
               >
                 <div className="relative">
                   <item.icon className="w-6 h-6" />
@@ -79,7 +91,9 @@ export function BottomNav() {
               className={({ isActive }) =>
                 cn(
                   "flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  isReelsPage
+                    ? isActive ? "text-white" : "text-white/60"
+                    : isActive ? "text-primary" : "text-muted-foreground"
                 )
               }
             >
