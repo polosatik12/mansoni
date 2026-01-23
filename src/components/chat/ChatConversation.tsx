@@ -14,7 +14,6 @@ import { VideoCircleMessage } from "./VideoCircleMessage";
 import { AttachmentSheet } from "./AttachmentSheet";
 import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
-import { IncomingCallSheet } from "./IncomingCallSheet";
 import { CallScreen } from "./CallScreen";
 
 interface ChatConversationProps {
@@ -28,7 +27,7 @@ interface ChatConversationProps {
 export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack }: ChatConversationProps) {
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage } = useMessages(conversationId);
-  const { activeCall, incomingCall, startCall, acceptCall, declineCall, endCall } = useCalls();
+  const { activeCall, startCall, endCall } = useCalls();
   const { setIsChatOpen } = useChatOpen();
   
   const [inputText, setInputText] = useState("");
@@ -200,19 +199,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const handleStartVideoCall = async () => {
     setIsCallInitiator(true);
     await startCall(conversationId, otherUserId, "video");
-  };
-
-  const handleAcceptCall = async () => {
-    if (incomingCall) {
-      setIsCallInitiator(false);
-      await acceptCall(incomingCall.id);
-    }
-  };
-
-  const handleDeclineCall = async () => {
-    if (incomingCall) {
-      await declineCall(incomingCall.id);
-    }
   };
 
   const handleEndCall = async () => {
@@ -526,15 +512,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         <FullscreenVideoPlayer
           src={viewingVideo}
           onClose={() => setViewingVideo(null)}
-        />
-      )}
-
-      {/* Incoming Call */}
-      {incomingCall && (
-        <IncomingCallSheet
-          call={incomingCall}
-          onAccept={handleAcceptCall}
-          onDecline={handleDeclineCall}
         />
       )}
 
