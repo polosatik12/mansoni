@@ -167,7 +167,7 @@ export function ReelsPage() {
 
 
       {/* Right sidebar actions */}
-      <div className="absolute right-3 bottom-20 flex flex-col items-center gap-4">
+      <div className="absolute right-3 bottom-8 flex flex-col items-center gap-4">
         {/* Like */}
         <button className="flex flex-col items-center gap-1" onClick={handleLike}>
           <div
@@ -235,7 +235,7 @@ export function ReelsPage() {
       </div>
 
       {/* Bottom info */}
-      <div className="absolute left-4 right-20 bottom-16">
+      <div className="absolute left-4 right-20 bottom-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-white font-semibold">
             @{currentReel.author?.display_name || "user"}
