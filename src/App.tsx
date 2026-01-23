@@ -15,6 +15,7 @@ import { ReelsPage } from "@/pages/ReelsPage";
 import { RealEstatePage } from "@/pages/RealEstatePage";
 import { PropertyDetailPage } from "@/pages/PropertyDetailPage";
 import { InsurancePage } from "@/pages/InsurancePage";
+import InsurancePoliciesPage from "@/pages/InsurancePoliciesPage";
 import { AuthPage } from "@/pages/AuthPage";
 import { ExploreFeedPage } from "@/pages/ExploreFeedPage";
 import NotFound from "./pages/NotFound";
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/realestate" element={<RealEstatePage />} />
                 <Route path="/realestate/:id" element={<PropertyDetailPage />} />
                 <Route path="/insurance" element={<InsurancePage />} />
+                <Route path="/insurance/policies" element={<InsurancePoliciesPage />} />
                 <Route path="/reels" element={<ReelsPage />} />
               </Route>
             </Route>
