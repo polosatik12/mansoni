@@ -10,6 +10,7 @@ import { HomePage } from "@/pages/HomePage";
 import { SearchPage } from "@/pages/SearchPage";
 import { ChatsPage } from "@/pages/ChatsPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { EditProfilePage } from "@/pages/EditProfilePage";
 import { UserProfilePage } from "@/pages/UserProfilePage";
 import { ReelsPage } from "@/pages/ReelsPage";
 import { RealEstatePage } from "@/pages/RealEstatePage";
@@ -43,6 +44,7 @@ const App = () => (
                 <Route path="/explore/:postIndex" element={<ExploreFeedPage />} />
                 <Route path="/chats" element={<ChatsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile/edit" element={<EditProfilePage />} />
                 <Route path="/user/:username" element={<UserProfilePage />} />
                 <Route path="/realestate" element={<RealEstatePage />} />
                 <Route path="/realestate/:id" element={<PropertyDetailPage />} />

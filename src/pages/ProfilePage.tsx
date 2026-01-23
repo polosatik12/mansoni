@@ -1,6 +1,7 @@
 import { Settings, Grid3X3, Bookmark, Play, Plus, AtSign, Share2, Eye, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CreateMenu } from "@/components/feed/CreateMenu";
@@ -8,7 +9,6 @@ import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
 import { SettingsDrawer } from "@/components/profile/SettingsDrawer";
 import { AccountSwitcher } from "@/components/profile/AccountSwitcher";
-import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
 import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +35,7 @@ function formatNumber(num: number): string {
 }
 
 export function ProfilePage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, loading: profileLoading, updateProfile } = useProfile();
   const { posts, loading: postsLoading } = useUserPosts();
@@ -45,7 +46,6 @@ export function ProfilePage() {
   const [showPostEditor, setShowPostEditor] = useState(false);
   const [showStoryEditor, setShowStoryEditor] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showEditProfile, setShowEditProfile] = useState(false);
 
   const handleCreateSelect = (type: string) => {
     if (type === "post") {
@@ -165,7 +165,7 @@ export function ProfilePage() {
           <Button 
             variant="secondary" 
             className="flex-1 rounded-lg h-8 text-sm font-semibold px-3"
-            onClick={() => setShowEditProfile(true)}
+            onClick={() => navigate('/profile/edit')}
           >
             Редактировать профиль
           </Button>
@@ -364,14 +364,6 @@ export function ProfilePage() {
       <SettingsDrawer 
         isOpen={showSettings} 
         onClose={() => setShowSettings(false)} 
-      />
-
-      {/* Edit Profile Sheet */}
-      <EditProfileSheet
-        isOpen={showEditProfile}
-        onClose={() => setShowEditProfile(false)}
-        profile={profile}
-        onSave={updateProfile}
       />
     </div>
   );
