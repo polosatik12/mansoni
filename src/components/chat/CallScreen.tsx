@@ -50,15 +50,22 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
   });
 
   // Start WebRTC only when call becomes active
+  // Callee starts faster to be ready to receive offer
+  // Initiator starts with slight delay to ensure callee is ready
   useEffect(() => {
     if (isCallActive && !webrtcStarted) {
       setWebrtcStarted(true);
+      
+      // Callee starts quickly, initiator waits a bit
+      const delay = isInitiator ? 800 : 200;
+      
+      console.log(`[CallScreen] Starting WebRTC in ${delay}ms, isInitiator: ${isInitiator}`);
       const timer = setTimeout(() => {
         startCall();
-      }, 500);
+      }, delay);
       return () => clearTimeout(timer);
     }
-  }, [isCallActive, webrtcStarted, startCall]);
+  }, [isCallActive, webrtcStarted, startCall, isInitiator]);
 
   // Attach streams to video elements
   useEffect(() => {
