@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, Clock, X, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
-import { useCalls } from "@/hooks/useCalls";
+import { useCallsContext } from "@/contexts/CallsContext";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -14,7 +13,6 @@ import { VideoCircleMessage } from "./VideoCircleMessage";
 import { AttachmentSheet } from "./AttachmentSheet";
 import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
-import { CallScreen } from "./CallScreen";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -27,7 +25,7 @@ interface ChatConversationProps {
 export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack }: ChatConversationProps) {
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage } = useMessages(conversationId);
-  const { activeCall, startCall, endCall } = useCalls();
+  const { activeCall, startCall, endCall } = useCallsContext();
   const { setIsChatOpen } = useChatOpen();
   
   const [inputText, setInputText] = useState("");
@@ -38,7 +36,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const [showAttachmentSheet, setShowAttachmentSheet] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [viewingVideo, setViewingVideo] = useState<string | null>(null);
-  const [isCallInitiator, setIsCallInitiator] = useState(false);
   const [recordMode, setRecordMode] = useState<'voice' | 'video'>('voice');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -192,12 +189,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   const handleStartAudioCall = async () => {
-    setIsCallInitiator(true);
     await startCall(conversationId, otherUserId, "audio");
   };
 
   const handleStartVideoCall = async () => {
-    setIsCallInitiator(true);
     await startCall(conversationId, otherUserId, "video");
   };
 
@@ -515,14 +510,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         />
       )}
 
-      {/* Active Call - show for calling, ringing, and active statuses */}
-      {activeCall && ["calling", "ringing", "active"].includes(activeCall.status) && (
-        <CallScreen
-          call={activeCall}
-          isInitiator={isCallInitiator}
-          onEnd={handleEndCall}
-        />
-      )}
     </div>
   );
 }
