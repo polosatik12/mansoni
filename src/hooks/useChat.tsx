@@ -298,7 +298,7 @@ export function useMessages(conversationId: string | null) {
     }
   };
 
-  const sendMediaMessage = async (file: File, mediaType: 'voice' | 'video_circle' | 'image', durationSeconds?: number) => {
+  const sendMediaMessage = async (file: File, mediaType: 'voice' | 'video_circle' | 'image' | 'video', durationSeconds?: number) => {
     if (!conversationId || !user) return { error: 'Not authenticated' };
 
     try {
@@ -322,7 +322,8 @@ export function useMessages(conversationId: string | null) {
         conversation_id: conversationId,
         sender_id: user.id,
         content: mediaType === 'voice' ? '🎤 Голосовое сообщение' : 
-                 mediaType === 'video_circle' ? '🎬 Видео-кружок' : '📷 Изображение',
+                 mediaType === 'video_circle' ? '🎬 Видео-кружок' : 
+                 mediaType === 'video' ? '🎥 Видео' : '📷 Изображение',
         media_url: publicUrl,
         media_type: mediaType,
         duration_seconds: durationSeconds || null
