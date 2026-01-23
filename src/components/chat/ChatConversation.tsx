@@ -382,39 +382,39 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       {/* Input - Telegram style */}
       <div className="flex-shrink-0 p-2 safe-area-bottom">
         {isRecording ? (
-          <div className="flex items-center gap-3 px-2">
+          <div className="flex items-center gap-2 px-1">
             <button 
               onClick={cancelRecording}
-              className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shrink-0"
+              className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0"
             >
-              <X className="w-5 h-5 text-white/80" />
+              <X className="w-5 h-5 text-white/70" />
             </button>
             
-            <div className="flex-1 flex items-center gap-3 h-11 px-4 rounded-full bg-black/60 backdrop-blur-sm">
+            <div className="flex-1 flex items-center gap-3 h-[42px] px-4 rounded-full border border-white/20 bg-black/40 backdrop-blur-md">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-sm text-white/80">
+              <span className="text-sm text-white/70">
                 Запись... {formatTime(recordingTime)}
               </span>
             </div>
             
             <button
               onClick={stopRecording}
-              className="w-11 h-11 rounded-full bg-primary flex items-center justify-center shrink-0"
+              className="w-[42px] h-[42px] rounded-full bg-primary flex items-center justify-center shrink-0"
             >
               <Send className="w-5 h-5 text-primary-foreground" />
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            {/* Attachment button - circular */}
+            {/* Attachment button - circular with border */}
             <button 
               onClick={() => setShowAttachmentSheet(true)}
-              className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shrink-0"
+              className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0"
             >
-              <Paperclip className="w-5 h-5 text-white/80" />
+              <Paperclip className="w-5 h-5 text-white/70" />
             </button>
             
-            {/* Input field - pill shaped */}
+            {/* Input field - pill shaped with transparency */}
             <div className="flex-1 relative">
               <input
                 type="text"
@@ -422,19 +422,27 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="w-full h-11 px-4 pr-12 rounded-full bg-black/60 backdrop-blur-sm text-white placeholder:text-white/50 border-0 outline-none focus:ring-1 focus:ring-white/20"
+                className="w-full h-[42px] px-4 pr-20 rounded-full border border-white/20 bg-black/40 backdrop-blur-md text-white placeholder:text-white/40 outline-none focus:border-white/30 transition-colors"
               />
-              {/* Timer/Sticker icon inside input */}
-              <button className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Clock className="w-5 h-5 text-white/50" />
-              </button>
+              {/* Icons inside input on the right */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <button 
+                  onClick={() => setShowVideoRecorder(true)}
+                  className="p-1"
+                >
+                  <Video className="w-5 h-5 text-white/50" />
+                </button>
+                <button className="p-1">
+                  <Clock className="w-5 h-5 text-white/50" />
+                </button>
+              </div>
             </div>
             
-            {/* Send or Voice button - circular */}
+            {/* Send or Mic button - circular with border */}
             {inputText.trim() ? (
               <button
                 onClick={handleSendMessage}
-                className="w-11 h-11 rounded-full bg-primary flex items-center justify-center shrink-0"
+                className="w-[42px] h-[42px] rounded-full bg-primary flex items-center justify-center shrink-0"
               >
                 <Send className="w-5 h-5 text-primary-foreground" />
               </button>
@@ -445,9 +453,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 onMouseLeave={() => isRecording && cancelRecording()}
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
-                className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shrink-0"
+                className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0"
               >
-                <Mic className="w-5 h-5 text-white/80" />
+                <Mic className="w-5 h-5 text-white/70" />
               </button>
             )}
           </div>
