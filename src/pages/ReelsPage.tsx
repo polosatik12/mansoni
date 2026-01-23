@@ -256,31 +256,6 @@ export function ReelsPage() {
         )}
       </div>
 
-      {/* Navigation arrows */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-        <button
-          className={cn(
-            "w-10 h-10 rounded-full bg-white/10 flex items-center justify-center transition-opacity",
-            currentIndex === 0 ? "opacity-30" : "opacity-100"
-          )}
-          onClick={() => currentIndex > 0 && setCurrentIndex(currentIndex - 1)}
-          disabled={currentIndex === 0}
-        >
-          <ChevronUp className="w-6 h-6 text-white" />
-        </button>
-        <button
-          className={cn(
-            "w-10 h-10 rounded-full bg-white/10 flex items-center justify-center transition-opacity",
-            currentIndex === reels.length - 1 ? "opacity-30" : "opacity-100"
-          )}
-          onClick={() =>
-            currentIndex < reels.length - 1 && setCurrentIndex(currentIndex + 1)
-          }
-          disabled={currentIndex === reels.length - 1}
-        >
-          <ChevronDown className="w-6 h-6 text-white" />
-        </button>
-      </div>
 
       <CreateReelSheet open={showCreateSheet} onOpenChange={setShowCreateSheet} />
     </div>
