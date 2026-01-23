@@ -13,10 +13,18 @@ export interface SearchUser {
 
 export interface ExplorePost {
   id: string;
+  author_id: string;
   content?: string;
   likes_count: number;
   comments_count: number;
+  shares_count: number;
+  views_count: number;
   created_at: string;
+  profile?: {
+    display_name: string | null;
+    avatar_url: string | null;
+    verified?: boolean;
+  };
   media?: {
     media_url: string;
     media_type: string;
@@ -76,9 +84,12 @@ export function useSearch() {
         .from("posts")
         .select(`
           id,
+          author_id,
           content,
           likes_count,
           comments_count,
+          shares_count,
+          views_count,
           created_at,
           post_media (
             media_url,
@@ -94,13 +105,31 @@ export function useSearch() {
 
       // Only include posts with media
       const postsWithMedia = (data || [])
-        .filter((p: any) => p.post_media && p.post_media.length > 0)
-        .map((p: any) => ({
-          ...p,
-          media: p.post_media,
-        }));
+        .filter((p: any) => p.post_media && p.post_media.length > 0);
+      
+      // Fetch author profiles
+      const authorIds = [...new Set(postsWithMedia.map((p: any) => p.author_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url, verified")
+        .in("user_id", authorIds);
+      
+      const profilesMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      
+      const enrichedPosts: ExplorePost[] = postsWithMedia.map((p: any) => ({
+        id: p.id,
+        author_id: p.author_id,
+        content: p.content,
+        likes_count: p.likes_count,
+        comments_count: p.comments_count,
+        shares_count: p.shares_count,
+        views_count: p.views_count,
+        created_at: p.created_at,
+        profile: profilesMap.get(p.author_id) || undefined,
+        media: p.post_media,
+      }));
 
-      setExplorePosts(postsWithMedia);
+      setExplorePosts(enrichedPosts);
     } catch (error) {
       console.error("Error fetching explore posts:", error);
     } finally {
