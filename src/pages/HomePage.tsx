@@ -1,5 +1,4 @@
 import { FeedHeader } from "@/components/feed/FeedHeader";
-import { CreatePost } from "@/components/feed/CreatePost";
 import { PostCard } from "@/components/feed/PostCard";
 import { PullToRefresh } from "@/components/feed/PullToRefresh";
 import { usePosts } from "@/hooks/usePosts";
@@ -35,7 +34,7 @@ export function HomePage() {
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="min-h-screen">
         <FeedHeader />
-        <CreatePost />
+        
         
         {loading && posts.length === 0 ? (
           <div className="flex items-center justify-center py-20">
