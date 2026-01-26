@@ -381,7 +381,29 @@ export function useMessages(conversationId: string | null) {
     }
   };
 
-  return { messages, loading, sendMessage, sendMediaMessage, refetch: fetchMessages };
+  const deleteMessage = async (messageId: string) => {
+    if (!user) return { error: 'Not authenticated' };
+
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("id", messageId)
+        .eq("sender_id", user.id); // Only allow deleting own messages
+
+      if (error) throw error;
+
+      // Remove from local state
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+
+      return { error: null };
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      return { error: error instanceof Error ? error.message : 'Failed to delete message' };
+    }
+  };
+
+  return { messages, loading, sendMessage, sendMediaMessage, deleteMessage, refetch: fetchMessages };
 }
 
 export function useCreateConversation() {
