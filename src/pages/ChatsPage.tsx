@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Check, CheckCheck, LogIn, MessageCircle, X, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { useConversations, Conversation, useCreateConversation } from "@/hooks/u
 import { useSearch, SearchUser } from "@/hooks/useSearch";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { ScrollContainerProvider } from "@/contexts/ScrollContainerContext";
 
 interface LocationState {
   conversationId?: string;
@@ -29,6 +30,9 @@ export function ChatsPage() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  
+  // Local scroll container for chat list - used by ChatStories for animation
+  const chatListRef = useRef<HTMLDivElement>(null);
 
   // Get the other participant's info for display
   const getOtherParticipant = (conv: Conversation) => {
@@ -154,170 +158,178 @@ export function ChatsPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header with Title */}
-      <div className="flex items-center justify-center py-3 border-b border-border">
-        <h1 className="text-lg font-semibold">Чаты</h1>
-      </div>
-
-      {/* Stories Section - scroll-controlled like feed */}
-      <ChatStories />
-
-      {/* Unified Search */}
-      <div className="p-3 border-b border-border">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Поиск"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
-            className="pl-9 pr-9 h-10 rounded-xl bg-muted/50 border-0 focus-visible:ring-1"
-          />
-          {searchQuery && (
-            <button 
-              onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+    <ScrollContainerProvider value={chatListRef}>
+      <div className="h-full flex flex-col overflow-hidden">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 flex items-center justify-center py-3 border-b border-border bg-background">
+          <h1 className="text-lg font-semibold">Чаты</h1>
         </div>
-      </div>
 
-      {/* Search Results - Users not in conversations */}
-      {searchQuery.trim().length >= 2 && newUsers.length > 0 && (
-        <div className="border-b border-border">
-          <div className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase">
-            Пользователи
+        {/* Fixed Stories Section - animation controlled by chat list scroll */}
+        <div className="flex-shrink-0">
+          <ChatStories />
+        </div>
+
+        {/* Fixed Search */}
+        <div className="flex-shrink-0 p-3 border-b border-border bg-background">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Поиск"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              className="pl-9 pr-9 h-10 rounded-xl bg-muted/50 border-0 focus-visible:ring-1"
+            />
+            {searchQuery && (
+              <button 
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          {newUsers.map((u) => (
-            <div
-              key={u.user_id}
-              onClick={() => handleUserClick(u)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
-            >
-              <img
-                src={u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.user_id}`}
-                alt={u.display_name}
-                className="w-11 h-11 rounded-full object-cover bg-muted"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-medium text-foreground truncate">
-                    {u.display_name}
-                  </span>
-                  {u.verified && (
-                    <span className="text-primary text-xs">✓</span>
-                  )}
-                </div>
-                {u.bio && (
-                  <p className="text-sm text-muted-foreground truncate">{u.bio}</p>
-                )}
+        </div>
+
+        {/* Scrollable Chat List - this is the scroll container for stories animation */}
+        <div 
+          ref={chatListRef}
+          className="flex-1 overflow-y-auto overscroll-contain"
+        >
+          {/* Search Results - Users not in conversations */}
+          {searchQuery.trim().length >= 2 && newUsers.length > 0 && (
+            <div className="border-b border-border">
+              <div className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase">
+                Пользователи
               </div>
-              <UserPlus className="w-5 h-5 text-primary flex-shrink-0" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Loading */}
-      {(chatsLoading || searchLoading) && (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-        </div>
-      )}
-
-      {/* Error */}
-      {!chatsLoading && chatsError && (
-        <div className="px-4 py-3">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="font-semibold text-foreground">Не удалось загрузить чаты</p>
-            <p className="mt-1 text-sm text-muted-foreground break-words">{chatsError}</p>
-            <div className="mt-3">
-              <Button variant="outline" size="sm" onClick={() => refetch()}>Повторить</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!chatsLoading && !chatsError && filteredConversations.length === 0 && !searchQuery && (
-        <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <MessageCircle className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h3 className="font-semibold mb-1">Нет чатов</h3>
-          <p className="text-sm text-muted-foreground">
-            Найдите пользователей через поиск, чтобы начать переписку
-          </p>
-        </div>
-      )}
-
-      {/* Chat List */}
-      <div className="flex-1 overflow-y-auto overscroll-contain">
-        {filteredConversations.map((conv) => {
-          const other = getOtherParticipant(conv);
-          const lastMessage = conv.last_message;
-          const isMyMessage = lastMessage?.sender_id === user?.id;
-
-          return (
-            <div
-              key={conv.id}
-              onClick={() => setSelectedConversation(conv)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
-            >
-              {/* Avatar */}
-              <div className="relative flex-shrink-0">
-                <img
-                  src={other.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.id}`}
-                  alt={other.display_name || "User"}
-                  className="w-14 h-14 rounded-full object-cover bg-muted"
-                />
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="font-semibold text-foreground truncate">
-                    {other.display_name || "Пользователь"}
-                  </span>
-                  {lastMessage && (
-                    <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                      {formatTime(lastMessage.created_at)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 flex-1 min-w-0">
-                    {isMyMessage && lastMessage?.is_read && (
-                      <CheckCheck className="w-4 h-4 text-primary flex-shrink-0" />
+              {newUsers.map((u) => (
+                <div
+                  key={u.user_id}
+                  onClick={() => handleUserClick(u)}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
+                >
+                  <img
+                    src={u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.user_id}`}
+                    alt={u.display_name}
+                    className="w-11 h-11 rounded-full object-cover bg-muted"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-foreground truncate">
+                        {u.display_name}
+                      </span>
+                      {u.verified && (
+                        <span className="text-primary text-xs">✓</span>
+                      )}
+                    </div>
+                    {u.bio && (
+                      <p className="text-sm text-muted-foreground truncate">{u.bio}</p>
                     )}
-                    {isMyMessage && !lastMessage?.is_read && (
-                      <Check className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    )}
-                    <p className="text-sm text-muted-foreground truncate">
-                      {lastMessage?.media_type === 'video_circle' 
-                        ? '🎥 Видеосообщение'
-                        : lastMessage?.media_type === 'voice'
-                        ? '🎤 Голосовое сообщение'
-                        : lastMessage?.media_url
-                        ? '📷 Фото'
-                        : lastMessage?.content || "Нет сообщений"}
-                    </p>
                   </div>
-                  
-                  {conv.unread_count > 0 && (
-                    <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px] flex-shrink-0 ml-2 bg-primary">
-                      {conv.unread_count}
-                    </Badge>
-                  )}
+                  <UserPlus className="w-5 h-5 text-primary flex-shrink-0" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Loading */}
+          {(chatsLoading || searchLoading) && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+            </div>
+          )}
+
+          {/* Error */}
+          {!chatsLoading && chatsError && (
+            <div className="px-4 py-3">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <p className="font-semibold text-foreground">Не удалось загрузить чаты</p>
+                <p className="mt-1 text-sm text-muted-foreground break-words">{chatsError}</p>
+                <div className="mt-3">
+                  <Button variant="outline" size="sm" onClick={() => refetch()}>Повторить</Button>
                 </div>
               </div>
             </div>
-          );
-        })}
+          )}
+
+          {/* Empty state */}
+          {!chatsLoading && !chatsError && filteredConversations.length === 0 && !searchQuery && (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <MessageCircle className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold mb-1">Нет чатов</h3>
+              <p className="text-sm text-muted-foreground">
+                Найдите пользователей через поиск, чтобы начать переписку
+              </p>
+            </div>
+          )}
+
+          {/* Chat List Items */}
+          {filteredConversations.map((conv) => {
+            const other = getOtherParticipant(conv);
+            const lastMessage = conv.last_message;
+            const isMyMessage = lastMessage?.sender_id === user?.id;
+
+            return (
+              <div
+                key={conv.id}
+                onClick={() => setSelectedConversation(conv)}
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
+              >
+                {/* Avatar */}
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={other.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.id}`}
+                    alt={other.display_name || "User"}
+                    className="w-14 h-14 rounded-full object-cover bg-muted"
+                  />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="font-semibold text-foreground truncate">
+                      {other.display_name || "Пользователь"}
+                    </span>
+                    {lastMessage && (
+                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                        {formatTime(lastMessage.created_at)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                      {isMyMessage && lastMessage?.is_read && (
+                        <CheckCheck className="w-4 h-4 text-primary flex-shrink-0" />
+                      )}
+                      {isMyMessage && !lastMessage?.is_read && (
+                        <Check className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      )}
+                      <p className="text-sm text-muted-foreground truncate">
+                        {lastMessage?.media_type === 'video_circle' 
+                          ? '🎥 Видеосообщение'
+                          : lastMessage?.media_type === 'voice'
+                          ? '🎤 Голосовое сообщение'
+                          : lastMessage?.media_url
+                          ? '📷 Фото'
+                          : lastMessage?.content || "Нет сообщений"}
+                      </p>
+                    </div>
+                    
+                    {conv.unread_count > 0 && (
+                      <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px] flex-shrink-0 ml-2 bg-primary">
+                        {conv.unread_count}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </ScrollContainerProvider>
   );
 }
