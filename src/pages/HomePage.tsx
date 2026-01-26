@@ -53,9 +53,10 @@ export function HomePage() {
               <PostCard
                 key={post.id}
                 id={post.id}
+                authorId={post.author_id}
                 author={{
                   name: post.author?.display_name || "Пользователь",
-                  username: post.author_id.slice(0, 8),
+                  username: post.author?.display_name || post.author_id.slice(0, 8),
                   avatar: post.author?.avatar_url || `https://i.pravatar.cc/150?u=${post.author_id}`,
                   verified: false,
                 }}
