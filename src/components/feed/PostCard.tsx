@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { CommentsSheet } from "./CommentsSheet";
+import { ShareSheet } from "./ShareSheet";
 import { usePostActions } from "@/hooks/usePosts";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 interface PostCardProps {
@@ -51,6 +52,7 @@ export function PostCard({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [likeAnimation, setLikeAnimation] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; y: number }[]>([]);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -283,9 +285,11 @@ export function PostCard({
             <MessageCircle className="w-6 h-6" />
             <span className="text-sm">{formatNumber(comments)}</span>
           </button>
-          <button className="flex items-center gap-1.5 text-foreground">
+          <button 
+            className="flex items-center gap-1.5 text-foreground"
+            onClick={() => setShowShare(true)}
+          >
             <Send className="w-6 h-6" />
-            <span className="text-sm">{formatNumber(shares)}</span>
           </button>
         </div>
         <div className="flex items-center gap-4">
@@ -328,12 +332,21 @@ export function PostCard({
 
       {/* Comments Sheet */}
       {id && (
-        <CommentsSheet
-          isOpen={showComments}
-          onClose={() => setShowComments(false)}
-          postId={id}
-          commentsCount={comments}
-        />
+        <>
+          <CommentsSheet
+            isOpen={showComments}
+            onClose={() => setShowComments(false)}
+            postId={id}
+            commentsCount={comments}
+          />
+          <ShareSheet
+            isOpen={showShare}
+            onClose={() => setShowShare(false)}
+            postId={id}
+            postContent={content}
+            postImage={allImages[0]}
+          />
+        </>
       )}
     </div>
   );
