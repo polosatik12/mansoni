@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { CreateReelSheet } from "@/components/reels/CreateReelSheet";
+import { ReelCommentsSheet } from "@/components/reels/ReelCommentsSheet";
 import { Button } from "@/components/ui/button";
 
 function formatNumber(num: number): string {
@@ -32,10 +33,11 @@ function formatNumber(num: number): string {
 export function ReelsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { reels, loading, toggleLike, recordView } = useReels();
+  const { reels, loading, toggleLike, recordView, refetch } = useReels();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const [commentsReelId, setCommentsReelId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const viewedReels = useRef<Set<string>>(new Set());
@@ -207,17 +209,23 @@ export function ReelsPage() {
                 />
               </div>
               <span className="text-white text-xs font-medium">
-                {formatNumber(reel.likes_count)}
+                {reel.likes_count > 0 ? formatNumber(reel.likes_count) : ""}
               </span>
             </button>
 
             {/* Comments */}
-            <button className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="flex flex-col items-center gap-1" 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setCommentsReelId(reel.id);
+              }}
+            >
               <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
                 <MessageCircle className="w-7 h-7 text-white" />
               </div>
               <span className="text-white text-xs font-medium">
-                {formatNumber(reel.comments_count)}
+                {reel.comments_count > 0 ? formatNumber(reel.comments_count) : ""}
               </span>
             </button>
 
@@ -283,6 +291,19 @@ export function ReelsPage() {
       ))}
 
       <CreateReelSheet open={showCreateSheet} onOpenChange={setShowCreateSheet} />
+      
+      {/* Comments Sheet */}
+      {commentsReelId && (
+        <ReelCommentsSheet
+          isOpen={!!commentsReelId}
+          onClose={() => {
+            setCommentsReelId(null);
+            refetch(); // Refresh to get updated comments count
+          }}
+          reelId={commentsReelId}
+          commentsCount={reels.find(r => r.id === commentsReelId)?.comments_count || 0}
+        />
+      )}
     </div>
   );
 }
