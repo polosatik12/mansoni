@@ -97,9 +97,7 @@ export function ProfilePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={() => setShowCreateMenu(true)}>
-          <Plus className="w-6 h-6" />
-        </Button>
+        <div className="w-10" />
         <AccountSwitcher currentUsername={profile.display_name || 'user'} />
         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
           <Settings className="w-6 h-6" />
