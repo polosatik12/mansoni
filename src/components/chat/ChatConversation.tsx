@@ -3,6 +3,7 @@ import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, X, Play, Pause, Check, C
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
+import { useMarkConversationRead } from "@/hooks/useMarkConversationRead";
 import { useCallsContext } from "@/contexts/CallsContext";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
@@ -29,6 +30,7 @@ interface ChatConversationProps {
 export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup, totalUnreadCount }: ChatConversationProps) {
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
+  const { markConversationRead } = useMarkConversationRead();
   const { activeCall, startCall, endCall } = useCallsContext();
   const { setIsChatOpen } = useChatOpen();
   
@@ -55,6 +57,13 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     setIsChatOpen(true);
     return () => setIsChatOpen(false);
   }, [setIsChatOpen]);
+
+  // Mark incoming messages as read when chat is opened / receives new messages.
+  useEffect(() => {
+    // Only for DMs (groups/channels have separate infra).
+    if (!conversationId || !user || isGroup) return;
+    void markConversationRead(conversationId);
+  }, [conversationId, user, isGroup, messages.length, markConversationRead]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
