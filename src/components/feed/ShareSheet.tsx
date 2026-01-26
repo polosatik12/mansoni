@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { useConversations, useMessages } from "@/hooks/useChat";
+import { useConversations } from "@/hooks/useChat";
 import { useGroupChats } from "@/hooks/useGroupChats";
 import { useChannels } from "@/hooks/useChannels";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 import {
   Drawer,
   DrawerContent,
@@ -42,7 +43,6 @@ export function ShareSheet({
   const { conversations, loading: dmsLoading } = useConversations();
   const { groups, loading: groupsLoading } = useGroupChats();
   const { channels, loading: channelsLoading } = useChannels();
-  const { sendMessage } = useMessages("");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTargets, setSelectedTargets] = useState<Set<string>>(new Set());
@@ -114,7 +114,7 @@ export function ShareSheet({
   };
 
   const handleShare = async () => {
-    if (selectedTargets.size === 0) return;
+    if (selectedTargets.size === 0 || !user) return;
     
     setSending(true);
     
@@ -124,8 +124,60 @@ export function ShareSheet({
         ? `${postContent.slice(0, 100)}${postContent.length > 100 ? "..." : ""}\n\n${shareLink}`
         : shareLink;
 
-      // For now, just show success - real implementation would send messages
-      // This would require updating useMessages to accept conversationId dynamically
+      const promises: Promise<void>[] = [];
+
+      for (const targetId of selectedTargets) {
+        const [type, id] = targetId.split(":");
+        
+        if (type === "dm") {
+          // Send to DM conversation
+          const sendDm = async () => {
+            const { error } = await supabase.from("messages").insert({
+              conversation_id: id,
+              sender_id: user.id,
+              content: shareText,
+            });
+            if (error) throw error;
+            await supabase
+              .from("conversations")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", id);
+          };
+          promises.push(sendDm());
+        } else if (type === "group") {
+          // Send to group chat
+          const sendGroup = async () => {
+            const { error } = await supabase.from("group_chat_messages").insert({
+              group_id: id,
+              sender_id: user.id,
+              content: shareText,
+            });
+            if (error) throw error;
+            await supabase
+              .from("group_chats")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", id);
+          };
+          promises.push(sendGroup());
+        } else if (type === "channel") {
+          // Send to channel
+          const sendChannel = async () => {
+            const { error } = await supabase.from("channel_messages").insert({
+              channel_id: id,
+              sender_id: user.id,
+              content: shareText,
+            });
+            if (error) throw error;
+            await supabase
+              .from("channels")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", id);
+          };
+          promises.push(sendChannel());
+        }
+      }
+
+      await Promise.all(promises);
       
       toast({
         title: "Отправлено",
