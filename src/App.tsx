@@ -21,6 +21,7 @@ import { InsurancePage } from "@/pages/InsurancePage";
 import InsurancePoliciesPage from "@/pages/InsurancePoliciesPage";
 import { AuthPage } from "@/pages/AuthPage";
 import { ExploreFeedPage } from "@/pages/ExploreFeedPage";
+import { PostDetailPage } from "@/pages/PostDetailPage";
 import NotFound from "./pages/NotFound";
 import { CommandPalette } from "@/components/CommandPalette";
 
@@ -46,6 +47,7 @@ const App = () => (
                     <Route path="/" element={<HomePage />} />
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/explore/:postIndex" element={<ExploreFeedPage />} />
+                    <Route path="/post/:id" element={<PostDetailPage />} />
                     <Route path="/chats" element={<ChatsPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/profile/edit" element={<EditProfilePage />} />
