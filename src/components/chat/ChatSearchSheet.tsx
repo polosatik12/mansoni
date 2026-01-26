@@ -3,6 +3,7 @@ import { Search, X, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useSearch, SearchUser } from "@/hooks/useSearch";
+import glassBackground from "@/assets/glass-background.png";
 
 interface ChatSearchSheetProps {
   open: boolean;
@@ -53,77 +54,89 @@ export function ChatSearchSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="top" 
-        className="h-[85vh] rounded-b-3xl bg-white/20 dark:bg-black/30 backdrop-blur-2xl border-b border-white/20 shadow-2xl"
+        className="h-[85vh] rounded-b-3xl border-b border-white/10 shadow-2xl overflow-hidden p-0"
+        overlayClassName="bg-black/40"
       >
-        <SheetHeader className="pb-4">
-          <SheetTitle>Поиск пользователей</SheetTitle>
-        </SheetHeader>
+        {/* Glass background with bokeh */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${glassBackground})` }}
+        />
+        {/* Dark overlay for better readability */}
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
         
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Введите имя..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9 h-11 rounded-xl bg-muted/50 border-0 focus-visible:ring-1"
-            autoFocus
-          />
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        {/* Content */}
+        <div className="relative z-10 h-full flex flex-col p-6">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-white">Поиск пользователей</SheetTitle>
+          </SheetHeader>
+          
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
+            <Input
+              placeholder="Введите имя..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9 h-11 rounded-xl bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+              autoFocus
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
-        <div className="overflow-y-auto flex-1 -mx-6 px-6">
-          {loading && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-            </div>
-          )}
+          <div className="overflow-y-auto flex-1 -mx-6 px-6">
+            {loading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+              </div>
+            )}
 
-          {!loading && searchQuery.trim().length < 2 && (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              Введите минимум 2 символа для поиска
-            </div>
-          )}
+            {!loading && searchQuery.trim().length < 2 && (
+              <div className="text-center py-8 text-white/60 text-sm">
+                Введите минимум 2 символа для поиска
+              </div>
+            )}
 
-          {!loading && searchQuery.trim().length >= 2 && newUsers.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              Пользователи не найдены
-            </div>
-          )}
+            {!loading && searchQuery.trim().length >= 2 && newUsers.length === 0 && (
+              <div className="text-center py-8 text-white/60 text-sm">
+                Пользователи не найдены
+              </div>
+            )}
 
-          {newUsers.map((u) => (
-            <div
-              key={u.user_id}
-              onClick={() => handleSelect(u)}
-              className="flex items-center gap-3 py-3 hover:bg-muted/50 transition-colors cursor-pointer rounded-lg px-2 -mx-2"
-            >
-              <img
-                src={u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.user_id}`}
-                alt={u.display_name}
-                className="w-12 h-12 rounded-full object-cover bg-muted"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-medium text-foreground truncate">
-                    {u.display_name}
-                  </span>
-                  {u.verified && (
-                    <span className="text-primary text-xs">✓</span>
+            {newUsers.map((u) => (
+              <div
+                key={u.user_id}
+                onClick={() => handleSelect(u)}
+                className="flex items-center gap-3 py-3 hover:bg-white/10 transition-colors cursor-pointer rounded-lg px-2 -mx-2"
+              >
+                <img
+                  src={u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.user_id}`}
+                  alt={u.display_name}
+                  className="w-12 h-12 rounded-full object-cover bg-white/10"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-white truncate">
+                      {u.display_name}
+                    </span>
+                    {u.verified && (
+                      <span className="text-primary text-xs">✓</span>
+                    )}
+                  </div>
+                  {u.bio && (
+                    <p className="text-sm text-white/60 truncate">{u.bio}</p>
                   )}
                 </div>
-                {u.bio && (
-                  <p className="text-sm text-muted-foreground truncate">{u.bio}</p>
-                )}
+                <UserPlus className="w-5 h-5 text-primary flex-shrink-0" />
               </div>
-              <UserPlus className="w-5 h-5 text-primary flex-shrink-0" />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </SheetContent>
     </Sheet>
