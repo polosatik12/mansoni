@@ -1,91 +1,63 @@
 
 
-## Цель
-Сделать анимацию сторис в чатах **идентичной ленте**: сторис сворачиваются при скролле вниз и разворачиваются при скролле вверх — плавно, на основе `collapseProgress` от хука `useScrollCollapse`.
+## Проблема
 
----
+Сторис в чатах показываются **развёрнутыми** при первой загрузке, хотя должны быть **свёрнутыми** изначально (как на скриншоте — маленькие аватарки в стопке).
 
-## Текущая проблема
+### Причина
+1. `useScrollCollapse` инициализирует `scrollY = 0` 
+2. При `scrollY = 0` → `collapseProgress = 0` → сторис развёрнуты
+3. `useEffect` устанавливает `scrollTop = 100` **после** первого рендера
+4. Первый кадр показывает развёрнутые сторис, потом они резко сворачиваются
 
-Сейчас в `ChatsPage`:
-- Сторис управляются через `isExpanded` (boolean) и `swipeProgress` от жестов
-- Скролл списка чатов обрабатывается **отдельно** в `handleScroll` внутри самой страницы
-- `ChatStories` не использует `useScrollCollapse` и не подключён к `ScrollContainerContext`
+## Решение
 
-В ленте (`HomePage`):
-- `FeedHeader` использует `useScrollCollapse(100)` — получает `collapseProgress` (0-1) от скролла
-- Скролл происходит в главном контейнере `<main>` через `ScrollContainerProvider`
-- Анимация плавная, GPU-ускоренная, зависит напрямую от позиции скролла
+### 1. Изменить начальное значение `scrollY` в `useScrollCollapse`
 
----
+**Файл:** `src/hooks/useScrollCollapse.tsx`
 
-## План изменений
+Добавить параметр `initialCollapsed: boolean = false`. Если `true`, начальное значение `scrollY` будет равно `threshold`, чтобы сторис рендерились свёрнутыми с первого кадра.
 
-### 1. Рефакторинг `ChatStories` — убрать внешнее управление состоянием
+```typescript
+export function useScrollCollapse(threshold: number = 50, initialCollapsed: boolean = false) {
+  const containerRef = useScrollContainer();
+  const [scrollY, setScrollY] = useState(initialCollapsed ? threshold : 0);
+  // ...
+}
+```
+
+### 2. Обновить `ChatStories` — передать `initialCollapsed: true`
 
 **Файл:** `src/components/chat/ChatStories.tsx`
 
-- Удалить пропсы `isExpanded`, `onExpandChange`, `swipeProgress`
-- Добавить `useScrollCollapse(100)` для получения `collapseProgress` напрямую (как в `FeedHeader`)
-- Добавить `useScrollContainer()` для scroll-to-top при клике на свёрнутые сторис
-- Использовать `collapseProgress` вместо `effectiveProgress`
-- Удалить логику pull-indicator (индикатор потяни вниз)
+```typescript
+const { collapseProgress } = useScrollCollapse(SCROLL_THRESHOLD, true);
+```
 
-### 2. Обновить `ChatsPage` — убрать лишнюю логику
+### 3. Синхронная установка `scrollTop` в `ChatsPage`
 
 **Файл:** `src/pages/ChatsPage.tsx`
 
-- Удалить state `storiesExpanded`
-- Удалить `swipeProgress`, `isDragging` от `useSwipeGesture`
-- Удалить `handleScroll` callback
-- Убрать передачу пропсов `isExpanded`, `onExpandChange`, `swipeProgress` в `ChatStories`
-- Убрать `ref={storiesContainerRef}` и связанную логику
+Использовать `useLayoutEffect` вместо `useEffect` для синхронной установки `scrollTop = 100` **до** первого рендера браузером:
 
-### 3. Поведение при клике (как в ленте)
+```typescript
+import { useLayoutEffect } from "react";
 
-Когда `collapseProgress > 0.1` (сторис свёрнуты):
-- Клик по сторис → `scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })`
-- Это прокрутит страницу вверх, и сторис автоматически развернутся
-
-Когда `collapseProgress <= 0.1` (сторис развёрнуты):
-- Клик по сторис → открывает `StoryViewer` или запускает загрузку новой сторис
-
----
-
-## Технические детали
-
-```text
-+--------------------------------------------------+
-|               Scroll Container (main)            |
-|        ↑                                         |
-|        | useScrollCollapse(100)                  |
-|        ↓                                         |
-| +----------------------------------------------+ |
-| |  ChatStories (collapseProgress: 0→1)        | |
-| |  - Expanded: avatars 64px, row layout       | |
-| |  - Collapsed: avatars 32px, stacked         | |
-| +----------------------------------------------+ |
-| |                                              | |
-| |  Chat List (scrollable content)             | |
-| |                                              | |
-+--------------------------------------------------+
+// Заменить useEffect на useLayoutEffect
+useLayoutEffect(() => {
+  if (chatListRef.current && !selectedConversation) {
+    chatListRef.current.scrollTop = 100;
+  }
+}, [selectedConversation]);
 ```
-
-**Константы анимации (из FeedHeader):**
-- EXPANDED_AVATAR_SIZE = 64px
-- COLLAPSED_AVATAR_SIZE = 32px  
-- COLLAPSED_OVERLAP = 10px
-- MAX_VISIBLE_IN_STACK = 4
-- threshold = 100px (порог полного сворачивания)
 
 ---
 
 ## Итог
 
 После изменений:
-- Скролл списка чатов **вниз** → сторис плавно сворачиваются в стопку
-- Скролл **вверх до top=0** → сторис плавно разворачиваются  
-- Тап по свёрнутым сторис → прокрутка вверх (как в ленте)
-- Тап по развёрнутым сторис → открытие просмотрщика
-- Никаких pull-down жестов, только скролл
+- Сторис рендерятся **свёрнутыми** с первого кадра (как на скриншоте Telegram)
+- При скролле списка чатов **вверх** (до `scrollTop = 0`) — сторис плавно разворачиваются
+- При скролле **вниз** — сторис снова сворачиваются в стопку
+- Никакого "прыжка" при загрузке страницы
 
