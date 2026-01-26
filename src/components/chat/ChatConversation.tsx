@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, X, Play, Pause, Check, CheckCheck } from "lucide-react";
+import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, X, Play, Pause, Check, CheckCheck, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,7 +15,7 @@ import { AttachmentSheet } from "./AttachmentSheet";
 import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
 import { SharedPostCard } from "./SharedPostCard";
-
+import { EmojiStickerPicker } from "./EmojiStickerPicker";
 interface ChatConversationProps {
   conversationId: string;
   chatName: string;
@@ -42,6 +42,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [showAttachmentSheet, setShowAttachmentSheet] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [viewingVideo, setViewingVideo] = useState<string | null>(null);
   const [recordMode, setRecordMode] = useState<'voice' | 'video'>('voice');
@@ -482,15 +483,22 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             </button>
             
             {/* Input field */}
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <input
                 type="text"
                 placeholder="Сообщение"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="w-full h-11 px-4 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
+                className="w-full h-11 px-4 pr-12 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
               />
+              {/* Emoji button inside input */}
+              <button
+                onClick={() => setShowEmojiPicker(true)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
+              >
+                <Smile className="w-5 h-5" />
+              </button>
             </div>
             
             {/* Send or toggleable Mic button */}
@@ -572,6 +580,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         open={showAttachmentSheet}
         onOpenChange={setShowAttachmentSheet}
         onSelectFile={handleAttachment}
+      />
+
+      {/* Emoji Sticker Picker */}
+      <EmojiStickerPicker
+        open={showEmojiPicker}
+        onOpenChange={setShowEmojiPicker}
+        onEmojiSelect={(emoji) => {
+          setInputText((prev) => prev + emoji);
+          setShowEmojiPicker(false);
+        }}
       />
 
       {/* Image Viewer */}
