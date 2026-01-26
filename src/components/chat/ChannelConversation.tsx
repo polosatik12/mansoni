@@ -249,20 +249,8 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
       )}
 
       {/* Bottom bar - subscriber view */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-[#17212b]/95 backdrop-blur-sm border-t border-white/5">
-        <div className="flex items-center gap-4">
-          <button className="flex items-center gap-1.5 text-white/60 hover:text-white/80 transition-colors">
-            <MessageCircle className="w-5 h-5" />
-            <span className="text-sm">{Math.floor(Math.random() * 50) + 2}</span>
-          </button>
-          <button className="text-white/60 hover:text-white/80 transition-colors">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
-            </svg>
-          </button>
-        </div>
-        
-        <button 
+      <div className="flex-shrink-0 flex items-center justify-center px-4 py-3 bg-[#17212b]/95 backdrop-blur-sm border-t border-white/5">
+        <button
           onClick={() => setIsMuted(!isMuted)}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#232e3c] hover:bg-[#2b3a4a] transition-colors"
         >
