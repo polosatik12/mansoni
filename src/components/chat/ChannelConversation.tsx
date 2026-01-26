@@ -249,7 +249,10 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
       )}
 
       {/* Bottom bar - subscriber view */}
-      <div className="flex-shrink-0 flex items-center justify-center px-4 py-3 bg-[#17212b]/95 backdrop-blur-sm border-t border-white/5">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-[#17212b]/95 backdrop-blur-sm border-t border-white/5">
+        {/* Spacer for centering */}
+        <div className="w-10" />
+        
         <button
           onClick={() => setIsMuted(!isMuted)}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#232e3c] hover:bg-[#2b3a4a] transition-colors"
@@ -264,7 +267,7 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
           </span>
         </button>
 
-        <button className="text-white/60 hover:text-white/80 transition-colors">
+        <button className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white/80 transition-colors">
           <Search className="w-5 h-5" />
         </button>
       </div>
