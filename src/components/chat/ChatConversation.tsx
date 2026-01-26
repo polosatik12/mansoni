@@ -15,6 +15,7 @@ import { AttachmentSheet } from "./AttachmentSheet";
 import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
 import { SharedPostCard } from "./SharedPostCard";
+import { SharedReelCard } from "./SharedReelCard";
 import { EmojiStickerPicker } from "./EmojiStickerPicker";
 interface ChatConversationProps {
   conversationId: string;
@@ -299,6 +300,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const isImage = message.media_type === 'image';
           const isVideo = message.media_type === 'video';
           const isSharedPost = !!message.shared_post_id;
+          const isSharedReel = !!message.shared_reel_id;
           const isRead = message.is_read;
 
           // Group messages - show avatar only for first in sequence
@@ -324,7 +326,27 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               )}
 
-              {isSharedPost && message.shared_post_id ? (
+              {isSharedReel && message.shared_reel_id ? (
+                <div className="flex flex-col gap-1">
+                  <SharedReelCard 
+                    reelId={message.shared_reel_id} 
+                    isOwn={isOwn} 
+                    messageId={message.id}
+                    onDelete={async (msgId) => {
+                      const result = await deleteMessage(msgId);
+                      if (result.error) {
+                        toast.error("Не удалось удалить сообщение");
+                      }
+                    }}
+                  />
+                  <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
+                    {isOwn && (
+                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                    )}
+                  </div>
+                </div>
+              ) : isSharedPost && message.shared_post_id ? (
                 <div className="flex flex-col gap-1">
                   <SharedPostCard 
                     postId={message.shared_post_id} 
