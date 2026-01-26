@@ -56,12 +56,13 @@ export function ChatSearchSheet({
         side="top" 
         className="h-[85vh] rounded-b-3xl border-b border-white/10 shadow-2xl overflow-hidden p-0 bg-transparent"
         overlayClassName="bg-transparent"
+        aria-describedby={undefined}
       >
         {/* Semi-transparent glass effect - shows content behind */}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-xl pointer-events-none" />
         
         {/* Content */}
-        <div className="relative z-10 h-full flex flex-col p-6">
+        <div className="relative z-10 h-full flex flex-col p-6 pt-12">
           <SheetHeader className="pb-4">
             <SheetTitle className="text-white">Поиск пользователей</SheetTitle>
           </SheetHeader>
