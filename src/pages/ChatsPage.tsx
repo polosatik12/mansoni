@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Check, CheckCheck, LogIn, MessageCircle, X, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -34,8 +34,8 @@ export function ChatsPage() {
   // Local scroll container for chat list - used by ChatStories for animation
   const chatListRef = useRef<HTMLDivElement>(null);
   
-  // Scroll to hide stories initially (collapsed state)
-  useEffect(() => {
+  // Scroll to hide stories initially (collapsed state) - useLayoutEffect runs before paint
+  useLayoutEffect(() => {
     if (chatListRef.current && !selectedConversation) {
       // Scroll to the threshold so stories start collapsed
       chatListRef.current.scrollTop = 100;
