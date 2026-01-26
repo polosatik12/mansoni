@@ -255,16 +255,25 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
               >
                 {({ isActive }) => (
                   <>
-                    <div className="relative flex items-center justify-center">
+                    <div className={cn(
+                      "relative flex items-center justify-center",
+                      item.isCenter && "-mt-6"
+                    )}>
                       {item.customIcon ? (
-                        <img 
-                          src={item.customIcon} 
-                          alt={item.label}
-                          className={cn(
-                            "w-7 h-7 transition-all duration-150",
-                            isActive && "scale-110"
-                          )}
-                        />
+                        <div className={cn(
+                          "flex items-center justify-center rounded-full",
+                          "w-14 h-14 bg-card shadow-lg border border-border",
+                          isActive && "ring-2 ring-primary/30"
+                        )}>
+                          <img 
+                            src={item.customIcon} 
+                            alt={item.label}
+                            className={cn(
+                              "w-9 h-9 transition-all duration-150",
+                              isActive && "scale-110"
+                            )}
+                          />
+                        </div>
                       ) : item.icon ? (
                         <item.icon
                           className={cn(
@@ -277,10 +286,10 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                       {item.hasBadge && unreadCount > 0 && (
                         <span 
                           className={cn(
-                            "absolute -top-1 -right-2.5",
+                            "absolute -top-1 -right-1",
                             "bg-primary text-primary-foreground",
                             "text-[10px] font-semibold leading-none",
-                            "rounded-full min-w-[16px] h-[16px]",
+                            "rounded-full min-w-[18px] h-[18px]",
                             "flex items-center justify-center px-1"
                           )}
                         >
