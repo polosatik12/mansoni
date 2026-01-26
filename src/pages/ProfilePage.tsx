@@ -8,7 +8,6 @@ import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
 import { SettingsDrawer } from "@/components/profile/SettingsDrawer";
-import { AccountSwitcher } from "@/components/profile/AccountSwitcher";
 import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
@@ -98,7 +97,7 @@ export function ProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="w-10" />
-        <AccountSwitcher currentUsername={profile.display_name || 'user'} />
+        <h1 className="font-semibold text-lg">{profile.display_name || 'Профиль'}</h1>
         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
           <Settings className="w-6 h-6" />
         </Button>
