@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, Check, CheckCheck, LogIn, MessageCircle, X, UserPlus } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Search, Check, CheckCheck, LogIn, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChatConversation } from "@/components/chat/ChatConversation";
 import { ChatStories } from "@/components/chat/ChatStories";
+import { ChatSearchSheet } from "@/components/chat/ChatSearchSheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations, Conversation, useCreateConversation } from "@/hooks/useChat";
-import { useSearch, SearchUser } from "@/hooks/useSearch";
+import { SearchUser } from "@/hooks/useSearch";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ScrollContainerProvider } from "@/contexts/ScrollContainerContext";
@@ -24,16 +24,13 @@ export function ChatsPage() {
   const locationState = location.state as LocationState | null;
   const { user, loading: authLoading } = useAuth();
   const { conversations, loading: chatsLoading, error: chatsError, refetch } = useConversations();
-  const { users: searchedUsers, loading: searchLoading, searchUsers } = useSearch();
   const { createConversation } = useCreateConversation();
   
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   
   // Local scroll container for chat list - used by ChatStories for animation
   const chatListRef = useRef<HTMLDivElement>(null);
-  
 
   // Get the other participant's info for display
   const getOtherParticipant = (conv: Conversation) => {
@@ -61,16 +58,6 @@ export function ChatsPage() {
     }
   }, [locationState, refetch]);
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.trim().length >= 2) {
-        searchUsers(searchQuery);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery, searchUsers]);
-
   const formatTime = (dateStr: string) => {
     try {
       return formatDistanceToNow(new Date(dateStr), { addSuffix: false, locale: ru });
@@ -79,25 +66,15 @@ export function ChatsPage() {
     }
   };
 
-  // Filter conversations by search
-  const filteredConversations = conversations.filter((conv) => {
-    if (!searchQuery.trim()) return true;
-    const other = getOtherParticipant(conv);
-    return (other.display_name || "").toLowerCase().includes(searchQuery.toLowerCase());
-  });
-
-  // Filter searched users to exclude those already in conversations
+  // Get user IDs already in conversations
   const conversationUserIds = new Set(
     conversations.flatMap(c => c.participants.map(p => p.user_id))
   );
-  const newUsers = searchedUsers.filter(u => !conversationUserIds.has(u.user_id) && u.user_id !== user?.id);
 
-  const handleUserClick = async (searchUser: SearchUser) => {
+  const handleUserSelect = async (searchUser: SearchUser) => {
     try {
       const convId = await createConversation(searchUser.user_id);
       if (convId) {
-        setSearchQuery("");
-        setIsSearchFocused(false);
         const newConv: Conversation = {
           id: convId,
           created_at: new Date().toISOString(),
@@ -116,11 +93,6 @@ export function ChatsPage() {
     } catch (error) {
       console.error("Failed to create conversation:", error);
     }
-  };
-
-  const clearSearch = () => {
-    setSearchQuery("");
-    setIsSearchFocused(false);
   };
 
   // Show auth prompt if not logged in
@@ -161,31 +133,16 @@ export function ChatsPage() {
   return (
     <ScrollContainerProvider value={chatListRef}>
       <div className="h-full flex flex-col overflow-hidden">
-        {/* Fixed Header */}
-        <div className="flex-shrink-0 flex items-center justify-center py-3 border-b border-border bg-background">
+        {/* Fixed Header with search icon */}
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+          <div className="w-8" /> {/* Spacer for centering */}
           <h1 className="text-lg font-semibold">Чаты</h1>
-        </div>
-
-        {/* Fixed Search */}
-        <div className="flex-shrink-0 p-3 border-b border-border bg-background">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Поиск"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              className="pl-9 pr-9 h-10 rounded-xl bg-muted/50 border-0 focus-visible:ring-1"
-            />
-            {searchQuery && (
-              <button 
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+          <button 
+            onClick={() => setSearchOpen(true)}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+          >
+            <Search className="w-5 h-5 text-foreground" />
+          </button>
         </div>
 
         <div 
@@ -196,44 +153,9 @@ export function ChatsPage() {
           <div className="sticky top-0 z-10">
             <ChatStories />
           </div>
-          {/* Search Results - Users not in conversations */}
-          {searchQuery.trim().length >= 2 && newUsers.length > 0 && (
-            <div className="border-b border-border">
-              <div className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase">
-                Пользователи
-              </div>
-              {newUsers.map((u) => (
-                <div
-                  key={u.user_id}
-                  onClick={() => handleUserClick(u)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
-                >
-                  <img
-                    src={u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.user_id}`}
-                    alt={u.display_name}
-                    className="w-11 h-11 rounded-full object-cover bg-muted"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-foreground truncate">
-                        {u.display_name}
-                      </span>
-                      {u.verified && (
-                        <span className="text-primary text-xs">✓</span>
-                      )}
-                    </div>
-                    {u.bio && (
-                      <p className="text-sm text-muted-foreground truncate">{u.bio}</p>
-                    )}
-                  </div>
-                  <UserPlus className="w-5 h-5 text-primary flex-shrink-0" />
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Loading */}
-          {(chatsLoading || searchLoading) && (
+          {chatsLoading && (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
             </div>
@@ -253,7 +175,7 @@ export function ChatsPage() {
           )}
 
           {/* Empty state */}
-          {!chatsLoading && !chatsError && filteredConversations.length === 0 && !searchQuery && (
+          {!chatsLoading && !chatsError && conversations.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-6">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                 <MessageCircle className="w-8 h-8 text-muted-foreground" />
@@ -266,7 +188,7 @@ export function ChatsPage() {
           )}
 
           {/* Chat List Items */}
-          {filteredConversations.map((conv) => {
+          {conversations.map((conv) => {
             const other = getOtherParticipant(conv);
             const lastMessage = conv.last_message;
             const isMyMessage = lastMessage?.sender_id === user?.id;
@@ -328,6 +250,15 @@ export function ChatsPage() {
             );
           })}
         </div>
+
+        {/* Search Sheet */}
+        <ChatSearchSheet
+          open={searchOpen}
+          onOpenChange={setSearchOpen}
+          onUserSelect={handleUserSelect}
+          existingUserIds={conversationUserIds}
+          currentUserId={user?.id}
+        />
       </div>
     </ScrollContainerProvider>
   );
