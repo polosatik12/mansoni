@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Check, CheckCheck, LogIn, MessageCircle, X, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,6 @@ import { useConversations, Conversation, useCreateConversation } from "@/hooks/u
 import { useSearch, SearchUser } from "@/hooks/useSearch";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 interface LocationState {
   conversationId?: string;
@@ -30,31 +28,7 @@ export function ChatsPage() {
   
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [storiesExpanded, setStoriesExpanded] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  
-  // Refs for swipe gesture
-  const storiesContainerRef = useRef<HTMLDivElement>(null);
-  const lastScrollTop = useRef(0);
-
-  // Swipe gesture for expanding stories
-  const { progress: swipeProgress, isDragging } = useSwipeGesture(storiesContainerRef, {
-    threshold: 60,
-    onSwipeDown: () => setStoriesExpanded(true),
-    enabled: !storiesExpanded,
-  });
-
-  // Handle scroll to collapse stories
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const scrollTop = e.currentTarget.scrollTop;
-    
-    // Collapse stories when scrolling down
-    if (scrollTop > lastScrollTop.current && scrollTop > 20 && storiesExpanded) {
-      setStoriesExpanded(false);
-    }
-    
-    lastScrollTop.current = scrollTop;
-  }, [storiesExpanded]);
 
   // Get the other participant's info for display
   const getOtherParticipant = (conv: Conversation) => {
@@ -186,20 +160,8 @@ export function ChatsPage() {
         <h1 className="text-lg font-semibold">Чаты</h1>
       </div>
 
-      {/* Stories Section - Pull down to expand */}
-      <div 
-        ref={storiesContainerRef}
-        className={cn(
-          "border-b border-border overflow-hidden touch-pan-y",
-          isDragging && "select-none"
-        )}
-      >
-        <ChatStories 
-          isExpanded={storiesExpanded} 
-          onExpandChange={setStoriesExpanded}
-          swipeProgress={swipeProgress}
-        />
-      </div>
+      {/* Stories Section - scroll-controlled like feed */}
+      <ChatStories />
 
       {/* Unified Search */}
       <div className="p-3 border-b border-border">
@@ -293,7 +255,7 @@ export function ChatsPage() {
       )}
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto overscroll-contain" onScroll={handleScroll}>
+      <div className="flex-1 overflow-y-auto overscroll-contain">
         {filteredConversations.map((conv) => {
           const other = getOtherParticipant(conv);
           const lastMessage = conv.last_message;

@@ -2,44 +2,44 @@ import { useState, useRef, useMemo } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { StoryViewer } from "@/components/feed/StoryViewer";
+import { useScrollCollapse } from "@/hooks/useScrollCollapse";
+import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 import { cn } from "@/lib/utils";
 
-interface ChatStoriesProps {
-  isExpanded: boolean;
-  onExpandChange: (expanded: boolean) => void;
-  swipeProgress?: number;
-}
-
-// Animation constants - matching FeedHeader
+// Animation constants - matching FeedHeader exactly
 const EXPANDED_AVATAR_SIZE = 64;
 const COLLAPSED_AVATAR_SIZE = 32;
 const EXPANDED_GAP = 16;
 const COLLAPSED_OVERLAP = 10;
 const MAX_VISIBLE_IN_STACK = 4;
 const EXPANDED_ROW_HEIGHT = 88;
-const HEADER_HEIGHT = 12; // Small top padding for pull indicator
+const HEADER_HEIGHT = 12;
 const PADDING_LEFT = 16;
 const COLLAPSED_START_X = PADDING_LEFT;
+const SCROLL_THRESHOLD = 100;
 
 // Precomputed values for animation
 const SIZE_DIFF = EXPANDED_AVATAR_SIZE - COLLAPSED_AVATAR_SIZE;
 const COLLAPSED_Y = 8;
 const Y_DIFF = COLLAPSED_Y - HEADER_HEIGHT;
 
-export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: ChatStoriesProps) {
+export function ChatStories() {
   const { usersWithStories, loading, uploadStory } = useStories();
+  const { collapseProgress } = useScrollCollapse(SCROLL_THRESHOLD);
+  const scrollContainerRef = useScrollContainer();
+  
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const effectiveProgress = isExpanded ? 1 : swipeProgress;
-
   const handleStoryClick = (index: number, user: UserWithStories) => {
-    if (!isExpanded && effectiveProgress < 0.5) {
-      onExpandChange(true);
+    // If collapsed, scroll to top to expand (like feed)
+    if (collapseProgress > 0.1) {
+      scrollContainerRef?.current?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     
+    // If expanded, handle story interaction
     if (user.isOwn && user.stories.length === 0) {
       fileInputRef.current?.click();
     } else if (user.stories.length > 0) {
@@ -61,7 +61,7 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
   // Memoize story styles calculation - matching FeedHeader approach
   const storyStyles = useMemo(() => {
     return usersWithStories.map((_, index) => {
-      const progress = 1 - effectiveProgress; // Invert for collapse direction
+      const progress = collapseProgress;
       
       // Use scale instead of width/height for GPU acceleration
       const scale = 1 - ((SIZE_DIFF / EXPANDED_AVATAR_SIZE) * progress);
@@ -90,15 +90,15 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
 
       return { scale, x, y, opacity, zIndex, nameOpacity, isInStack };
     });
-  }, [usersWithStories.length, effectiveProgress]);
+  }, [usersWithStories.length, collapseProgress]);
 
   // Container height - matching FeedHeader calculation
-  const containerHeight = HEADER_HEIGHT + EXPANDED_ROW_HEIGHT * effectiveProgress + (1 - effectiveProgress) * 48;
+  const containerHeight = HEADER_HEIGHT + EXPANDED_ROW_HEIGHT * (1 - collapseProgress) + collapseProgress * 48;
 
   if (loading && usersWithStories.length === 0) {
     return (
       <div 
-        className="flex items-center justify-center"
+        className="flex items-center justify-center border-b border-border"
         style={{ height: containerHeight }}
       >
         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -117,24 +117,16 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
       />
       
       <div 
-        className="relative overflow-hidden bg-card will-change-auto"
+        className="relative overflow-hidden bg-card border-b border-border will-change-auto"
         style={{ height: `${containerHeight}px` }}
       >
-        {/* Pull indicator - visible when collapsed */}
-        <div 
-          className="absolute top-1 left-0 right-0 flex justify-center transition-opacity duration-200"
-          style={{ opacity: 1 - effectiveProgress }}
-        >
-          <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-        </div>
-
         {/* Stories - GPU-accelerated transforms like FeedHeader */}
         {usersWithStories.map((user, index) => {
           const styles = storyStyles[index];
           if (!styles) return null;
           
           const hasStories = user.stories.length > 0;
-          const showPlusIcon = user.isOwn && !hasStories && effectiveProgress > 0.5;
+          const showPlusIcon = user.isOwn && !hasStories && collapseProgress < 0.5;
 
           return (
             <button
@@ -189,7 +181,7 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
                 {showPlusIcon && hasStories && (
                   <div 
                     className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center"
-                    style={{ opacity: effectiveProgress }}
+                    style={{ opacity: 1 - collapseProgress }}
                   >
                     <Plus className="w-3 h-3 text-primary-foreground" />
                   </div>
@@ -212,13 +204,13 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
         })}
 
         {/* Show count when collapsed */}
-        {effectiveProgress < 0.5 && usersWithStories.length > MAX_VISIBLE_IN_STACK && (
+        {collapseProgress > 0.5 && usersWithStories.length > MAX_VISIBLE_IN_STACK && (
           <div 
             className="absolute flex items-center justify-center text-xs text-muted-foreground font-medium"
             style={{ 
               left: COLLAPSED_START_X + MAX_VISIBLE_IN_STACK * COLLAPSED_OVERLAP + 20,
               top: COLLAPSED_Y + 8,
-              opacity: 1 - effectiveProgress * 2,
+              opacity: (collapseProgress - 0.5) * 2,
             }}
           >
             +{usersWithStories.length - MAX_VISIBLE_IN_STACK}
