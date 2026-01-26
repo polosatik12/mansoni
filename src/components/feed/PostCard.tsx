@@ -292,12 +292,11 @@ export function PostCard({
           <button
             onClick={handleSave}
             className={cn(
-              "flex items-center gap-1.5 transition-colors",
+              "transition-colors",
               saved ? "text-primary" : "text-foreground"
             )}
           >
             <Bookmark className={cn("w-6 h-6", saved && "fill-current")} />
-            <span className="text-sm">{formatNumber(saves)}</span>
           </button>
         </div>
       </div>
