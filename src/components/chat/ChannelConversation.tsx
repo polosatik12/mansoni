@@ -275,26 +275,6 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
         </button>
       )}
 
-      {/* Bottom bar - subscriber view */}
-      <div className="flex-shrink-0 flex items-center justify-center gap-4 px-4 py-2">
-        <button
-          onClick={() => setIsMuted(!isMuted)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-        >
-          {isMuted ? (
-            <VolumeX className="w-4 h-4 text-muted-foreground" />
-          ) : (
-            <Volume2 className="w-4 h-4 text-muted-foreground" />
-          )}
-          <span className="text-sm text-muted-foreground">
-            {isMuted ? "Включить звук" : "Убрать звук"}
-          </span>
-        </button>
-
-        <button className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-          <Search className="w-5 h-5" />
-        </button>
-      </div>
     </div>
   );
 }
