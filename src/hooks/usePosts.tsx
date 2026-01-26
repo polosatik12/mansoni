@@ -221,20 +221,25 @@ export function usePostActions() {
   const [viewedPosts] = useState(new Set<string>());
 
   const recordView = useCallback(async (postId: string) => {
-    // Prevent duplicate views in same session
+    // Prevent duplicate views in same session (client-side optimization)
     if (viewedPosts.has(postId)) return;
+    viewedPosts.add(postId);
     
     try {
       const sessionId = getSessionId();
       
-      await supabase.from('post_views').insert({
+      // Use upsert with onConflict to silently ignore duplicates
+      // DB has unique constraint on (post_id, user_id, session_id)
+      await supabase.from('post_views').upsert({
         post_id: postId,
         user_id: user?.id || null,
         session_id: sessionId
+      }, {
+        onConflict: 'post_id,user_id,session_id',
+        ignoreDuplicates: true
       });
-      
-      viewedPosts.add(postId);
     } catch (err) {
+      // Silently ignore - view tracking is non-critical
       console.error('Failed to record view:', err);
     }
   }, [user, viewedPosts]);
