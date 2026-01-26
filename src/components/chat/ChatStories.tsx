@@ -84,12 +84,7 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
           className="flex justify-center py-1 transition-opacity duration-200"
           style={{ opacity: 1 - effectiveProgress }}
         >
-          <div className={cn(
-            "w-10 h-1 rounded-full transition-all duration-300",
-            hasNewStories 
-              ? "bg-primary/60 animate-pulse" 
-              : "bg-muted-foreground/30"
-          )} />
+          <div className="w-10 h-1 rounded-full bg-muted-foreground/30 transition-all duration-300" />
         </div>
 
         <ScrollArea className="w-full">
