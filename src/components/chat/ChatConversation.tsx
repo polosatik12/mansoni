@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, Clock, X, Play, Pause } from "lucide-react";
+import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, X, Play, Pause, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,9 +20,11 @@ interface ChatConversationProps {
   chatAvatar: string;
   otherUserId: string;
   onBack: () => void;
+  participantCount?: number;
+  isGroup?: boolean;
 }
 
-export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack }: ChatConversationProps) {
+export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup }: ChatConversationProps) {
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage } = useMessages(conversationId);
   const { activeCall, startCall, endCall } = useCallsContext();
@@ -204,33 +206,48 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
-      {/* Header - fixed */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b border-border bg-card safe-area-top">
-        <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        
-        <div className="relative">
-          <img
-            src={chatAvatar}
-            alt={chatName}
-            className="w-10 h-10 rounded-full object-cover bg-muted"
-          />
+      {/* Header - Telegram style centered */}
+      <div className="flex-shrink-0 bg-[#17212b] safe-area-top">
+        <div className="flex items-center px-2 py-2">
+          {/* Back button with unread count */}
+          <button 
+            onClick={onBack} 
+            className="flex items-center gap-1 px-2 py-1 text-[#6ab3f3] hover:bg-white/5 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm font-medium">1513</span>
+          </button>
+          
+          {/* Center - Chat info */}
+          <div className="flex-1 flex flex-col items-center justify-center min-w-0">
+            <h2 className="font-semibold text-white text-base truncate max-w-[200px]">{chatName}</h2>
+            <p className="text-xs text-[#6ab3f3]">
+              {isGroup 
+                ? `${participantCount || 0} участник${participantCount === 1 ? '' : participantCount && participantCount < 5 ? 'а' : 'ов'}`
+                : 'был(а) недавно'
+              }
+            </p>
+          </div>
+          
+          {/* Right - Avatar */}
+          <div className="px-2">
+            <img
+              src={chatAvatar}
+              alt={chatName}
+              className="w-10 h-10 rounded-full object-cover bg-[#6ab3f3]"
+            />
+          </div>
         </div>
         
-        <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-foreground truncate">{chatName}</h2>
-          <p className="text-xs text-muted-foreground">был(а) недавно</p>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={handleStartAudioCall}>
-            <Phone className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleStartVideoCall}>
-            <Video className="w-5 h-5" />
-          </Button>
-        </div>
+        {/* Add participants banner for groups */}
+        {isGroup && (
+          <button className="w-full py-2.5 px-4 bg-[#1e2c3a] flex items-center justify-center gap-2 border-t border-white/5">
+            <span className="text-[#6ab3f3] text-sm font-medium">Добавить участников</span>
+            <span className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center">
+              <X className="w-3 h-3 text-white/40" />
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Messages - scrollable with Telegram-style background */}
@@ -255,18 +272,37 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           </div>
         )}
 
-        {messages.map((message) => {
+        {messages.map((message, index) => {
           const isOwn = message.sender_id === user?.id;
           const isVoice = message.media_type === 'voice';
           const isVideoCircle = message.media_type === 'video_circle';
           const isImage = message.media_type === 'image';
           const isVideo = message.media_type === 'video';
+          const isRead = message.is_read;
+
+          // Group messages - show avatar only for first in sequence
+          const prevMessage = index > 0 ? messages[index - 1] : null;
+          const showAvatar = !isOwn && (!prevMessage || prevMessage.sender_id !== message.sender_id);
+          const showSenderName = isGroup && !isOwn && showAvatar;
 
           return (
             <div
               key={message.id}
-              className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+              className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"}`}
             >
+              {/* Avatar for incoming messages */}
+              {!isOwn && (
+                <div className="w-8 shrink-0">
+                  {showAvatar && (
+                    <img 
+                      src={chatAvatar} 
+                      alt="" 
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  )}
+                </div>
+              )}
+
               {isVideoCircle && message.media_url ? (
                 <div className="flex flex-col items-center gap-1">
                   <VideoCircleMessage
@@ -274,12 +310,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     duration={String(message.duration_seconds || 0)}
                     isOwn={isOwn}
                   />
-                  <span className="text-[10px] text-muted-foreground">{formatMessageTime(message.created_at)}</span>
+                  <span className="text-[10px] text-white/50">{formatMessageTime(message.created_at)}</span>
                 </div>
               ) : isImage && message.media_url ? (
                 <div 
                   className={`max-w-[75%] rounded-2xl overflow-hidden cursor-pointer ${
-                    isOwn ? "rounded-br-md" : "rounded-bl-md"
+                    isOwn ? "rounded-br-md bg-[#2b5278]" : "rounded-bl-md bg-[#182533]"
                   }`}
                   onClick={() => setViewingImage(message.media_url!)}
                 >
@@ -288,10 +324,11 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     alt="Изображение" 
                     className="max-w-full h-auto"
                   />
-                  <div className={`px-3 py-1 ${isOwn ? "bg-primary" : "bg-muted"}`}>
-                    <span className={`text-[10px] ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                      {formatMessageTime(message.created_at)}
-                    </span>
+                  <div className="px-3 py-1.5 flex items-center justify-end gap-1">
+                    <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
+                    {isOwn && (
+                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                    )}
                   </div>
                 </div>
               ) : isVideo && message.media_url ? (
@@ -301,24 +338,32 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     isOwn={isOwn}
                     onFullscreen={() => setViewingVideo(message.media_url!)}
                   />
-                  <span className={`text-[10px] ${isOwn ? "text-right" : "text-left"} text-muted-foreground`}>
-                    {formatMessageTime(message.created_at)}
-                  </span>
+                  <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
+                    {isOwn && (
+                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                  className={`max-w-[75%] rounded-2xl px-3 py-2 ${
                     isOwn
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-muted text-foreground rounded-bl-md"
+                      ? "bg-[#2b5278] text-white rounded-br-sm"
+                      : "bg-[#182533] text-white rounded-bl-sm"
                   }`}
                 >
+                  {/* Sender name for group chats */}
+                  {showSenderName && (
+                    <p className="text-[13px] font-medium text-[#6ab3f3] mb-0.5">Эдгар</p>
+                  )}
+                  
                   {isVoice ? (
                     <div className="flex items-center gap-3">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 shrink-0"
+                        className="h-8 w-8 shrink-0 text-white hover:bg-white/10"
                         onClick={() => toggleVoicePlay(message.id, message.media_url || undefined)}
                       >
                         {playingVoice === message.id ? (
@@ -332,25 +377,26 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                           {Array.from({ length: 20 }).map((_, i) => (
                             <div
                               key={i}
-                              className={`w-1 rounded-full ${
-                                isOwn ? "bg-primary-foreground/50" : "bg-foreground/30"
-                              }`}
+                              className="w-1 rounded-full bg-white/30"
                               style={{ height: `${Math.random() * 16 + 8}px` }}
                             />
                           ))}
                         </div>
                       </div>
-                      <span className={`text-xs ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                      <span className="text-xs text-white/50">
                         {message.duration_seconds ? formatTime(message.duration_seconds) : "0:00"}
                       </span>
                     </div>
                   ) : (
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-[15px] leading-[1.4] whitespace-pre-wrap">{message.content}</p>
                   )}
-                  <div className={`flex items-center justify-end gap-1 mt-1 ${
-                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                  }`}>
-                    <span className="text-[10px]">{formatMessageTime(message.created_at)}</span>
+                  
+                  {/* Time and read status */}
+                  <div className="flex items-center justify-end gap-1 mt-1">
+                    <span className="text-[11px] text-white/40">{formatMessageTime(message.created_at)}</span>
+                    {isOwn && (
+                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                    )}
                   </div>
                 </div>
               )}
@@ -361,17 +407,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       </div>
 
       {/* Input - Telegram style */}
-      <div className="flex-shrink-0 p-2 safe-area-bottom">
+      <div className="flex-shrink-0 px-2 py-2 bg-[#17212b] safe-area-bottom">
         {isRecording ? (
-          <div className="flex items-center gap-2 px-1">
+          <div className="flex items-center gap-2">
             <button 
               onClick={cancelRecording}
-              className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0"
+              className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
             >
               <X className="w-5 h-5 text-white/70" />
             </button>
             
-            <div className="flex-1 flex items-center gap-3 h-[42px] px-4 rounded-full border border-white/20 bg-black/40 backdrop-blur-md">
+            <div className="flex-1 flex items-center gap-3 h-11 px-4 rounded-full bg-[#242f3d]">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
               <span className="text-sm text-white/70">
                 Запись... {formatTime(recordingTime)}
@@ -380,46 +426,40 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             
             <button
               onClick={stopRecording}
-              className="w-[42px] h-[42px] rounded-full bg-primary flex items-center justify-center shrink-0"
+              className="w-11 h-11 rounded-full bg-[#6ab3f3] flex items-center justify-center shrink-0"
             >
-              <Send className="w-5 h-5 text-primary-foreground" />
+              <Send className="w-5 h-5 text-white" />
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            {/* Attachment button - circular with border */}
+            {/* Attachment button */}
             <button 
               onClick={() => setShowAttachmentSheet(true)}
-              className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0"
+              className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
             >
-              <Paperclip className="w-5 h-5 text-white/70" />
+              <Paperclip className="w-5 h-5 text-white/60 rotate-45" />
             </button>
             
-            {/* Input field - pill shaped with transparency */}
-            <div className="flex-1 relative">
+            {/* Input field */}
+            <div className="flex-1">
               <input
                 type="text"
                 placeholder="Сообщение"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="w-full h-[42px] px-4 pr-12 rounded-full border border-white/20 bg-black/40 backdrop-blur-md text-white placeholder:text-white/40 outline-none focus:border-white/30 transition-colors"
+                className="w-full h-11 px-4 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
               />
-              {/* Clock icon inside input on the right */}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <button className="p-1">
-                  <Clock className="w-5 h-5 text-white/50" />
-                </button>
-              </div>
             </div>
             
-            {/* Send or toggleable Mic/Video button */}
+            {/* Send or toggleable Mic button */}
             {inputText.trim() ? (
               <button
                 onClick={handleSendMessage}
-                className="w-[42px] h-[42px] rounded-full bg-primary flex items-center justify-center shrink-0"
+                className="w-11 h-11 rounded-full bg-[#6ab3f3] flex items-center justify-center shrink-0"
               >
-                <Send className="w-5 h-5 text-primary-foreground" />
+                <Send className="w-5 h-5 text-white" />
               </button>
             ) : (
               <button
@@ -466,12 +506,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   }
                   isHoldingRef.current = false;
                 }}
-                className="w-[42px] h-[42px] rounded-full border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center shrink-0 transition-all touch-none"
+                className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0 transition-all touch-none"
               >
                 {recordMode === 'voice' ? (
-                  <Mic className="w-5 h-5 text-white/70" />
+                  <Mic className="w-5 h-5 text-white/60" />
                 ) : (
-                  <Video className="w-5 h-5 text-white/70" />
+                  <Video className="w-5 h-5 text-white/60" />
                 )}
               </button>
             )}
