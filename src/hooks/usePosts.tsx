@@ -170,11 +170,25 @@ export function usePosts(filter: FeedFilter = 'all') {
           { event: 'UPDATE', schema: 'public', table: 'posts' },
           (payload) => {
             const updatedPost = payload.new as any;
-            setPosts(prev => prev.map(post => 
-              post.id === updatedPost.id 
-                ? { ...post, ...updatedPost }
-                : post
-            ));
+            // Update post in place without changing order
+            setPosts(prev => {
+              const index = prev.findIndex(post => post.id === updatedPost.id);
+              if (index === -1) return prev;
+              
+              // Create new array with updated post at same position
+              const newPosts = [...prev];
+              newPosts[index] = { 
+                ...newPosts[index], 
+                // Only update specific fields to prevent position jumps
+                views_count: updatedPost.views_count,
+                likes_count: updatedPost.likes_count,
+                comments_count: updatedPost.comments_count,
+                shares_count: updatedPost.shares_count,
+                content: updatedPost.content,
+                is_published: updatedPost.is_published
+              };
+              return newPosts;
+            });
           }
         )
         .on(
