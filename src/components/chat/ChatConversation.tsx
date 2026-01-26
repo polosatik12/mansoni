@@ -25,9 +25,11 @@ interface ChatConversationProps {
   participantCount?: number;
   isGroup?: boolean;
   totalUnreadCount?: number;
+  /** Called to refresh conversation list after marking messages read */
+  onRefetch?: () => void;
 }
 
-export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup, totalUnreadCount }: ChatConversationProps) {
+export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup, totalUnreadCount, onRefetch }: ChatConversationProps) {
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
   const { markConversationRead } = useMarkConversationRead();
@@ -62,8 +64,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   useEffect(() => {
     // Only for DMs (groups/channels have separate infra).
     if (!conversationId || !user || isGroup) return;
-    void markConversationRead(conversationId);
-  }, [conversationId, user, isGroup, messages.length, markConversationRead]);
+    (async () => {
+      await markConversationRead(conversationId);
+      // Refresh list so unread badge updates immediately.
+      onRefetch?.();
+    })();
+  }, [conversationId, user, isGroup, messages.length, markConversationRead, onRefetch]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
