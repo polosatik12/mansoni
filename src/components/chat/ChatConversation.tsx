@@ -23,9 +23,10 @@ interface ChatConversationProps {
   onBack: () => void;
   participantCount?: number;
   isGroup?: boolean;
+  totalUnreadCount?: number;
 }
 
-export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup }: ChatConversationProps) {
+export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup, totalUnreadCount }: ChatConversationProps) {
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
   const { activeCall, startCall, endCall } = useCallsContext();
@@ -216,7 +217,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             className="flex items-center gap-1 px-2 py-1 text-[#6ab3f3] hover:bg-white/5 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm font-medium">1513</span>
+            {totalUnreadCount && totalUnreadCount > 0 ? (
+              <span className="text-sm font-medium">{totalUnreadCount}</span>
+            ) : null}
           </button>
           
           {/* Center - Chat info */}

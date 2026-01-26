@@ -149,6 +149,9 @@ export function ChatsPage() {
     );
   }
 
+  // Calculate total unread count
+  const totalUnreadCount = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+
   // Show selected DM conversation
   if (selectedConversation) {
     const other = getOtherParticipant(selectedConversation);
@@ -158,6 +161,7 @@ export function ChatsPage() {
         chatName={other.display_name || "Пользователь"}
         chatAvatar={other.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConversation.id}`}
         otherUserId={other.user_id}
+        totalUnreadCount={totalUnreadCount}
         onBack={() => {
           setSelectedConversation(null);
           refetch();
