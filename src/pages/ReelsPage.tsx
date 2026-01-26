@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { CreateReelSheet } from "@/components/reels/CreateReelSheet";
 import { ReelCommentsSheet } from "@/components/reels/ReelCommentsSheet";
+import { ReelShareSheet } from "@/components/reels/ReelShareSheet";
 import { Button } from "@/components/ui/button";
 
 function formatNumber(num: number): string {
@@ -38,6 +39,7 @@ export function ReelsPage() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [commentsReelId, setCommentsReelId] = useState<string | null>(null);
+  const [shareReelId, setShareReelId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const viewedReels = useRef<Set<string>>(new Set());
@@ -230,7 +232,18 @@ export function ReelsPage() {
             </button>
 
             {/* Share */}
-            <button className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="flex flex-col items-center gap-1" 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (!user) {
+                  toast.error("Войдите, чтобы поделиться");
+                  navigate("/auth");
+                  return;
+                }
+                setShareReelId(reel.id);
+              }}
+            >
               <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
                 <Send className="w-6 h-6 text-white" />
               </div>
@@ -293,6 +306,13 @@ export function ReelsPage() {
       <CreateReelSheet open={showCreateSheet} onOpenChange={setShowCreateSheet} />
       
       {/* Comments Sheet */}
+      {/* Share Sheet */}
+      <ReelShareSheet
+        isOpen={!!shareReelId}
+        onClose={() => setShareReelId(null)}
+        reelId={shareReelId || ""}
+      />
+
       {commentsReelId && (
         <ReelCommentsSheet
           isOpen={!!commentsReelId}
