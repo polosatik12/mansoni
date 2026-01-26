@@ -63,7 +63,7 @@ export function ChatSearchSheet({
           style={{ backgroundImage: `url(${glassBackground})` }}
         />
         {/* Dark overlay for better readability */}
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-2xl" />
+        <div className="absolute inset-0 bg-black/10 backdrop-blur-3xl" />
         
         {/* Content */}
         <div className="relative z-10 h-full flex flex-col p-6">
