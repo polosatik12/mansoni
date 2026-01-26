@@ -5,28 +5,33 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateChannel } from "@/hooks/useChannels";
+import { useCreateGroup } from "@/hooks/useGroupChats";
 import { toast } from "sonner";
 
 interface CreateChatSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onChannelCreated?: (channelId: string) => void;
+  onGroupCreated?: (groupId: string) => void;
 }
 
 type CreateMode = "select" | "channel" | "group";
 
-export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: CreateChatSheetProps) {
+export function CreateChatSheet({ open, onOpenChange, onChannelCreated, onGroupCreated }: CreateChatSheetProps) {
   const [mode, setMode] = useState<CreateMode>("select");
   const [channelName, setChannelName] = useState("");
   const [channelDescription, setChannelDescription] = useState("");
+  const [groupName, setGroupName] = useState("");
   const [loading, setLoading] = useState(false);
   
   const { createChannel } = useCreateChannel();
+  const { createGroup } = useCreateGroup();
 
   const handleClose = () => {
     setMode("select");
     setChannelName("");
     setChannelDescription("");
+    setGroupName("");
     onOpenChange(false);
   };
 
@@ -48,6 +53,29 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: Create
       }
     } catch (error) {
       toast.error("Ошибка при создании канала");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!groupName.trim()) {
+      toast.error("Введите название группы");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const groupId = await createGroup(groupName.trim());
+      if (groupId) {
+        toast.success("Группа создана!");
+        onGroupCreated?.(groupId);
+        handleClose();
+      } else {
+        toast.error("Не удалось создать группу");
+      }
+    } catch (error) {
+      toast.error("Ошибка при создании группы");
     } finally {
       setLoading(false);
     }
@@ -164,15 +192,21 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: Create
               <div className="space-y-3">
                 <Input
                   placeholder="Название группы"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
                   className="h-12 rounded-xl"
                 />
                 <p className="text-center text-muted-foreground text-sm">
-                  Функция групповых чатов скоро будет доступна
+                  После создания вы сможете добавить участников
                 </p>
               </div>
               
-              <Button disabled className="w-full h-12 rounded-xl opacity-50">
-                Скоро
+              <Button 
+                onClick={handleCreateGroup}
+                disabled={loading || !groupName.trim()}
+                className="w-full h-12 rounded-xl"
+              >
+                {loading ? "Создание..." : "Создать группу"}
               </Button>
             </div>
           )}

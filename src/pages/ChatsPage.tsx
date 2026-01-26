@@ -8,9 +8,11 @@ import { ChatStories } from "@/components/chat/ChatStories";
 import { ChatSearchSheet } from "@/components/chat/ChatSearchSheet";
 import { CreateChatSheet } from "@/components/chat/CreateChatSheet";
 import { ChannelConversation } from "@/components/chat/ChannelConversation";
+import { GroupConversation } from "@/components/chat/GroupConversation";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations, Conversation, useCreateConversation } from "@/hooks/useChat";
 import { useChannels, Channel } from "@/hooks/useChannels";
+import { useGroupChats, GroupChat } from "@/hooks/useGroupChats";
 import { SearchUser } from "@/hooks/useSearch";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -34,10 +36,12 @@ export function ChatsPage() {
   const { user, loading: authLoading } = useAuth();
   const { conversations, loading: chatsLoading, error: chatsError, refetch } = useConversations();
   const { channels, loading: channelsLoading, refetch: refetchChannels } = useChannels();
+  const { groups, loading: groupsLoading, refetch: refetchGroups } = useGroupChats();
   const { createConversation } = useCreateConversation();
   
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<GroupChat | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chats" | "channels">("chats");
@@ -122,6 +126,10 @@ export function ChatsPage() {
     }
   };
 
+  const handleGroupCreated = (groupId: string) => {
+    refetchGroups();
+  };
+
   // Show auth prompt if not logged in
   if (!authLoading && !user) {
     return (
@@ -168,6 +176,20 @@ export function ChatsPage() {
           refetchChannels();
         }}
         onLeave={() => refetchChannels()}
+      />
+    );
+  }
+
+  // Show selected group
+  if (selectedGroup) {
+    return (
+      <GroupConversation
+        group={selectedGroup}
+        onBack={() => {
+          setSelectedGroup(null);
+          refetchGroups();
+        }}
+        onLeave={() => refetchGroups()}
       />
     );
   }
@@ -290,17 +312,54 @@ export function ChatsPage() {
               )}
 
               {/* Empty state */}
-              {!chatsLoading && !chatsError && conversations.length === 0 && (
+              {!chatsLoading && !groupsLoading && !chatsError && conversations.length === 0 && groups.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-center px-6">
                   <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                     <MessageCircle className="w-8 h-8 text-muted-foreground" />
                   </div>
                   <h3 className="font-semibold mb-1">Нет чатов</h3>
                   <p className="text-sm text-muted-foreground">
-                    Найдите пользователей через поиск, чтобы начать переписку
+                    Найдите пользователей через поиск или создайте группу
                   </p>
                 </div>
               )}
+
+              {/* Group Chats */}
+              {groups.map((group) => (
+                <div
+                  key={group.id}
+                  onClick={() => setSelectedGroup(group)}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
+                >
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={group.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${group.id}`}
+                      alt={group.name}
+                      className="w-14 h-14 rounded-full object-cover bg-muted"
+                    />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-background">
+                      <Users className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="font-semibold text-foreground truncate flex items-center gap-1">
+                        {group.name}
+                      </span>
+                      {group.last_message && (
+                        <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                          {formatTime(group.last_message.created_at)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground truncate flex-1">
+                        {group.last_message?.content || `${group.member_count} участников`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
 
               {/* Chat List Items */}
               {conversations.map((conv) => {
@@ -457,6 +516,7 @@ export function ChatsPage() {
           open={createOpen}
           onOpenChange={setCreateOpen}
           onChannelCreated={handleChannelCreated}
+          onGroupCreated={handleGroupCreated}
         />
       </div>
     </ScrollContainerProvider>
