@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, User } from "lucide-react";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
 import { ServicesMenu } from "@/components/layout/ServicesMenu";
 import { cn } from "@/lib/utils";
@@ -150,13 +150,17 @@ export function FeedHeader() {
               }}
             >
               <div className="w-full h-full rounded-full bg-background p-[2px]">
-                <div className="w-full h-full rounded-full overflow-hidden">
-                  <img
-                    src={user.avatar_url || `https://i.pravatar.cc/150?u=${user.user_id}`}
-                    alt={user.display_name || ''}
-                    className="w-full h-full object-cover rounded-full"
-                    loading="lazy"
-                  />
+                <div className="w-full h-full rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                  {user.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.display_name || ''}
+                      className="w-full h-full object-cover rounded-full"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-muted-foreground" />
+                  )}
                 </div>
               </div>
               {/* Plus icon */}
