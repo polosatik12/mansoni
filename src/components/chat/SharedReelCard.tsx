@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { Heart, MessageCircle, Play, Trash2, Film } from "lucide-react";
+import { Play, Trash2, Film } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
@@ -187,39 +187,14 @@ export function SharedReelCard({ reelId, isOwn, messageId, onDelete }: SharedRee
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-3">
-          {/* Author info */}
-          <div className="flex items-center gap-2 mb-2">
-            <img
-              src={reel.author?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reel.author_id}`}
-              alt={authorName}
-              className="w-5 h-5 rounded-full object-cover"
-            />
-            <span className="text-xs font-medium text-white truncate flex-1">
-              @{authorName}
-            </span>
-          </div>
-
-          {/* Description preview */}
-          {contentPreview && (
-            <p className="text-xs text-white/70 line-clamp-2 mb-2">
+        {/* Content - only description */}
+        {contentPreview && (
+          <div className="p-3">
+            <p className="text-xs text-white/80 line-clamp-2">
               {contentPreview}
             </p>
-          )}
-
-          {/* Stats */}
-          <div className="flex items-center gap-3 text-[10px] text-white/50">
-            <span className="flex items-center gap-1">
-              <Heart className="w-3 h-3" />
-              {reel.likes_count || 0}
-            </span>
-            <span className="flex items-center gap-1">
-              <MessageCircle className="w-3 h-3" />
-              {reel.comments_count || 0}
-            </span>
           </div>
-        </div>
+        )}
       </button>
 
       {/* Delete Confirmation Dialog */}
