@@ -156,16 +156,20 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
   };
 
   // Handle tap on left/right side
-  const handleTap = (e: React.MouseEvent) => {
+  const handleTap = useCallback((e: React.MouseEvent) => {
+    // Don't navigate if clicking on close button area
+    if ((e.target as HTMLElement).closest('button')) return;
+    
     const screenWidth = window.innerWidth;
     const tapX = e.clientX;
     
-    if (tapX < screenWidth / 3) {
+    // Left half = previous, Right half = next
+    if (tapX < screenWidth / 2) {
       goToPrevStory();
-    } else if (tapX > (screenWidth * 2) / 3) {
+    } else {
       goToNextStory();
     }
-  };
+  }, [goToPrevStory, goToNextStory]);
 
   // Keyboard navigation
   useEffect(() => {
