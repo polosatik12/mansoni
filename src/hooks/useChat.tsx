@@ -207,6 +207,30 @@ export function useConversations() {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Realtime subscription for conversation updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('conversations-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversations',
+        },
+        () => {
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchConversations]);
+
   return { conversations, loading, error, refetch: fetchConversations };
 }
 
