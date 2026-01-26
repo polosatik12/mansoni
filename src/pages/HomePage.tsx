@@ -67,7 +67,6 @@ export function HomePage() {
                 views={post.views_count}
                 timeAgo={formatTimeAgo(post.created_at)}
                 isLiked={post.is_liked}
-                onLikeChange={refetch}
               />
             ))}
           </div>
