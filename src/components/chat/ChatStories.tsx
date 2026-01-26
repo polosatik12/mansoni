@@ -25,7 +25,7 @@ const Y_DIFF = COLLAPSED_Y - HEADER_HEIGHT;
 
 export function ChatStories() {
   const { usersWithStories, loading, uploadStory } = useStories();
-  const { collapseProgress } = useScrollCollapse(SCROLL_THRESHOLD, true);
+  const { collapseProgress } = useScrollCollapse(SCROLL_THRESHOLD);
   const scrollContainerRef = useScrollContainer();
   
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -118,7 +118,7 @@ export function ChatStories() {
       
       <div 
         className="relative overflow-hidden bg-card border-b border-border will-change-auto"
-        style={{ height: `${containerHeight}px`, marginBottom: `${100 * collapseProgress}px` }}
+        style={{ height: `${containerHeight}px` }}
       >
         {/* Stories - GPU-accelerated transforms like FeedHeader */}
         {usersWithStories.map((user, index) => {

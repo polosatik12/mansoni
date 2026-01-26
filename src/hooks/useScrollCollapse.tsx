@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 
-export function useScrollCollapse(threshold: number = 50, initialCollapsed: boolean = false) {
+export function useScrollCollapse(threshold: number = 50) {
   const containerRef = useScrollContainer();
-  const [scrollY, setScrollY] = useState(initialCollapsed ? threshold : 0);
+  const [scrollY, setScrollY] = useState(0);
   const rafId = useRef<number | null>(null);
   const lastScrollY = useRef(0);
 
@@ -26,12 +26,7 @@ export function useScrollCollapse(threshold: number = 50, initialCollapsed: bool
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-    
-    // Only read initial scroll if NOT initialCollapsed
-    // If initialCollapsed, keep scrollY = threshold until first user scroll
-    if (!initialCollapsed) {
-      handleScroll();
-    }
+    handleScroll(); // Get initial state
     
     return () => {
       container.removeEventListener("scroll", handleScroll);
@@ -39,7 +34,7 @@ export function useScrollCollapse(threshold: number = 50, initialCollapsed: bool
         cancelAnimationFrame(rafId.current);
       }
     };
-  }, [containerRef, updateScroll, initialCollapsed]);
+  }, [containerRef, updateScroll]);
 
   const isCollapsed = scrollY > threshold;
   const collapseProgress = Math.min(scrollY / threshold, 1);

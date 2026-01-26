@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Check, CheckCheck, LogIn, MessageCircle, X, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -34,24 +34,6 @@ export function ChatsPage() {
   // Local scroll container for chat list - used by ChatStories for animation
   const chatListRef = useRef<HTMLDivElement>(null);
   
-  // Scroll to hide stories initially (collapsed state) - useLayoutEffect runs before paint
-  useLayoutEffect(() => {
-    if (chatListRef.current && !selectedConversation) {
-      // Use RAF to ensure scroll is set after browser completes layout
-      requestAnimationFrame(() => {
-        if (chatListRef.current) {
-          chatListRef.current.scrollTop = 100;
-        }
-      });
-    }
-  }, [selectedConversation]);
-
-  // Re-apply scroll after chats finish loading (DOM re-renders can reset scroll)
-  useEffect(() => {
-    if (!chatsLoading && chatListRef.current && !selectedConversation) {
-      chatListRef.current.scrollTop = 100;
-    }
-  }, [chatsLoading, selectedConversation]);
 
   // Get the other participant's info for display
   const getOtherParticipant = (conv: Conversation) => {
@@ -184,11 +166,6 @@ export function ChatsPage() {
           <h1 className="text-lg font-semibold">Чаты</h1>
         </div>
 
-        {/* Fixed Stories Section - animation controlled by chat list scroll */}
-        <div className="flex-shrink-0">
-          <ChatStories />
-        </div>
-
         {/* Fixed Search */}
         <div className="flex-shrink-0 p-3 border-b border-border bg-background">
           <div className="relative">
@@ -215,6 +192,10 @@ export function ChatsPage() {
           ref={chatListRef}
           className="flex-1 overflow-y-auto overscroll-contain"
         >
+          {/* Stories inside scroll area with sticky positioning */}
+          <div className="sticky top-0 z-10">
+            <ChatStories />
+          </div>
           {/* Search Results - Users not in conversations */}
           {searchQuery.trim().length >= 2 && newUsers.length > 0 && (
             <div className="border-b border-border">
