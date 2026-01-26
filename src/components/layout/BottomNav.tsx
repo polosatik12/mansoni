@@ -1,8 +1,9 @@
 import { useState, useEffect, forwardRef, useRef, useCallback } from "react";
-import { Home, MessageCircle, Search, Heart, FileText, User, LucideIcon, Play, Plus, Check, ChevronDown } from "lucide-react";
+import { Home, Search, Heart, FileText, User, LucideIcon, Play, Plus, Check, ChevronDown } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
+import ChatIcon from "@/assets/chat-icon.svg";
 import {
   Drawer,
   DrawerContent,
@@ -12,11 +13,13 @@ import {
 
 interface NavItem {
   to: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  customIcon?: string;
   label: string;
   hasBadge?: boolean;
   isAction?: boolean;
   hasLongPress?: boolean;
+  isCenter?: boolean;
 }
 
 interface Account {
@@ -44,27 +47,27 @@ const mockAccounts: Account[] = [
   },
 ];
 
-// Default nav items (main pages)
+// Default nav items (main pages) - Chat icon in center
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/search", icon: Search, label: "Поиск" },
+  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true, isCenter: true },
   { to: "/reels", icon: Play, label: "Reels" },
-  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "/profile", icon: User, label: "Профиль", hasLongPress: true },
 ];
 
 // Real estate service nav items
 const realEstateNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
-  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "#search", icon: Search, label: "Поиск", isAction: true },
+  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true, isCenter: true },
   { to: "#favorites", icon: Heart, label: "Избранное", isAction: true },
 ];
 
 // Insurance service nav items
 const insuranceNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
-  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
+  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true, isCenter: true },
   { to: "/insurance/policies", icon: FileText, label: "Полисы" },
 ];
 
@@ -253,13 +256,24 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                 {({ isActive }) => (
                   <>
                     <div className="relative flex items-center justify-center">
-                      <item.icon
-                        className={cn(
-                          "w-[22px] h-[22px] transition-all duration-150",
-                          isActive && "stroke-[2.2px]"
-                        )}
-                        strokeWidth={isActive ? 2.2 : 1.8}
-                      />
+                      {item.customIcon ? (
+                        <img 
+                          src={item.customIcon} 
+                          alt={item.label}
+                          className={cn(
+                            "w-7 h-7 transition-all duration-150",
+                            isActive && "scale-110"
+                          )}
+                        />
+                      ) : item.icon ? (
+                        <item.icon
+                          className={cn(
+                            "w-[22px] h-[22px] transition-all duration-150",
+                            isActive && "stroke-[2.2px]"
+                          )}
+                          strokeWidth={isActive ? 2.2 : 1.8}
+                        />
+                      ) : null}
                       {item.hasBadge && unreadCount > 0 && (
                         <span 
                           className={cn(
@@ -274,9 +288,11 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] font-medium mt-0.5 leading-tight">
-                      {item.label}
-                    </span>
+                    {!item.isCenter && (
+                      <span className="text-[10px] font-medium mt-0.5 leading-tight">
+                        {item.label}
+                      </span>
+                    )}
                   </>
                 )}
               </NavLink>
