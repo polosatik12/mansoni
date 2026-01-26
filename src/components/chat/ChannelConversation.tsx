@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Eye, Share2, MessageCircle, Search, Volume2, VolumeX, ChevronDown } from "lucide-react";
+import { ArrowLeft, Eye, Share2, Search, Volume2, VolumeX, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useChannelMessages, useJoinChannel, Channel } from "@/hooks/useChannels";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import chatBackground from "@/assets/chat-background.jpg";
 
 interface ChannelConversationProps {
   channel: Channel;
@@ -93,31 +92,24 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
   };
 
   return (
-    <div 
-      className="h-full flex flex-col"
-      style={{ 
-        backgroundImage: `url(${chatBackground})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center"
-      }}
-    >
+    <div className="h-full flex flex-col bg-background">
       {/* Header - Telegram style */}
-      <div className="flex-shrink-0 flex items-center gap-2 px-2 py-2 bg-[#17212b]/95 backdrop-blur-sm">
+      <div className="flex-shrink-0 flex items-center gap-2 px-2 py-2 bg-card/95 backdrop-blur-sm border-b border-border">
         {/* Back button with unread count placeholder */}
         <button 
           onClick={onBack} 
-          className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-[#232e3c] hover:bg-[#2b3a4a] transition-colors"
+          className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-muted hover:bg-muted/80 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-white" />
-          <span className="text-white text-sm font-medium pr-1">
+          <ArrowLeft className="w-5 h-5 text-foreground" />
+          <span className="text-foreground text-sm font-medium pr-1">
             {Math.floor(Math.random() * 1000) + 100}
           </span>
         </button>
         
         {/* Channel info - centered */}
         <div className="flex-1 flex flex-col items-center min-w-0">
-          <h2 className="font-semibold text-white text-sm truncate">{channel.name}</h2>
-          <p className="text-[11px] text-[#6ab3f3]">
+          <h2 className="font-semibold text-foreground text-sm truncate">{channel.name}</h2>
+          <p className="text-[11px] text-primary">
             {formatSubscribers(channel.member_count || 0)}
           </p>
         </div>
@@ -126,24 +118,24 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
         <img
           src={channel.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${channel.id}`}
           alt={channel.name}
-          className="w-10 h-10 rounded-full object-cover bg-[#232e3c]"
+          className="w-10 h-10 rounded-full object-cover bg-muted"
         />
       </div>
 
       {/* Pinned message bar */}
-      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 bg-[#17212b]/90 border-b border-white/5">
+      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 bg-card/90 border-b border-border">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-0.5 h-8 bg-[#6ab3f3] rounded-full flex-shrink-0" />
+          <div className="w-0.5 h-8 bg-primary rounded-full flex-shrink-0" />
           <div className="min-w-0">
-            <p className="text-xs text-[#6ab3f3] font-medium">Закреплённое сообщение</p>
-            <p className="text-xs text-white/70 truncate">Увидели что-то важное и интересное...</p>
+            <p className="text-xs text-primary font-medium">Закреплённое сообщение</p>
+            <p className="text-xs text-muted-foreground truncate">Увидели что-то важное и интересное...</p>
           </div>
         </div>
         {!isMember && (
           <Button 
             onClick={handleJoin}
             size="sm" 
-            className="bg-[#6ab3f3] hover:bg-[#5a9fd9] text-white rounded-full px-4 h-8 text-xs font-medium"
+            className="rounded-full px-4 h-8 text-xs font-medium"
           >
             Подписаться
           </Button>
@@ -158,12 +150,12 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
       >
         {loading && (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#6ab3f3]" />
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
           </div>
         )}
 
         {!loading && messages.length === 0 && (
-          <div className="text-center py-8 text-white/60">
+          <div className="text-center py-8 text-muted-foreground">
             <p>Пока нет публикаций</p>
           </div>
         )}
@@ -175,15 +167,15 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
           const postReactions = sampleReactions.slice(0, Math.floor(Math.random() * 4) + 3);
           
           return (
-            <div key={msg.id} className="bg-[#182533] rounded-xl overflow-hidden">
+            <div key={msg.id} className="bg-card rounded-xl overflow-hidden border border-border">
               {/* Post header */}
               <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-                <span className="text-[#6ab3f3] text-lg">👉</span>
-                <span className="text-[#6ab3f3] font-medium text-sm">{channel.name}.</span>
+                <span className="text-primary text-lg">👉</span>
+                <span className="text-primary font-medium text-sm">{channel.name}.</span>
                 {!isMember && (
                   <button 
                     onClick={handleJoin}
-                    className="text-[#6ab3f3] text-sm hover:underline"
+                    className="text-primary text-sm hover:underline"
                   >
                     Подписаться
                   </button>
@@ -192,7 +184,7 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
 
               {/* Post content */}
               <div className="px-3 pb-2">
-                <p className="text-white text-[15px] leading-relaxed whitespace-pre-wrap">
+                <p className="text-foreground text-[15px] leading-relaxed whitespace-pre-wrap">
                   {msg.content}
                 </p>
               </div>
@@ -213,22 +205,22 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
                 {postReactions.map((reaction, i) => (
                   <button 
                     key={i}
-                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#232e3c] hover:bg-[#2b3a4a] transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors"
                   >
                     <span className="text-sm">{reaction.emoji}</span>
-                    <span className="text-xs text-white/80">{formatViews(reaction.count)}</span>
+                    <span className="text-xs text-foreground/80">{formatViews(reaction.count)}</span>
                   </button>
                 ))}
               </div>
 
               {/* Post footer - views and time */}
               <div className="flex items-center justify-between px-3 pb-3">
-                <div className="flex items-center gap-1.5 text-white/50">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Eye className="w-4 h-4" />
                   <span className="text-xs">{formatViews(viewCount)}</span>
                   <span className="text-xs ml-1">{formatTime(msg.created_at)}</span>
                 </div>
-                <button className="text-white/50 hover:text-white/80 transition-colors">
+                <button className="text-muted-foreground hover:text-foreground transition-colors">
                   <Share2 className="w-4 h-4" />
                 </button>
               </div>
@@ -242,32 +234,32 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
       {showScrollDown && (
         <button
           onClick={scrollToBottom}
-          className="absolute right-4 bottom-20 w-10 h-10 rounded-full bg-[#232e3c] flex items-center justify-center shadow-lg hover:bg-[#2b3a4a] transition-colors"
+          className="absolute right-4 bottom-20 w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-lg hover:bg-muted transition-colors border border-border"
         >
-          <ChevronDown className="w-6 h-6 text-white" />
+          <ChevronDown className="w-6 h-6 text-foreground" />
         </button>
       )}
 
       {/* Bottom bar - subscriber view */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-[#17212b]/95 backdrop-blur-sm border-t border-white/5">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-card/95 backdrop-blur-sm border-t border-border">
         {/* Spacer for centering */}
         <div className="w-10" />
         
         <button
           onClick={() => setIsMuted(!isMuted)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#232e3c] hover:bg-[#2b3a4a] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
         >
           {isMuted ? (
-            <VolumeX className="w-4 h-4 text-white/70" />
+            <VolumeX className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <Volume2 className="w-4 h-4 text-white/70" />
+            <Volume2 className="w-4 h-4 text-muted-foreground" />
           )}
-          <span className="text-sm text-white/70">
+          <span className="text-sm text-muted-foreground">
             {isMuted ? "Включить звук" : "Убрать звук"}
           </span>
         </button>
 
-        <button className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white/80 transition-colors">
+        <button className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
           <Search className="w-5 h-5" />
         </button>
       </div>
