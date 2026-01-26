@@ -37,10 +37,21 @@ export function ChatsPage() {
   // Scroll to hide stories initially (collapsed state) - useLayoutEffect runs before paint
   useLayoutEffect(() => {
     if (chatListRef.current && !selectedConversation) {
-      // Scroll to the threshold so stories start collapsed
-      chatListRef.current.scrollTop = 100;
+      // Use RAF to ensure scroll is set after browser completes layout
+      requestAnimationFrame(() => {
+        if (chatListRef.current) {
+          chatListRef.current.scrollTop = 100;
+        }
+      });
     }
   }, [selectedConversation]);
+
+  // Re-apply scroll after chats finish loading (DOM re-renders can reset scroll)
+  useEffect(() => {
+    if (!chatsLoading && chatListRef.current && !selectedConversation) {
+      chatListRef.current.scrollTop = 100;
+    }
+  }, [chatsLoading, selectedConversation]);
 
   // Get the other participant's info for display
   const getOtherParticipant = (conv: Conversation) => {

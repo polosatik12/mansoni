@@ -26,7 +26,12 @@ export function useScrollCollapse(threshold: number = 50, initialCollapsed: bool
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Get initial state
+    
+    // Only read initial scroll if NOT initialCollapsed
+    // If initialCollapsed, keep scrollY = threshold until first user scroll
+    if (!initialCollapsed) {
+      handleScroll();
+    }
     
     return () => {
       container.removeEventListener("scroll", handleScroll);
@@ -34,7 +39,7 @@ export function useScrollCollapse(threshold: number = 50, initialCollapsed: bool
         cancelAnimationFrame(rafId.current);
       }
     };
-  }, [containerRef, updateScroll]);
+  }, [containerRef, updateScroll, initialCollapsed]);
 
   const isCollapsed = scrollY > threshold;
   const collapseProgress = Math.min(scrollY / threshold, 1);
