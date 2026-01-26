@@ -216,13 +216,21 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        onClick={handleTap}
-        onMouseDown={() => setIsPaused(true)}
-        onMouseUp={() => setIsPaused(false)}
-        onMouseLeave={() => setIsPaused(false)}
       >
+        {/* Tap zones for navigation */}
+        <button
+          className="absolute left-0 top-0 w-1/2 h-full z-20"
+          onClick={goToPrevStory}
+          aria-label="Previous story"
+        />
+        <button
+          className="absolute right-0 top-0 w-1/2 h-full z-20"
+          onClick={goToNextStory}
+          aria-label="Next story"
+        />
+
         {/* Story image/video */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           {currentStory.media_type === 'video' ? (
             <video 
               src={currentStory.media_url}
