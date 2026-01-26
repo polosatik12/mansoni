@@ -12,11 +12,16 @@ import { SearchUser } from "@/hooks/useSearch";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ScrollContainerProvider } from "@/contexts/ScrollContainerContext";
+import { usePullDownExpand } from "@/hooks/usePullDownExpand";
 
 interface LocationState {
   conversationId?: string;
   chatName?: string;
 }
+
+// Animation constants
+const HEADER_BASE_HEIGHT = 56;
+const STORIES_ROW_HEIGHT = 92;
 
 export function ChatsPage() {
   const navigate = useNavigate();
@@ -29,8 +34,14 @@ export function ChatsPage() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   
-  // Local scroll container for chat list - used by ChatStories for animation
+  // Local scroll container for chat list
   const chatListRef = useRef<HTMLDivElement>(null);
+  
+  // Pull-down expand hook for stories
+  const { expandProgress, isExpanded, toggleExpanded } = usePullDownExpand(chatListRef, {
+    threshold: 80,
+    collapseScrollThreshold: 10,
+  });
 
   // Get the other participant's info for display
   const getOtherParticipant = (conv: Conversation) => {
@@ -130,30 +141,76 @@ export function ChatsPage() {
     );
   }
 
+  // Calculate header height based on expand progress
+  const headerHeight = HEADER_BASE_HEIGHT + (STORIES_ROW_HEIGHT * expandProgress);
+
   return (
     <ScrollContainerProvider value={chatListRef}>
       <div className="h-full flex flex-col overflow-hidden">
-        {/* Fixed Header with search icon */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-border bg-background">
-          <div className="w-8" /> {/* Spacer for centering */}
-          <h1 className="text-lg font-semibold">Чаты</h1>
-          <button 
-            onClick={() => setSearchOpen(true)}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+        {/* Dynamic Header with stories stack/row */}
+        <div 
+          className="flex-shrink-0 border-b border-border bg-background will-change-auto overflow-hidden"
+          style={{ 
+            height: headerHeight,
+            transition: expandProgress === 0 || expandProgress === 1 ? 'height 0.2s ease-out' : 'none',
+          }}
+        >
+          {/* Top row: stack (when collapsed) + title + search */}
+          <div className="flex items-center justify-between px-4 h-14">
+            {/* Stories stack (collapsed) - left side */}
+            <div 
+              className="flex-shrink-0 transition-opacity"
+              style={{ 
+                opacity: 1 - expandProgress,
+                pointerEvents: expandProgress > 0.5 ? 'none' : 'auto',
+              }}
+            >
+              <ChatStories 
+                expandProgress={0} 
+                mode="stack" 
+                onStackClick={toggleExpanded}
+              />
+            </div>
+            
+            {/* Title - shifts based on expand */}
+            <h1 
+              className="text-lg font-semibold absolute left-1/2 -translate-x-1/2"
+              style={{
+                transform: `translateX(-50%) translateX(${(1 - expandProgress) * 30}px)`,
+              }}
+            >
+              Чаты
+            </h1>
+            
+            <button 
+              onClick={() => setSearchOpen(true)}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+            >
+              <Search className="w-5 h-5 text-foreground" />
+            </button>
+          </div>
+          
+          {/* Stories row (expanded) - appears below title */}
+          <div 
+            className="overflow-hidden"
+            style={{ 
+              opacity: expandProgress,
+              height: STORIES_ROW_HEIGHT * expandProgress,
+              pointerEvents: expandProgress < 0.5 ? 'none' : 'auto',
+            }}
           >
-            <Search className="w-5 h-5 text-foreground" />
-          </button>
+            <ChatStories 
+              expandProgress={expandProgress} 
+              mode="row" 
+            />
+          </div>
         </div>
 
+        {/* Scrollable chat list */}
         <div 
           ref={chatListRef}
           className="flex-1 overflow-y-auto overscroll-contain"
         >
-          {/* Stories inside scroll area with sticky positioning */}
-          <div className="sticky top-0 z-10">
-            <ChatStories />
-          </div>
-
           {/* Loading */}
           {chatsLoading && (
             <div className="flex items-center justify-center py-8">
