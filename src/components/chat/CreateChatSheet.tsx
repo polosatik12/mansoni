@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Users, Megaphone, X, Camera } from "lucide-react";
+import { Users, Megaphone, Camera } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateChannel } from "@/hooks/useChannels";
 import { toast } from "sonner";
-import glassBackground from "@/assets/glass-background.png";
 
 interface CreateChatSheetProps {
   open: boolean;
@@ -57,25 +56,22 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: Create
   return (
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent 
-        side="bottom" 
-        className="h-auto max-h-[80vh] rounded-t-3xl border-t border-white/10 shadow-2xl overflow-hidden p-0"
-        overlayClassName="bg-black/40"
+        side="top" 
+        className="rounded-b-3xl border-b border-border shadow-lg p-0 bg-card"
+        hideCloseButton
       >
-        {/* Glass background */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${glassBackground})` }}
-        />
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-xl" />
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
+        </div>
         
-        {/* Content */}
-        <div className="relative z-10 p-6">
+        <div className="px-6 pb-6">
           <SheetHeader className="pb-4">
-            <SheetTitle className="text-white flex items-center justify-between">
+            <SheetTitle className="text-foreground flex items-center">
               {mode === "select" && "Создать"}
               {mode === "channel" && (
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setMode("select")} className="text-white/60 hover:text-white">
+                  <button onClick={() => setMode("select")} className="text-muted-foreground hover:text-foreground">
                     ←
                   </button>
                   Новый канал
@@ -83,7 +79,7 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: Create
               )}
               {mode === "group" && (
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setMode("select")} className="text-white/60 hover:text-white">
+                  <button onClick={() => setMode("select")} className="text-muted-foreground hover:text-foreground">
                     ←
                   </button>
                   Новая группа
@@ -93,30 +89,30 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: Create
           </SheetHeader>
 
           {mode === "select" && (
-            <div className="space-y-2">
+            <div className="space-y-1">
               <button
                 onClick={() => setMode("channel")}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white/10 hover:bg-white/15 transition-colors text-left"
+                className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors text-left"
               >
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Megaphone className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Megaphone className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <div className="font-medium text-white">Новый канал</div>
-                  <div className="text-sm text-white/60">Создайте канал для публикаций</div>
+                  <div className="font-medium text-foreground">Новый канал</div>
+                  <div className="text-sm text-muted-foreground">Создайте канал для публикаций</div>
                 </div>
               </button>
               
               <button
                 onClick={() => setMode("group")}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white/10 hover:bg-white/15 transition-colors text-left"
+                className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors text-left"
               >
-                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-blue-400" />
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-500" />
                 </div>
                 <div>
-                  <div className="font-medium text-white">Новая группа</div>
-                  <div className="text-sm text-white/60">Создайте групповой чат</div>
+                  <div className="font-medium text-foreground">Новая группа</div>
+                  <div className="text-sm text-muted-foreground">Создайте групповой чат</div>
                 </div>
               </button>
             </div>
@@ -126,8 +122,8 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: Create
             <div className="space-y-4">
               {/* Avatar placeholder */}
               <div className="flex justify-center">
-                <button className="w-20 h-20 rounded-full bg-white/10 border-2 border-dashed border-white/30 flex items-center justify-center hover:bg-white/15 transition-colors">
-                  <Camera className="w-8 h-8 text-white/60" />
+                <button className="w-20 h-20 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center hover:bg-muted/80 transition-colors">
+                  <Camera className="w-8 h-8 text-muted-foreground" />
                 </button>
               </div>
               
@@ -136,13 +132,13 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: Create
                   placeholder="Название канала"
                   value={channelName}
                   onChange={(e) => setChannelName(e.target.value)}
-                  className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl"
+                  className="h-12 rounded-xl"
                 />
                 <Textarea
                   placeholder="Описание (необязательно)"
                   value={channelDescription}
                   onChange={(e) => setChannelDescription(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl resize-none"
+                  className="rounded-xl resize-none"
                   rows={3}
                 />
               </div>
@@ -160,17 +156,17 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated }: Create
           {mode === "group" && (
             <div className="space-y-4">
               <div className="flex justify-center">
-                <button className="w-20 h-20 rounded-full bg-white/10 border-2 border-dashed border-white/30 flex items-center justify-center hover:bg-white/15 transition-colors">
-                  <Camera className="w-8 h-8 text-white/60" />
+                <button className="w-20 h-20 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center hover:bg-muted/80 transition-colors">
+                  <Camera className="w-8 h-8 text-muted-foreground" />
                 </button>
               </div>
               
               <div className="space-y-3">
                 <Input
                   placeholder="Название группы"
-                  className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl"
+                  className="h-12 rounded-xl"
                 />
-                <p className="text-center text-white/60 text-sm">
+                <p className="text-center text-muted-foreground text-sm">
                   Функция групповых чатов скоро будет доступна
                 </p>
               </div>
