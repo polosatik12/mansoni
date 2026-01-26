@@ -98,8 +98,8 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       
-      {/* Sheet */}
-      <div className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-300">
+      {/* Sheet - ensure input is always visible */}
+      <div className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[85vh] min-h-[300px] flex flex-col animate-in slide-in-from-bottom duration-300">
         {/* Handle */}
         <div className="flex justify-center py-3">
           <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
@@ -114,7 +114,7 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
         </div>
         
         {/* Comments List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 native-scroll min-h-[200px]">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 native-scroll min-h-[100px]">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -157,8 +157,8 @@ export function CommentsSheet({ isOpen, onClose, postId, commentsCount }: Commen
           )}
         </div>
         
-        {/* Input */}
-        <div className="border-t border-border safe-area-bottom">
+        {/* Input - always visible at bottom */}
+        <div className="border-t border-border bg-card pb-safe flex-shrink-0">
           {/* Reply indicator */}
           {replyingTo && (
             <div className="flex items-center justify-between px-4 py-2 bg-muted/50 text-sm">
