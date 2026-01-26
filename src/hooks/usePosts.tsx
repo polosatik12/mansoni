@@ -72,7 +72,9 @@ export function usePosts(filter: FeedFilter = 'all') {
         .from('posts')
         .select('*')
         .eq('is_published', true)
-        .order('created_at', { ascending: false })
+         // Stable ordering to avoid "jumping" when rows share the same created_at
+         .order('created_at', { ascending: false })
+         .order('id', { ascending: false })
         .limit(50);
 
       if (postsError) throw postsError;
