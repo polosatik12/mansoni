@@ -49,10 +49,11 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
   
   const avatarSize = COLLAPSED_AVATAR + (effectiveProgress * (EXPANDED_AVATAR - COLLAPSED_AVATAR));
   const gap = COLLAPSED_GAP + (effectiveProgress * (EXPANDED_GAP - COLLAPSED_GAP));
-  // Container height: collapsed = 56px, expanded = 100px (matching FeedHeader row height ~88px + padding)
-  const containerHeight = 56 + (effectiveProgress * 44);
-  // Name opacity
+  // Container height: collapsed = 56px, expanded = 120px (64px avatar + 4px border + 6px margin + 20px name + 26px padding)
+  const containerHeight = 56 + (effectiveProgress * 64);
+  // Name opacity and height - hide completely when collapsed
   const nameOpacity = effectiveProgress;
+  const nameHeight = effectiveProgress * 20; // 0px when collapsed, 20px when expanded
   // Badge scale
   const badgeScale = effectiveProgress;
 
@@ -178,12 +179,18 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
                   </div>
                   
                   {/* Name - only visible when expanded */}
-                  <span 
-                    className="text-xs text-foreground font-medium mt-1.5 max-w-16 truncate transition-opacity duration-200"
-                    style={{ opacity: nameOpacity }}
-                  >
-                    {user.isOwn ? 'Моя история' : user.display_name}
-                  </span>
+                  {effectiveProgress > 0.1 && (
+                    <span 
+                      className="text-xs text-foreground font-medium mt-1.5 max-w-16 truncate transition-all duration-200 overflow-hidden"
+                      style={{ 
+                        opacity: nameOpacity,
+                        height: nameHeight,
+                        lineHeight: '20px',
+                      }}
+                    >
+                      {user.isOwn ? 'Моя история' : user.display_name}
+                    </span>
+                  )}
                 </div>
               );
             })}
