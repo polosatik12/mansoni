@@ -104,19 +104,21 @@ export function EditProfilePage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border safe-area-top">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-lg font-semibold">Редактировать профиль</h1>
-        <Button 
-          variant="ghost" 
-          onClick={handleSave}
-          disabled={saving || uploading}
-          className="text-primary font-semibold"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Сохранить'}
-        </Button>
+      <div className="sticky top-0 z-10 bg-background border-b border-border" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="flex items-center justify-between px-4 h-14">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Редактировать профиль</h1>
+          <Button 
+            variant="ghost" 
+            onClick={handleSave}
+            disabled={saving || uploading}
+            className="text-primary font-semibold px-3"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Сохранить'}
+          </Button>
+        </div>
       </div>
 
       {/* Content */}
