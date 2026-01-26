@@ -192,13 +192,6 @@ export function PostCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="default" 
-            size="sm" 
-            className="rounded-lg text-xs font-semibold h-8 px-4"
-          >
-            Подписаться
-          </Button>
           <Button variant="ghost" size="icon" className="text-muted-foreground h-8 w-8">
             <MoreHorizontal className="w-5 h-5" />
           </Button>
