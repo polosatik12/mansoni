@@ -164,19 +164,6 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
             Прислать новость
           </Button>
         </div>
-        
-        {/* Pinned message reactions */}
-        <div className="flex flex-wrap gap-1.5 px-3 pb-2">
-          {sampleReactions.slice(0, 6).map((reaction, i) => (
-            <button 
-              key={i}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted transition-colors"
-            >
-              <span className="text-sm">{reaction.emoji}</span>
-              <span className="text-xs text-foreground/80">{formatViews(reaction.count)}</span>
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Messages as posts */}
