@@ -276,10 +276,7 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
       )}
 
       {/* Bottom bar - subscriber view */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-card border-t border-border">
-        {/* Spacer for centering */}
-        <div className="w-10" />
-        
+      <div className="flex-shrink-0 flex items-center justify-center gap-4 px-4 py-3 bg-card border-t border-border">
         <button
           onClick={() => setIsMuted(!isMuted)}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
