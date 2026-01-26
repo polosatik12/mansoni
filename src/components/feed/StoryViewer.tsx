@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
@@ -22,27 +22,34 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isExiting, setIsExiting] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  const hasInitialized = useRef(false);
 
   const STORY_DURATION = 5000;
   const PROGRESS_INTERVAL = 50;
   const MIN_SWIPE_DISTANCE = 50;
 
-  // Filter only users with stories
-  const activeUsers = usersWithStories.filter(u => u.stories.length > 0);
+  // Stabilize activeUsers with useMemo to prevent reset on every render
+  const activeUsers = useMemo(
+    () => usersWithStories.filter(u => u.stories.length > 0),
+    [usersWithStories]
+  );
   const currentUser = activeUsers[currentUserIndex];
   const currentUserStories = currentUser?.stories || [];
   const totalStoriesForUser = currentUserStories.length;
 
-  // Reset when opening
+  // Reset only when opening (not on every render)
   useEffect(() => {
-    if (isOpen) {
-      // Find the correct index in activeUsers
+    if (isOpen && !hasInitialized.current) {
+      hasInitialized.current = true;
       const targetUser = usersWithStories[initialUserIndex];
       const activeIndex = activeUsers.findIndex(u => u.user_id === targetUser?.user_id);
       setCurrentUserIndex(activeIndex >= 0 ? activeIndex : 0);
       setCurrentStoryInUser(0);
       setProgress(0);
       setIsExiting(false);
+    }
+    if (!isOpen) {
+      hasInitialized.current = false;
     }
   }, [isOpen, initialUserIndex, usersWithStories, activeUsers]);
 
@@ -217,14 +224,18 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* Tap zones for navigation */}
+        {/* Tap zones for navigation - below header, no focus styles */}
         <button
-          className="absolute left-0 top-0 w-1/2 h-full z-20"
+          type="button"
+          className="absolute left-0 top-16 w-1/2 h-[calc(100%-4rem)] z-10 bg-transparent border-0 outline-none focus:outline-none focus-visible:outline-none ring-0 appearance-none cursor-default"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
           onClick={goToPrevStory}
           aria-label="Previous story"
         />
         <button
-          className="absolute right-0 top-0 w-1/2 h-full z-20"
+          type="button"
+          className="absolute right-0 top-16 w-1/2 h-[calc(100%-4rem)] z-10 bg-transparent border-0 outline-none focus:outline-none focus-visible:outline-none ring-0 appearance-none cursor-default"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
           onClick={goToNextStory}
           aria-label="Next story"
         />
@@ -271,8 +282,8 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
           ))}
         </div>
 
-        {/* Header with user info */}
-        <div className="absolute top-6 left-0 right-0 z-10 px-3 flex items-center gap-3">
+        {/* Header with user info - higher z-index than nav zones */}
+        <div className="absolute top-6 left-0 right-0 z-30 px-3 flex items-center gap-3">
           <img 
             src={currentUser.avatar_url || `https://i.pravatar.cc/150?u=${currentUser.user_id}`} 
             alt={currentUser.display_name || ''}
