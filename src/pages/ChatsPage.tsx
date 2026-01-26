@@ -197,6 +197,32 @@ export function ChatsPage() {
   // Calculate header height based on expand progress
   const headerHeight = HEADER_BASE_HEIGHT + (STORIES_ROW_HEIGHT * expandProgress);
 
+  type CombinedItem =
+    | { kind: "channel"; id: string; activityAt: string; channel: Channel }
+    | { kind: "group"; id: string; activityAt: string; group: GroupChat }
+    | { kind: "dm"; id: string; activityAt: string; conv: Conversation };
+
+  const combinedItems: CombinedItem[] = [
+    ...channels.map((channel) => ({
+      kind: "channel" as const,
+      id: channel.id,
+      activityAt: channel.last_message?.created_at || channel.updated_at || channel.created_at,
+      channel,
+    })),
+    ...groups.map((group) => ({
+      kind: "group" as const,
+      id: group.id,
+      activityAt: group.last_message?.created_at || group.updated_at || group.created_at,
+      group,
+    })),
+    ...conversations.map((conv) => ({
+      kind: "dm" as const,
+      id: conv.id,
+      activityAt: conv.last_message?.created_at || conv.updated_at || conv.created_at,
+      conv,
+    })),
+  ].sort((a, b) => new Date(b.activityAt).getTime() - new Date(a.activityAt).getTime());
+
   return (
     <ScrollContainerProvider value={chatListRef}>
       <div className="h-full flex flex-col overflow-hidden">
@@ -307,92 +333,91 @@ export function ChatsPage() {
             </div>
           )}
 
-          {/* Channel List Items */}
-          {channels.map((channel) => (
-            <div
-              key={`channel-${channel.id}`}
-              onClick={() => setSelectedChannel(channel)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
-            >
-              {/* Avatar */}
-              <div className="relative flex-shrink-0">
-                <img
-                  src={channel.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${channel.id}`}
-                  alt={channel.name}
-                  className="w-14 h-14 rounded-full object-cover bg-muted"
-                />
-                {channel.is_member && (
-                  <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-background">
-                    <Check className="w-3 h-3 text-primary-foreground" />
+          {/* Unified list sorted by activity */}
+          {combinedItems.map((item) => {
+            if (item.kind === "channel") {
+              const channel = item.channel;
+              return (
+                <div
+                  key={`channel-${channel.id}`}
+                  onClick={() => setSelectedChannel(channel)}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
+                >
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={channel.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${channel.id}`}
+                      alt={channel.name}
+                      className="w-14 h-14 rounded-full object-cover bg-muted"
+                    />
+                    {channel.is_member && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-background">
+                        <Check className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="font-semibold text-foreground truncate flex items-center gap-1">
-                    <Megaphone className="w-4 h-4 text-primary flex-shrink-0" />
-                    {channel.name}
-                  </span>
-                  {channel.last_message && (
-                    <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                      {formatTime(channel.last_message.created_at)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground truncate flex-1">
-                    {channel.last_message?.content || channel.description || `${channel.member_count} подписчиков`}
-                  </p>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
-                    <Users className="w-3 h-3" />
-                    {channel.member_count}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="font-semibold text-foreground truncate flex items-center gap-1">
+                        <Megaphone className="w-4 h-4 text-primary flex-shrink-0" />
+                        {channel.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                        {formatTime(channel.last_message?.created_at || channel.updated_at)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground truncate flex-1">
+                        {channel.last_message?.content || channel.description || `${channel.member_count} подписчиков`}
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
+                        <Users className="w-3 h-3" />
+                        {channel.member_count}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              );
+            }
 
-          {/* Group Chats */}
-          {groups.map((group) => (
-            <div
-              key={`group-${group.id}`}
-              onClick={() => setSelectedGroup(group)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
-            >
-              <div className="relative flex-shrink-0">
-                <img
-                  src={group.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${group.id}`}
-                  alt={group.name}
-                  className="w-14 h-14 rounded-full object-cover bg-muted"
-                />
-                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-background">
-                  <Users className="w-3 h-3 text-primary-foreground" />
+            if (item.kind === "group") {
+              const group = item.group;
+              return (
+                <div
+                  key={`group-${group.id}`}
+                  onClick={() => setSelectedGroup(group)}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
+                >
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={group.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${group.id}`}
+                      alt={group.name}
+                      className="w-14 h-14 rounded-full object-cover bg-muted"
+                    />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-background">
+                      <Users className="w-3 h-3 text-primary-foreground" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="font-semibold text-foreground truncate flex items-center gap-1">
+                        {group.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                        {formatTime(group.last_message?.created_at || group.updated_at)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground truncate flex-1">
+                        {group.last_message?.content || `${group.member_count} участников`}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="font-semibold text-foreground truncate flex items-center gap-1">
-                    {group.name}
-                  </span>
-                  {group.last_message && (
-                    <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                      {formatTime(group.last_message.created_at)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground truncate flex-1">
-                    {group.last_message?.content || `${group.member_count} участников`}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            }
 
-          {/* Chat List Items (DMs) */}
-          {conversations.map((conv) => {
+            const conv = item.conv;
             const other = getOtherParticipant(conv);
             const lastMessage = conv.last_message;
             const isMyMessage = lastMessage?.sender_id === user?.id;
@@ -403,7 +428,6 @@ export function ChatsPage() {
                 onClick={() => setSelectedConversation(conv)}
                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
               >
-                {/* Avatar */}
                 <div className="relative flex-shrink-0">
                   <img
                     src={other.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.id}`}
@@ -412,17 +436,14 @@ export function ChatsPage() {
                   />
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="font-semibold text-foreground truncate">
                       {other.display_name || "Пользователь"}
                     </span>
-                    {lastMessage && (
-                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                        {formatTime(lastMessage.created_at)}
-                      </span>
-                    )}
+                    <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                      {formatTime(lastMessage?.created_at || conv.updated_at)}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 flex-1 min-w-0">
@@ -442,7 +463,7 @@ export function ChatsPage() {
                           : lastMessage?.content || "Нет сообщений"}
                       </p>
                     </div>
-                    
+
                     {conv.unread_count > 0 && (
                       <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px] flex-shrink-0 ml-2 bg-primary">
                         {conv.unread_count}
