@@ -104,6 +104,30 @@ export function useGroupChats() {
     fetchGroups();
   }, [fetchGroups]);
 
+  // Realtime subscription for group updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('group-chats-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'group_chats',
+        },
+        () => {
+          fetchGroups();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchGroups]);
+
   return { groups, loading, error, refetch: fetchGroups };
 }
 

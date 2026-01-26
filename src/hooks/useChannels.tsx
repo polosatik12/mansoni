@@ -97,6 +97,30 @@ export function useChannels() {
     fetchChannels();
   }, [fetchChannels]);
 
+  // Realtime subscription for channel updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('channels-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'channels',
+        },
+        () => {
+          fetchChannels();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchChannels]);
+
   return { channels, loading, error, refetch: fetchChannels };
 }
 
