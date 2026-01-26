@@ -62,8 +62,8 @@ export function ChatSearchSheet({
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${glassBackground})` }}
         />
-        {/* Dark overlay for better readability */}
-        <div className="absolute inset-0 bg-black/10 backdrop-blur-3xl" />
+        {/* Light overlay with minimal blur to show bokeh */}
+        <div className="absolute inset-0 bg-black/5 backdrop-blur-sm" />
         
         {/* Content */}
         <div className="relative z-10 h-full flex flex-col p-6">
