@@ -13,6 +13,7 @@ import { VideoCircleMessage } from "./VideoCircleMessage";
 import { AttachmentSheet } from "./AttachmentSheet";
 import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
+import { SharedPostCard } from "./SharedPostCard";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -278,6 +279,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const isVideoCircle = message.media_type === 'video_circle';
           const isImage = message.media_type === 'image';
           const isVideo = message.media_type === 'video';
+          const isSharedPost = !!message.shared_post_id;
           const isRead = message.is_read;
 
           // Group messages - show avatar only for first in sequence
@@ -303,7 +305,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               )}
 
-              {isVideoCircle && message.media_url ? (
+              {isSharedPost && message.shared_post_id ? (
+                <div className="flex flex-col gap-1">
+                  <SharedPostCard postId={message.shared_post_id} isOwn={isOwn} />
+                  <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
+                    {isOwn && (
+                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                    )}
+                  </div>
+                </div>
+              ) : isVideoCircle && message.media_url ? (
                 <div className="flex flex-col items-center gap-1">
                   <VideoCircleMessage
                     videoUrl={message.media_url}

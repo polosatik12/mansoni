@@ -119,23 +119,19 @@ export function ShareSheet({
     setSending(true);
     
     try {
-      const shareLink = `${window.location.origin}/post/${postId}`;
-      const shareText = postContent 
-        ? `${postContent.slice(0, 100)}${postContent.length > 100 ? "..." : ""}\n\n${shareLink}`
-        : shareLink;
-
       const promises: Promise<void>[] = [];
 
       for (const targetId of selectedTargets) {
         const [type, id] = targetId.split(":");
         
         if (type === "dm") {
-          // Send to DM conversation
+          // Send to DM conversation with shared post
           const sendDm = async () => {
             const { error } = await supabase.from("messages").insert({
               conversation_id: id,
               sender_id: user.id,
-              content: shareText,
+              content: "📤 Поделился публикацией",
+              shared_post_id: postId,
             });
             if (error) throw error;
             await supabase
@@ -145,12 +141,13 @@ export function ShareSheet({
           };
           promises.push(sendDm());
         } else if (type === "group") {
-          // Send to group chat
+          // Send to group chat with shared post
           const sendGroup = async () => {
             const { error } = await supabase.from("group_chat_messages").insert({
               group_id: id,
               sender_id: user.id,
-              content: shareText,
+              content: "📤 Поделился публикацией",
+              shared_post_id: postId,
             });
             if (error) throw error;
             await supabase
@@ -160,12 +157,13 @@ export function ShareSheet({
           };
           promises.push(sendGroup());
         } else if (type === "channel") {
-          // Send to channel
+          // Send to channel with shared post
           const sendChannel = async () => {
             const { error } = await supabase.from("channel_messages").insert({
               channel_id: id,
               sender_id: user.id,
-              content: shareText,
+              content: "📤 Поделился публикацией",
+              shared_post_id: postId,
             });
             if (error) throw error;
             await supabase
