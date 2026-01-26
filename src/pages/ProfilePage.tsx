@@ -8,6 +8,7 @@ import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
 import { SettingsDrawer } from "@/components/profile/SettingsDrawer";
+import { FollowersSheet } from "@/components/profile/FollowersSheet";
 import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +46,8 @@ export function ProfilePage() {
   const [showPostEditor, setShowPostEditor] = useState(false);
   const [showStoryEditor, setShowStoryEditor] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
 
   const handleCreateSelect = (type: string) => {
     if (type === "post") {
@@ -131,14 +134,20 @@ export function ProfilePage() {
                 <p className="font-bold text-foreground">{profile.stats.postsCount}</p>
                 <p className="text-xs text-muted-foreground">публикации</p>
               </div>
-              <div className="text-center">
+              <button 
+                className="text-center"
+                onClick={() => setShowFollowers(true)}
+              >
                 <p className="font-bold text-foreground">{formatNumber(profile.stats.followersCount)}</p>
                 <p className="text-xs text-muted-foreground">подписчики</p>
-              </div>
-              <div className="text-center">
+              </button>
+              <button 
+                className="text-center"
+                onClick={() => setShowFollowing(true)}
+              >
                 <p className="font-bold text-foreground">{formatNumber(profile.stats.followingCount)}</p>
                 <p className="text-xs text-muted-foreground">подписки</p>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -361,6 +370,26 @@ export function ProfilePage() {
         isOpen={showSettings} 
         onClose={() => setShowSettings(false)} 
       />
+
+      {/* Followers Sheet */}
+      {user && (
+        <>
+          <FollowersSheet
+            isOpen={showFollowers}
+            onClose={() => setShowFollowers(false)}
+            userId={user.id}
+            type="followers"
+            title="Подписчики"
+          />
+          <FollowersSheet
+            isOpen={showFollowing}
+            onClose={() => setShowFollowing(false)}
+            userId={user.id}
+            type="following"
+            title="Подписки"
+          />
+        </>
+      )}
     </div>
   );
 }

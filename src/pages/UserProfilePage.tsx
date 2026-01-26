@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useProfileByUsername, useUserPosts } from "@/hooks/useProfile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FollowersSheet } from "@/components/profile/FollowersSheet";
 
 const tabs = [
   { id: "posts", icon: Grid3X3 },
@@ -32,6 +33,8 @@ export function UserProfilePage() {
   const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
 
   // Decode URI component to handle spaces and special characters
   const username = rawUsername ? decodeURIComponent(rawUsername) : undefined;
@@ -181,14 +184,20 @@ export function UserProfilePage() {
                 <p className="font-bold text-foreground">{profile.stats.postsCount}</p>
                 <p className="text-xs text-muted-foreground">публикации</p>
               </div>
-              <div className="text-center">
+              <button 
+                className="text-center"
+                onClick={() => setShowFollowers(true)}
+              >
                 <p className="font-bold text-foreground">{formatNumber(profile.stats.followersCount)}</p>
                 <p className="text-xs text-muted-foreground">подписчики</p>
-              </div>
-              <div className="text-center">
+              </button>
+              <button 
+                className="text-center"
+                onClick={() => setShowFollowing(true)}
+              >
                 <p className="font-bold text-foreground">{formatNumber(profile.stats.followingCount)}</p>
                 <p className="text-xs text-muted-foreground">подписки</p>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -330,6 +339,22 @@ export function UserProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Followers/Following Sheets */}
+      <FollowersSheet
+        isOpen={showFollowers}
+        onClose={() => setShowFollowers(false)}
+        userId={profile.user_id}
+        type="followers"
+        title="Подписчики"
+      />
+      <FollowersSheet
+        isOpen={showFollowing}
+        onClose={() => setShowFollowing(false)}
+        userId={profile.user_id}
+        type="following"
+        title="Подписки"
+      />
     </div>
   );
 }
