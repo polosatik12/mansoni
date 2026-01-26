@@ -1,14 +1,17 @@
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { CommentsSheet } from "./CommentsSheet";
 import { ShareSheet } from "./ShareSheet";
+import { PostOptionsSheet } from "./PostOptionsSheet";
 import { usePostActions } from "@/hooks/usePosts";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
+
 interface PostCardProps {
   id?: string;
+  authorId?: string;
   author: {
     name: string;
     username: string;
@@ -31,6 +34,7 @@ interface PostCardProps {
 
 export function PostCard({
   id,
+  authorId,
   author,
   content,
   image,
@@ -53,6 +57,7 @@ export function PostCard({
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [likeAnimation, setLikeAnimation] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; x: number; y: number }[]>([]);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -192,7 +197,12 @@ export function PostCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-muted-foreground h-8 w-8">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-muted-foreground h-8 w-8"
+            onClick={() => setShowOptions(true)}
+          >
             <MoreHorizontal className="w-5 h-5" />
           </Button>
         </div>
@@ -339,6 +349,15 @@ export function PostCard({
             postContent={content}
             postImage={allImages[0]}
           />
+          {authorId && (
+            <PostOptionsSheet
+              isOpen={showOptions}
+              onClose={() => setShowOptions(false)}
+              postId={id}
+              authorId={authorId}
+              authorUsername={author.username}
+            />
+          )}
         </>
       )}
     </div>

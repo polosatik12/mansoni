@@ -69,6 +69,7 @@ export function ExploreFeedPage() {
             <div key={post.id} id={`explore-post-${index}`}>
               <PostCard
                 id={post.id}
+                authorId={post.author_id}
                 author={{
                   name: post.profile?.display_name || "Пользователь",
                   username: post.profile?.display_name || "user",
