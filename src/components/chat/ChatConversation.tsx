@@ -27,7 +27,7 @@ interface ChatConversationProps {
 
 export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup }: ChatConversationProps) {
   const { user } = useAuth();
-  const { messages, loading, sendMessage, sendMediaMessage } = useMessages(conversationId);
+  const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
   const { activeCall, startCall, endCall } = useCallsContext();
   const { setIsChatOpen } = useChatOpen();
   
@@ -307,7 +307,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
               {isSharedPost && message.shared_post_id ? (
                 <div className="flex flex-col gap-1">
-                  <SharedPostCard postId={message.shared_post_id} isOwn={isOwn} />
+                  <SharedPostCard 
+                    postId={message.shared_post_id} 
+                    isOwn={isOwn} 
+                    messageId={message.id}
+                    onDelete={async (msgId) => {
+                      const result = await deleteMessage(msgId);
+                      if (result.error) {
+                        toast.error("Не удалось удалить сообщение");
+                      }
+                    }}
+                  />
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
