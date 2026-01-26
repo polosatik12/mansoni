@@ -41,12 +41,16 @@ export function ChatStories({ isExpanded, onExpandChange, swipeProgress = 0 }: C
   // Calculate interpolated values based on expansion state and swipe progress
   const effectiveProgress = isExpanded ? 1 : swipeProgress;
   
-  // Sizes: collapsed = 40px avatar, expanded = 64px
-  const avatarSize = 40 + (effectiveProgress * 24);
-  // Gap: collapsed = -12px (stacked), expanded = 16px
-  const gap = -12 + (effectiveProgress * 28);
-  // Container height: collapsed = 56px, expanded = 140px
-  const containerHeight = 56 + (effectiveProgress * 84);
+  // Match FeedHeader sizes: expanded = 64px avatar, collapsed = 40px (stacked)
+  const EXPANDED_AVATAR = 64;
+  const COLLAPSED_AVATAR = 40;
+  const EXPANDED_GAP = 16;
+  const COLLAPSED_GAP = -12;
+  
+  const avatarSize = COLLAPSED_AVATAR + (effectiveProgress * (EXPANDED_AVATAR - COLLAPSED_AVATAR));
+  const gap = COLLAPSED_GAP + (effectiveProgress * (EXPANDED_GAP - COLLAPSED_GAP));
+  // Container height: collapsed = 56px, expanded = 100px (matching FeedHeader row height ~88px + padding)
+  const containerHeight = 56 + (effectiveProgress * 44);
   // Name opacity
   const nameOpacity = effectiveProgress;
   // Badge scale
