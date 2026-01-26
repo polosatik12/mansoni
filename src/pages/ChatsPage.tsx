@@ -33,6 +33,14 @@ export function ChatsPage() {
   
   // Local scroll container for chat list - used by ChatStories for animation
   const chatListRef = useRef<HTMLDivElement>(null);
+  
+  // Scroll to hide stories initially (collapsed state)
+  useEffect(() => {
+    if (chatListRef.current && !selectedConversation) {
+      // Scroll to the threshold so stories start collapsed
+      chatListRef.current.scrollTop = 100;
+    }
+  }, [selectedConversation]);
 
   // Get the other participant's info for display
   const getOtherParticipant = (conv: Conversation) => {
@@ -192,11 +200,12 @@ export function ChatsPage() {
           </div>
         </div>
 
-        {/* Scrollable Chat List - this is the scroll container for stories animation */}
         <div 
           ref={chatListRef}
           className="flex-1 overflow-y-auto overscroll-contain"
         >
+          {/* Spacer for stories collapse animation - scroll past this to expand stories */}
+          <div className="h-[100px] w-full" aria-hidden="true" />
           {/* Search Results - Users not in conversations */}
           {searchQuery.trim().length >= 2 && newUsers.length > 0 && (
             <div className="border-b border-border">
