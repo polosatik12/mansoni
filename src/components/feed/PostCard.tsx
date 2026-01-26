@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Eye } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ interface PostCardProps {
   comments: number;
   shares: number;
   saves?: number;
-  views?: number;
+  
   timeAgo: string;
   isRecommended?: boolean;
   isLiked?: boolean;
@@ -38,18 +38,16 @@ export function PostCard({
   comments,
   shares,
   saves = 0,
-  views = 0,
   timeAgo,
   isRecommended = false,
   isLiked = false,
   onLikeChange,
 }: PostCardProps) {
   const navigate = useNavigate();
-  const { recordView, toggleLike } = usePostActions();
+  const { toggleLike } = usePostActions();
   const { isSaved, toggleSave } = useSavedPosts();
   const [liked, setLiked] = useState(isLiked);
   const [likeCount, setLikeCount] = useState(likes);
-  const [viewCount] = useState(views);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -58,7 +56,7 @@ export function PostCard({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const heartIdRef = useRef(0);
-  const viewRecorded = useRef(false);
+  
   
   const saved = id ? isSaved(id) : false;
   
@@ -71,13 +69,6 @@ export function PostCard({
     }
   };
 
-  // Record view when post becomes visible
-  useEffect(() => {
-    if (id && !viewRecorded.current) {
-      viewRecorded.current = true;
-      recordView(id);
-    }
-  }, [id, recordView]);
 
   const allImages = images || (image ? [image] : []);
   const hasMultipleImages = allImages.length > 1;
@@ -298,12 +289,6 @@ export function PostCard({
           </button>
         </div>
         <div className="flex items-center gap-4">
-          {viewCount > 0 && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Eye className="w-5 h-5" />
-              <span className="text-sm">{formatNumber(viewCount)}</span>
-            </div>
-          )}
           <button
             onClick={handleSave}
             className={cn(

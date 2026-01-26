@@ -80,7 +80,7 @@ export function ExploreFeedPage() {
                 likes={post.likes_count}
                 comments={post.comments_count}
                 shares={post.shares_count}
-                views={post.views_count}
+                
                 timeAgo={formatTimeAgo(post.created_at)}
               />
             </div>
