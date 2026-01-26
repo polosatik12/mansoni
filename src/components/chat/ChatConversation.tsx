@@ -469,124 +469,137 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input - Telegram style */}
-      <div className="flex-shrink-0 px-2 py-2 bg-[#17212b] safe-area-bottom">
-        {isRecording ? (
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={cancelRecording}
-              className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
-            >
-              <X className="w-5 h-5 text-white/70" />
-            </button>
-            
-            <div className="flex-1 flex items-center gap-3 h-11 px-4 rounded-full bg-[#242f3d]">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-sm text-white/70">
-                Запись... {formatTime(recordingTime)}
-              </span>
-            </div>
-            
-            <button
-              onClick={stopRecording}
-              className="w-11 h-11 rounded-full bg-[#6ab3f3] flex items-center justify-center shrink-0"
-            >
-              <Send className="w-5 h-5 text-white" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            {/* Attachment button */}
-            <button 
-              onClick={() => setShowAttachmentSheet(true)}
-              className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
-            >
-              <Paperclip className="w-5 h-5 text-white/60 rotate-45" />
-            </button>
-            
-            {/* Input field */}
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Сообщение"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="w-full h-11 px-4 pr-12 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
-              />
-              {/* Emoji button inside input */}
-              <button
-                onClick={() => setShowEmojiPicker(true)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
+      {/* Input area - Telegram style */}
+      <div className="flex-shrink-0 bg-[#17212b] safe-area-bottom">
+        {/* Emoji Picker - Telegram style inline above input */}
+        <EmojiStickerPicker
+          open={showEmojiPicker}
+          onOpenChange={setShowEmojiPicker}
+          onEmojiSelect={(emoji) => {
+            setInputText((prev) => prev + emoji);
+          }}
+        />
+        
+        {/* Input controls */}
+        <div className="px-2 py-2">
+          {isRecording ? (
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={cancelRecording}
+                className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
               >
-                <Smile className="w-5 h-5" />
+                <X className="w-5 h-5 text-white/70" />
               </button>
-            </div>
-            
-            {/* Send or toggleable Mic button */}
-            {inputText.trim() ? (
+              
+              <div className="flex-1 flex items-center gap-3 h-11 px-4 rounded-full bg-[#242f3d]">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-sm text-white/70">
+                  Запись... {formatTime(recordingTime)}
+                </span>
+              </div>
+              
               <button
-                onClick={handleSendMessage}
+                onClick={stopRecording}
                 className="w-11 h-11 rounded-full bg-[#6ab3f3] flex items-center justify-center shrink-0"
               >
                 <Send className="w-5 h-5 text-white" />
               </button>
-            ) : (
-              <button
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  isHoldingRef.current = false;
-                  holdTimerRef.current = setTimeout(() => {
-                    isHoldingRef.current = true;
-                    if (recordMode === 'voice') startRecording();
-                    else setShowVideoRecorder(true);
-                  }, 200);
-                }}
-                onMouseUp={() => {
-                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-                  if (isHoldingRef.current) {
-                    if (recordMode === 'voice') stopRecording();
-                  } else {
-                    setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
-                  }
-                  isHoldingRef.current = false;
-                }}
-                onMouseLeave={() => {
-                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-                  if (isHoldingRef.current && recordMode === 'voice' && isRecording) {
-                    cancelRecording();
-                  }
-                  isHoldingRef.current = false;
-                }}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  isHoldingRef.current = false;
-                  holdTimerRef.current = setTimeout(() => {
-                    isHoldingRef.current = true;
-                    if (recordMode === 'voice') startRecording();
-                    else setShowVideoRecorder(true);
-                  }, 200);
-                }}
-                onTouchEnd={() => {
-                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-                  if (isHoldingRef.current) {
-                    if (recordMode === 'voice') stopRecording();
-                  } else {
-                    setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
-                  }
-                  isHoldingRef.current = false;
-                }}
-                className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0 transition-all touch-none"
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {/* Attachment button */}
+              <button 
+                onClick={() => setShowAttachmentSheet(true)}
+                className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
               >
-                {recordMode === 'voice' ? (
-                  <Mic className="w-5 h-5 text-white/60" />
-                ) : (
-                  <Video className="w-5 h-5 text-white/60" />
-                )}
+                <Paperclip className="w-5 h-5 text-white/60 rotate-45" />
               </button>
-            )}
-          </div>
-        )}
+              
+              {/* Input field */}
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Сообщение"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  onFocus={() => setShowEmojiPicker(false)}
+                  className="w-full h-11 px-4 pr-12 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
+                />
+                {/* Emoji button inside input */}
+                <button
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${showEmojiPicker ? 'text-[#6ab3f3]' : 'text-white/50 hover:text-white/80'}`}
+                >
+                  <Smile className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Send or toggleable Mic button */}
+              {inputText.trim() ? (
+                <button
+                  onClick={handleSendMessage}
+                  className="w-11 h-11 rounded-full bg-[#6ab3f3] flex items-center justify-center shrink-0"
+                >
+                  <Send className="w-5 h-5 text-white" />
+                </button>
+              ) : (
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    isHoldingRef.current = false;
+                    holdTimerRef.current = setTimeout(() => {
+                      isHoldingRef.current = true;
+                      if (recordMode === 'voice') startRecording();
+                      else setShowVideoRecorder(true);
+                    }, 200);
+                  }}
+                  onMouseUp={() => {
+                    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+                    if (isHoldingRef.current) {
+                      if (recordMode === 'voice') stopRecording();
+                    } else {
+                      setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
+                    }
+                    isHoldingRef.current = false;
+                  }}
+                  onMouseLeave={() => {
+                    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+                    if (isHoldingRef.current && recordMode === 'voice' && isRecording) {
+                      cancelRecording();
+                    }
+                    isHoldingRef.current = false;
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    isHoldingRef.current = false;
+                    holdTimerRef.current = setTimeout(() => {
+                      isHoldingRef.current = true;
+                      if (recordMode === 'voice') startRecording();
+                      else setShowVideoRecorder(true);
+                    }, 200);
+                  }}
+                  onTouchEnd={() => {
+                    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+                    if (isHoldingRef.current) {
+                      if (recordMode === 'voice') stopRecording();
+                    } else {
+                      setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
+                    }
+                    isHoldingRef.current = false;
+                  }}
+                  className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0 transition-all touch-none"
+                >
+                  {recordMode === 'voice' ? (
+                    <Mic className="w-5 h-5 text-white/60" />
+                  ) : (
+                    <Video className="w-5 h-5 text-white/60" />
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Video Circle Recorder */}
@@ -604,15 +617,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         onSelectFile={handleAttachment}
       />
 
-      {/* Emoji Sticker Picker */}
-      <EmojiStickerPicker
-        open={showEmojiPicker}
-        onOpenChange={setShowEmojiPicker}
-        onEmojiSelect={(emoji) => {
-          setInputText((prev) => prev + emoji);
-          setShowEmojiPicker(false);
-        }}
-      />
 
       {/* Image Viewer */}
       {viewingImage && (
