@@ -164,6 +164,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           sender_id: string
+          shared_post_id: string | null
         }
         Insert: {
           channel_id: string
@@ -173,6 +174,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           sender_id: string
+          shared_post_id?: string | null
         }
         Update: {
           channel_id?: string
@@ -182,6 +184,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           sender_id?: string
+          shared_post_id?: string | null
         }
         Relationships: [
           {
@@ -189,6 +192,13 @@ export type Database = {
             columns: ["channel_id"]
             isOneToOne: false
             referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_messages_shared_post_id_fkey"
+            columns: ["shared_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
@@ -415,6 +425,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           sender_id: string
+          shared_post_id: string | null
         }
         Insert: {
           content: string
@@ -424,6 +435,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           sender_id: string
+          shared_post_id?: string | null
         }
         Update: {
           content?: string
@@ -433,6 +445,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           sender_id?: string
+          shared_post_id?: string | null
         }
         Relationships: [
           {
@@ -440,6 +453,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_chat_messages_shared_post_id_fkey"
+            columns: ["shared_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
@@ -1001,6 +1021,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           sender_id: string
+          shared_post_id: string | null
         }
         Insert: {
           content: string
@@ -1012,6 +1033,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           sender_id: string
+          shared_post_id?: string | null
         }
         Update: {
           content?: string
@@ -1023,6 +1045,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           sender_id?: string
+          shared_post_id?: string | null
         }
         Relationships: [
           {
@@ -1030,6 +1053,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_shared_post_id_fkey"
+            columns: ["shared_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]

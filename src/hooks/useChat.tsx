@@ -32,6 +32,7 @@ export interface ChatMessage {
   media_url?: string | null;
   media_type?: string | null; // 'voice', 'video_circle', 'image'
   duration_seconds?: number | null;
+  shared_post_id?: string | null;
 }
 
 export interface Conversation {
