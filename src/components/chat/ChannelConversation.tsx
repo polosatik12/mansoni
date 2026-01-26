@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Eye, Share2, Search, Volume2, VolumeX, ChevronDown } from "lucide-react";
+import { ArrowLeft, Eye, Share2, Search, Volume2, VolumeX, ChevronDown, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useChannelMessages, useJoinChannel, Channel } from "@/hooks/useChannels";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
+import chatBackgroundDark from "@/assets/chat-background.jpg";
+import chatBackgroundLight from "@/assets/chat-background-light.jpg";
 
 interface ChannelConversationProps {
   channel: Channel;
@@ -30,16 +33,19 @@ const formatViews = (count: number): string => {
 
 // Sample reactions for demo
 const sampleReactions = [
-  { emoji: "👍", count: 1423 },
-  { emoji: "🤡", count: 536 },
-  { emoji: "👍", count: 167 },
-  { emoji: "❤️", count: 106 },
-  { emoji: "🎉", count: 83 },
-  { emoji: "😂", count: 48 },
+  { emoji: "❤️", count: 914 },
+  { emoji: "🤡", count: 328 },
+  { emoji: "🤯", count: 113 },
+  { emoji: "🔥", count: 66 },
+  { emoji: "👍", count: 45 },
+  { emoji: "🎉", count: 42 },
+  { emoji: "👍", count: 40 },
+  { emoji: "😂", count: 19 },
 ];
 
 export function ChannelConversation({ channel, onBack, onLeave }: ChannelConversationProps) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const { messages, loading } = useChannelMessages(channel.id);
   const { joinChannel, leaveChannel } = useJoinChannel();
   const [isMember, setIsMember] = useState(channel.is_member);
@@ -47,6 +53,9 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
+
+  const isDark = theme === "dark";
+  const chatBackground = isDark ? chatBackgroundDark : chatBackgroundLight;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,54 +101,82 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div 
+      className="h-full flex flex-col"
+      style={{ 
+        backgroundImage: `url(${chatBackground})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center"
+      }}
+    >
       {/* Header - Telegram style */}
-      <div className="flex-shrink-0 flex items-center gap-2 px-2 py-2 bg-card/95 backdrop-blur-sm border-b border-border">
-        {/* Back button with unread count placeholder */}
+      <div className="flex-shrink-0 flex items-center gap-2 px-2 py-2 bg-card border-b border-border">
+        {/* Back button with unread count */}
         <button 
           onClick={onBack} 
-          className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+          className="flex items-center gap-1 text-primary"
         >
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-          <span className="text-foreground text-sm font-medium pr-1">
-            {Math.floor(Math.random() * 1000) + 100}
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm font-medium">
+            {Math.floor(Math.random() * 100) + 10}
           </span>
         </button>
         
-        {/* Channel info - centered */}
-        <div className="flex-1 flex flex-col items-center min-w-0">
-          <h2 className="font-semibold text-foreground text-sm truncate">{channel.name}</h2>
-          <p className="text-[11px] text-primary">
-            {formatSubscribers(channel.member_count || 0)}
-          </p>
-        </div>
-
         {/* Channel avatar */}
         <img
           src={channel.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${channel.id}`}
           alt={channel.name}
-          className="w-10 h-10 rounded-full object-cover bg-muted"
+          className="w-9 h-9 rounded-full object-cover bg-muted"
         />
+
+        {/* Channel info */}
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold text-foreground text-sm truncate">{channel.name}</h2>
+          <p className="text-[11px] text-muted-foreground">
+            {formatSubscribers(channel.member_count || 0)}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <button className="p-2 text-muted-foreground hover:text-foreground">
+          <Search className="w-5 h-5" />
+        </button>
+        <button className="p-2 text-muted-foreground hover:text-foreground">
+          <MoreVertical className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Pinned message bar */}
-      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 bg-card/90 border-b border-border">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-0.5 h-8 bg-primary rounded-full flex-shrink-0" />
-          <div className="min-w-0">
-            <p className="text-xs text-primary font-medium">Закреплённое сообщение</p>
-            <p className="text-xs text-muted-foreground truncate">Увидели что-то важное и интересное...</p>
+      <div className="flex-shrink-0 bg-card border-b border-border">
+        <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="w-0.5 h-8 bg-primary rounded-full flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-xs text-foreground truncate">Закреплённое сообщение</p>
+              <p className="text-xs text-muted-foreground truncate">Увидели что-то важное и интересное...</p>
+            </div>
           </div>
-        </div>
-        {!isMember && (
           <Button 
             onClick={handleJoin}
             size="sm" 
             className="rounded-full px-4 h-8 text-xs font-medium"
           >
-            Подписаться
+            Прислать новость
           </Button>
-        )}
+        </div>
+        
+        {/* Pinned message reactions */}
+        <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+          {sampleReactions.slice(0, 6).map((reaction, i) => (
+            <button 
+              key={i}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted transition-colors"
+            >
+              <span className="text-sm">{reaction.emoji}</span>
+              <span className="text-xs text-foreground/80">{formatViews(reaction.count)}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Messages as posts */}
@@ -164,29 +201,20 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
           // Generate random view count for demo
           const viewCount = Math.floor(Math.random() * 200000) + 1000;
           // Get random subset of reactions
-          const postReactions = sampleReactions.slice(0, Math.floor(Math.random() * 4) + 3);
+          const postReactions = sampleReactions.slice(0, Math.floor(Math.random() * 5) + 4);
           
           return (
-            <div key={msg.id} className="bg-card rounded-xl overflow-hidden border border-border">
-              {/* Post header */}
+            <div key={msg.id} className="bg-card rounded-2xl overflow-hidden shadow-sm">
+              {/* Post header with channel info */}
               <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-                <span className="text-primary text-lg">👉</span>
-                <span className="text-primary font-medium text-sm">{channel.name}.</span>
-                {!isMember && (
-                  <button 
-                    onClick={handleJoin}
-                    className="text-primary text-sm hover:underline"
-                  >
-                    Подписаться
-                  </button>
-                )}
-              </div>
-
-              {/* Post content */}
-              <div className="px-3 pb-2">
-                <p className="text-foreground text-[15px] leading-relaxed whitespace-pre-wrap">
-                  {msg.content}
-                </p>
+                <img
+                  src={channel.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${channel.id}`}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover bg-muted"
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="text-primary font-medium text-sm">{channel.name}</span>
+                </div>
               </div>
 
               {/* Post image if exists */}
@@ -197,15 +225,35 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
                     alt="" 
                     className="w-full max-h-80 object-cover"
                   />
+                  {/* Video overlay indicator */}
+                  <div className="absolute top-2 left-2 bg-black/60 rounded px-1.5 py-0.5 text-white text-xs flex items-center gap-1">
+                    <span>00:32</span>
+                    <Volume2 className="w-3 h-3" />
+                  </div>
                 </div>
               )}
+
+              {/* Post content */}
+              <div className="px-3 py-2">
+                <p className="text-foreground text-[15px] leading-relaxed whitespace-pre-wrap">
+                  {msg.content}
+                </p>
+              </div>
+
+              {/* Subscribe link */}
+              <div className="px-3 pb-2">
+                <button className="text-primary text-sm hover:underline flex items-center gap-1">
+                  <span>👉</span>
+                  <span>{channel.name}. Подписаться</span>
+                </button>
+              </div>
 
               {/* Reactions row */}
               <div className="flex flex-wrap gap-1.5 px-3 py-2">
                 {postReactions.map((reaction, i) => (
                   <button 
                     key={i}
-                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted/60 hover:bg-muted transition-colors"
                   >
                     <span className="text-sm">{reaction.emoji}</span>
                     <span className="text-xs text-foreground/80">{formatViews(reaction.count)}</span>
@@ -241,7 +289,7 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
       )}
 
       {/* Bottom bar - subscriber view */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-card/95 backdrop-blur-sm border-t border-border">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-card border-t border-border">
         {/* Spacer for centering */}
         <div className="w-10" />
         
