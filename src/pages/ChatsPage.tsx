@@ -162,6 +162,7 @@ export function ChatsPage() {
         chatAvatar={other.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConversation.id}`}
         otherUserId={other.user_id}
         totalUnreadCount={totalUnreadCount}
+        onRefetch={refetch}
         onBack={() => {
           setSelectedConversation(null);
           refetch();
