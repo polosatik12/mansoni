@@ -51,7 +51,10 @@ export function ChatSearchSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="top" className="h-[85vh] rounded-b-2xl">
+      <SheetContent 
+        side="top" 
+        className="h-[85vh] rounded-b-3xl bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-2xl"
+      >
         <SheetHeader className="pb-4">
           <SheetTitle>Поиск пользователей</SheetTitle>
         </SheetHeader>
