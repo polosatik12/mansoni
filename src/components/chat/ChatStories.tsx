@@ -118,7 +118,7 @@ export function ChatStories() {
       
       <div 
         className="relative overflow-hidden bg-card border-b border-border will-change-auto"
-        style={{ height: `${containerHeight}px` }}
+        style={{ height: `${containerHeight}px`, marginBottom: `${100 * collapseProgress}px` }}
       >
         {/* Stories - GPU-accelerated transforms like FeedHeader */}
         {usersWithStories.map((user, index) => {
