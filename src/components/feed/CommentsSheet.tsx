@@ -8,6 +8,7 @@ import { useComments, Comment } from "@/hooks/useComments";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { toast } from "@/hooks/use-toast";
 import {
   Drawer,
   DrawerContent,
@@ -82,7 +83,13 @@ export function CommentsSheet({
     setSubmitting(true);
     const result = await addComment(newComment.trim(), replyingTo?.commentId);
     setSubmitting(false);
-    if (!result.error) {
+    if (result.error) {
+      toast({
+        title: "Ошибка",
+        description: result.error,
+        variant: "destructive",
+      });
+    } else {
       setNewComment("");
       setReplyingTo(null);
     }
@@ -104,8 +111,8 @@ export function CommentsSheet({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="max-h-[85vh] flex flex-col">
-        <DrawerHeader className="border-b border-border pb-3">
+      <DrawerContent className="h-[92dvh] max-h-[92dvh] mt-0 flex flex-col">
+        <DrawerHeader className="border-b border-border pb-3 flex-shrink-0">
           <DrawerTitle className="text-center">
             Комментарии {totalComments > 0 && `(${totalComments})`}
           </DrawerTitle>
