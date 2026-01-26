@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 
-export function useScrollCollapse(threshold: number = 50) {
+export function useScrollCollapse(threshold: number = 50, initialCollapsed: boolean = false) {
   const containerRef = useScrollContainer();
-  const [scrollY, setScrollY] = useState(0);
+  const [scrollY, setScrollY] = useState(initialCollapsed ? threshold : 0);
   const rafId = useRef<number | null>(null);
   const lastScrollY = useRef(0);
 

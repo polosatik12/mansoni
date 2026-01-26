@@ -25,7 +25,7 @@ const Y_DIFF = COLLAPSED_Y - HEADER_HEIGHT;
 
 export function ChatStories() {
   const { usersWithStories, loading, uploadStory } = useStories();
-  const { collapseProgress } = useScrollCollapse(SCROLL_THRESHOLD);
+  const { collapseProgress } = useScrollCollapse(SCROLL_THRESHOLD, true);
   const scrollContainerRef = useScrollContainer();
   
   const [viewerOpen, setViewerOpen] = useState(false);
