@@ -24,9 +24,9 @@ export function EmojiStickerPicker({
         emojiStyle={EmojiStyle.APPLE}
         theme={Theme.DARK}
         width="100%"
-        height={320}
-        searchPlaceholder="Поиск эмодзи..."
-        skinTonesDisabled={false}
+        height={280}
+        searchDisabled={true}
+        skinTonesDisabled={true}
         lazyLoadEmojis={true}
         previewConfig={{ showPreview: false }}
         categories={[
