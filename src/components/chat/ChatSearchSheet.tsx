@@ -58,7 +58,7 @@ export function ChatSearchSheet({
         overlayClassName="bg-transparent"
       >
         {/* Semi-transparent glass effect - shows content behind */}
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-xl pointer-events-none" />
         
         {/* Content */}
         <div className="relative z-10 h-full flex flex-col p-6">
