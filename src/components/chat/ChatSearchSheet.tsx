@@ -54,16 +54,11 @@ export function ChatSearchSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="top" 
-        className="h-[85vh] rounded-b-3xl border-b border-white/10 shadow-2xl overflow-hidden p-0"
-        overlayClassName="bg-black/40"
+        className="h-[85vh] rounded-b-3xl border-b border-white/10 shadow-2xl overflow-hidden p-0 bg-transparent"
+        overlayClassName="bg-transparent"
       >
-        {/* Glass background with bokeh */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${glassBackground})` }}
-        />
-        {/* Light overlay with minimal blur to show bokeh */}
-        <div className="absolute inset-0 bg-black/5 backdrop-blur-sm" />
+        {/* Semi-transparent glass effect - shows content behind */}
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
         
         {/* Content */}
         <div className="relative z-10 h-full flex flex-col p-6">
