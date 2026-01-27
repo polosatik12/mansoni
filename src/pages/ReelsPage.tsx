@@ -284,8 +284,9 @@ export function ReelsPage() {
               className="relative"
               onClick={(e) => {
                 e.stopPropagation();
-                if (reel.author?.display_name) {
-                  navigate(`/user/${reel.author.display_name}`);
+                // Navigate by user_id for reliability (display_name can have duplicates)
+                if (reel.author_id) {
+                  navigate(`/user/${encodeURIComponent(reel.author?.display_name || reel.author_id)}`);
                 }
               }}
             >
