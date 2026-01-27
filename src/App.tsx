@@ -1,31 +1,50 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ChatOpenProvider } from "@/contexts/ChatOpenContext";
 import { CallsProvider } from "@/contexts/CallsContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { HomePage } from "@/pages/HomePage";
-import { SearchPage } from "@/pages/SearchPage";
-import { ChatsPage } from "@/pages/ChatsPage";
-import { ProfilePage } from "@/pages/ProfilePage";
-import { EditProfilePage } from "@/pages/EditProfilePage";
-import { UserProfilePage } from "@/pages/UserProfilePage";
-import { ReelsPage } from "@/pages/ReelsPage";
-import { RealEstatePage } from "@/pages/RealEstatePage";
-import { PropertyDetailPage } from "@/pages/PropertyDetailPage";
-import { InsurancePage } from "@/pages/InsurancePage";
-import InsurancePoliciesPage from "@/pages/InsurancePoliciesPage";
-import { AuthPage } from "@/pages/AuthPage";
-import { ExploreFeedPage } from "@/pages/ExploreFeedPage";
-import { PostDetailPage } from "@/pages/PostDetailPage";
-import NotFound from "./pages/NotFound";
-import { CommandPalette } from "@/components/CommandPalette";
+import { createQueryClient } from "@/lib/queryClient";
+import { initErrorTracking } from "@/lib/sentry";
+import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
+// Initialize error tracking
+initErrorTracking();
+
+// Create query client with circuit breaker
+const queryClient = createQueryClient();
+
+// F4: Lazy load heavy pages
+const HomePage = lazy(() => import("@/pages/HomePage").then(m => ({ default: m.HomePage })));
+const SearchPage = lazy(() => import("@/pages/SearchPage").then(m => ({ default: m.SearchPage })));
+const ChatsPage = lazy(() => import("@/pages/ChatsPage").then(m => ({ default: m.ChatsPage })));
+const ProfilePage = lazy(() => import("@/pages/ProfilePage").then(m => ({ default: m.ProfilePage })));
+const EditProfilePage = lazy(() => import("@/pages/EditProfilePage").then(m => ({ default: m.EditProfilePage })));
+const UserProfilePage = lazy(() => import("@/pages/UserProfilePage").then(m => ({ default: m.UserProfilePage })));
+const ReelsPage = lazy(() => import("@/pages/ReelsPage").then(m => ({ default: m.ReelsPage })));
+const RealEstatePage = lazy(() => import("@/pages/RealEstatePage").then(m => ({ default: m.RealEstatePage })));
+const PropertyDetailPage = lazy(() => import("@/pages/PropertyDetailPage").then(m => ({ default: m.PropertyDetailPage })));
+const InsurancePage = lazy(() => import("@/pages/InsurancePage").then(m => ({ default: m.InsurancePage })));
+const InsurancePoliciesPage = lazy(() => import("@/pages/InsurancePoliciesPage"));
+const ExploreFeedPage = lazy(() => import("@/pages/ExploreFeedPage").then(m => ({ default: m.ExploreFeedPage })));
+const PostDetailPage = lazy(() => import("@/pages/PostDetailPage").then(m => ({ default: m.PostDetailPage })));
+const AuthPage = lazy(() => import("@/pages/AuthPage").then(m => ({ default: m.AuthPage })));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const CommandPalette = lazy(() => import("@/components/CommandPalette").then(m => ({ default: m.CommandPalette })));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -36,32 +55,94 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <CommandPalette />
+              <Suspense fallback={null}>
+                <CommandPalette />
+              </Suspense>
               <Routes>
                 {/* Public route - Auth page */}
-                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/auth" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <AuthPage />
+                  </Suspense>
+                } />
                 
                 {/* Protected routes - require authentication */}
                 <Route element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/search" element={<SearchPage />} />
-                    <Route path="/explore/:postIndex" element={<ExploreFeedPage />} />
-                    <Route path="/post/:id" element={<PostDetailPage />} />
-                    <Route path="/chats" element={<ChatsPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/profile/edit" element={<EditProfilePage />} />
-                    <Route path="/user/:username" element={<UserProfilePage />} />
-                    <Route path="/realestate" element={<RealEstatePage />} />
-                    <Route path="/realestate/:id" element={<PropertyDetailPage />} />
-                    <Route path="/insurance" element={<InsurancePage />} />
-                    <Route path="/insurance/policies" element={<InsurancePoliciesPage />} />
-                    <Route path="/reels" element={<ReelsPage />} />
+                    <Route path="/" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <HomePage />
+                      </Suspense>
+                    } />
+                    <Route path="/search" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <SearchPage />
+                      </Suspense>
+                    } />
+                    <Route path="/explore/:postIndex" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <ExploreFeedPage />
+                      </Suspense>
+                    } />
+                    <Route path="/post/:id" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <PostDetailPage />
+                      </Suspense>
+                    } />
+                    <Route path="/chats" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <ChatsPage />
+                      </Suspense>
+                    } />
+                    <Route path="/profile" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <ProfilePage />
+                      </Suspense>
+                    } />
+                    <Route path="/profile/edit" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <EditProfilePage />
+                      </Suspense>
+                    } />
+                    <Route path="/user/:username" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <UserProfilePage />
+                      </Suspense>
+                    } />
+                    <Route path="/realestate" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <RealEstatePage />
+                      </Suspense>
+                    } />
+                    <Route path="/realestate/:id" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <PropertyDetailPage />
+                      </Suspense>
+                    } />
+                    <Route path="/insurance" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <InsurancePage />
+                      </Suspense>
+                    } />
+                    <Route path="/insurance/policies" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <InsurancePoliciesPage />
+                      </Suspense>
+                    } />
+                    <Route path="/reels" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <ReelsPage />
+                      </Suspense>
+                    } />
                   </Route>
                 </Route>
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <NotFound />
+                  </Suspense>
+                } />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>

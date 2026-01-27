@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { 
+  handleCors, 
+  getCorsHeaders, 
+  checkRateLimit, 
+  getClientId, 
+  rateLimitResponse 
+} from "../_shared/utils.ts";
 
 const systemPrompt = `Ты — умный AI-ассистент для подбора недвижимости. Ты помогаешь пользователям найти идеальное жильё.
 
@@ -28,11 +30,22 @@ const systemPrompt = `Ты — умный AI-ассистент для подб�
 - Эконом (Бутово, Некрасовка): от 180к ₽/м²`;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // E1: Handle CORS with restricted origins
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
+    // A1: Rate limiting
+    const clientId = getClientId(req);
+    const rateLimit = checkRateLimit(clientId);
+    
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetIn, origin);
+    }
+
     const { messages } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
@@ -78,7 +91,11 @@ serve(async (req) => {
     }
 
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { 
+        ...corsHeaders, 
+        "Content-Type": "text/event-stream",
+        "X-RateLimit-Remaining": String(rateLimit.remaining),
+      },
     });
   } catch (e) {
     console.error("property-assistant error:", e);
