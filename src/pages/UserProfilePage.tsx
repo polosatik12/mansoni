@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { useProfileByUsername, useUserPosts } from "@/hooks/useProfile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowersSheet } from "@/components/profile/FollowersSheet";
+import { StoryViewer } from "@/components/feed/StoryViewer";
+import type { Story, UserWithStories } from "@/hooks/useStories";
 
 const tabs = [
   { id: "posts", icon: Grid3X3 },
@@ -35,6 +37,8 @@ export function UserProfilePage() {
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+  const [storyViewerOpen, setStoryViewerOpen] = useState(false);
+  const [profileStoriesUsers, setProfileStoriesUsers] = useState<UserWithStories[]>([]);
 
   // Decode URI component to handle spaces and special characters
   const username = rawUsername ? decodeURIComponent(rawUsername) : undefined;
@@ -43,6 +47,39 @@ export function UserProfilePage() {
   const { posts, loading: postsLoading } = useUserPosts(profile?.user_id);
   const [hasUnviewedStories, setHasUnviewedStories] = useState(false);
   const [hasAnyStories, setHasAnyStories] = useState(false);
+
+  const openProfileStories = async () => {
+    if (!profile?.user_id) return;
+
+    try {
+      const { data: stories, error: storiesError } = await supabase
+        .from('stories')
+        .select('id, author_id, media_url, media_type, caption, created_at, expires_at')
+        .eq('author_id', profile.user_id)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: true });
+
+      if (storiesError) throw storiesError;
+      const activeStories = (stories || []) as Story[];
+
+      if (activeStories.length === 0) return;
+
+      const userEntry: UserWithStories = {
+        user_id: profile.user_id,
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        stories: activeStories,
+        // viewed влияет только на UI, но не на возможность открыть
+        hasNew: hasUnviewedStories,
+        isOwn: Boolean(currentUser && currentUser.id === profile.user_id),
+      };
+
+      setProfileStoriesUsers([userEntry]);
+      setStoryViewerOpen(true);
+    } catch (e) {
+      console.error('Error opening profile stories:', e);
+    }
+  };
 
   // Check if user has UNVIEWED active stories (not just any stories)
   useEffect(() => {
@@ -226,14 +263,19 @@ export function UserProfilePage() {
         <div className="flex items-start gap-4">
           {/* Avatar with gradient ring - only show if user has UNVIEWED stories */}
           <div className="relative">
-            <div className={cn(
-              "w-20 h-20 rounded-full p-[2.5px]",
-              hasUnviewedStories 
-                ? "bg-gradient-to-tr from-primary via-accent to-primary" 
-                : hasAnyStories
-                  ? "bg-muted-foreground/40" // Gray ring for viewed stories
-                  : "bg-muted" // No ring if no stories
-            )}>
+            <button
+              type="button"
+              onClick={openProfileStories}
+              className={cn(
+                "w-20 h-20 rounded-full p-[2.5px]",
+                hasUnviewedStories
+                  ? "bg-gradient-to-tr from-primary via-accent to-primary"
+                  : hasAnyStories
+                    ? "bg-muted-foreground/40" // просмотрено
+                    : "bg-muted" // нет сторис
+              )}
+              aria-label="Open stories"
+            >
               <div className="w-full h-full rounded-full bg-background p-[2px]">
                 <Avatar className="w-full h-full">
                   <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
@@ -242,7 +284,7 @@ export function UserProfilePage() {
                   </AvatarFallback>
                 </Avatar>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Stats */}
@@ -423,6 +465,14 @@ export function UserProfilePage() {
         userId={profile.user_id}
         type="following"
         title="Подписки"
+      />
+
+      {/* Story Viewer (profile) */}
+      <StoryViewer
+        usersWithStories={profileStoriesUsers}
+        initialUserIndex={0}
+        isOpen={storyViewerOpen}
+        onClose={() => setStoryViewerOpen(false)}
       />
     </div>
   );
