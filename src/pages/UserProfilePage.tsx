@@ -41,36 +41,68 @@ export function UserProfilePage() {
 
   const { profile, loading: profileLoading, error, follow, unfollow } = useProfileByUsername(username);
   const { posts, loading: postsLoading } = useUserPosts(profile?.user_id);
-  const [hasActiveStories, setHasActiveStories] = useState(false);
+  const [hasUnviewedStories, setHasUnviewedStories] = useState(false);
+  const [hasAnyStories, setHasAnyStories] = useState(false);
 
-  // Check if user has active stories
+  // Check if user has UNVIEWED active stories (not just any stories)
   useEffect(() => {
     const checkUserStories = async () => {
       if (!profile?.user_id) {
-        setHasActiveStories(false);
+        setHasUnviewedStories(false);
+        setHasAnyStories(false);
         return;
       }
 
       try {
-        const { count, error } = await supabase
+        // Step 1: Get all active (non-expired) stories for this user
+        const { data: activeStories, error: storiesError } = await supabase
           .from('stories')
-          .select('*', { count: 'exact', head: true })
+          .select('id')
           .eq('author_id', profile.user_id)
           .gt('expires_at', new Date().toISOString());
 
-        if (!error && count && count > 0) {
-          setHasActiveStories(true);
+        if (storiesError || !activeStories || activeStories.length === 0) {
+          setHasUnviewedStories(false);
+          setHasAnyStories(false);
+          return;
+        }
+
+        setHasAnyStories(true);
+
+        // Step 2: Check which of these stories the current user has viewed
+        if (currentUser) {
+          const storyIds = activeStories.map(s => s.id);
+          
+          const { data: viewedStories, error: viewsError } = await supabase
+            .from('story_views')
+            .select('story_id')
+            .eq('viewer_id', currentUser.id)
+            .in('story_id', storyIds);
+
+          if (viewsError) {
+            console.error('Error checking story views:', viewsError);
+            setHasUnviewedStories(true); // Assume unviewed on error
+            return;
+          }
+
+          const viewedIds = new Set((viewedStories || []).map(v => v.story_id));
+          
+          // Check if there are ANY unviewed stories
+          const hasUnviewed = activeStories.some(s => !viewedIds.has(s.id));
+          setHasUnviewedStories(hasUnviewed);
         } else {
-          setHasActiveStories(false);
+          // Not logged in - show as unviewed (will prompt login)
+          setHasUnviewedStories(true);
         }
       } catch (err) {
         console.error('Error checking stories:', err);
-        setHasActiveStories(false);
+        setHasUnviewedStories(false);
+        setHasAnyStories(false);
       }
     };
 
     checkUserStories();
-  }, [profile?.user_id]);
+  }, [profile?.user_id, currentUser]);
 
   const handleFollowToggle = async () => {
     if (!currentUser) {
@@ -192,13 +224,15 @@ export function UserProfilePage() {
       {/* Profile Info Row - Same layout as ProfilePage */}
       <div className="px-4 py-4">
         <div className="flex items-start gap-4">
-          {/* Avatar with gradient ring - only show if user has active stories */}
+          {/* Avatar with gradient ring - only show if user has UNVIEWED stories */}
           <div className="relative">
             <div className={cn(
               "w-20 h-20 rounded-full p-[2.5px]",
-              hasActiveStories 
-                ? "bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400" 
-                : "bg-muted"
+              hasUnviewedStories 
+                ? "bg-gradient-to-tr from-primary via-accent to-primary" 
+                : hasAnyStories
+                  ? "bg-muted-foreground/40" // Gray ring for viewed stories
+                  : "bg-muted" // No ring if no stories
             )}>
               <div className="w-full h-full rounded-full bg-background p-[2px]">
                 <Avatar className="w-full h-full">
