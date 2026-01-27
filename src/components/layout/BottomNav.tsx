@@ -1,5 +1,5 @@
 import { useState, useEffect, forwardRef, useRef, useCallback } from "react";
-import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, ChevronDown } from "lucide-react";
+import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, ChevronDown, Camera } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
@@ -49,13 +49,13 @@ const mockAccounts: Account[] = [
   },
 ];
 
-// Default nav items (main pages) - Chat icon in center
+// Default nav items: Лента → Reels → Чаты → Профиль | AR (отдельная кнопка)
 const defaultNavItems: NavItem[] = [
-  { to: "/", icon: Home, label: "Главная" },
-  { to: "/search", icon: Search, label: "Поиск" },
-  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true },
+  { to: "/", icon: Home, label: "Лента" },
   { to: "/reels", customIcon: ReelsIcon, label: "Reels" },
+  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true },
   { to: "/profile", customIcon: ProfileIcon, label: "Профиль", hasLongPress: true },
+  { to: "/ar", icon: Camera, label: "AR" },
 ];
 
 // Real estate service nav items
