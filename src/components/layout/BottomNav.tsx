@@ -73,7 +73,11 @@ const insuranceNavItems: NavItem[] = [
   { to: "/insurance/policies", icon: FileText, label: "Полисы" },
 ];
 
-export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) {
+interface BottomNavProps {
+  hidden?: boolean;
+}
+
+export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function BottomNav({ hidden = false }, ref) {
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useUnreadChats();
@@ -172,7 +176,7 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
           "fixed bottom-0 left-0 right-0 z-[100]",
           "touch-none select-none",
           "px-4",
-          keyboardOpen && "pointer-events-none"
+          (keyboardOpen || hidden) && "pointer-events-none"
         )}
         style={{
           position: 'fixed',
@@ -180,11 +184,12 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
           left: 0,
           right: 0,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          transform: keyboardOpen ? 'translate3d(0, 100%, 0)' : 'translate3d(0, 0, 0)',
-          WebkitTransform: keyboardOpen ? 'translate3d(0, 100%, 0)' : 'translate3d(0, 0, 0)',
-          transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          WebkitTransition: '-webkit-transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          willChange: 'transform',
+          transform: (keyboardOpen || hidden) ? 'translate3d(0, 100%, 0)' : 'translate3d(0, 0, 0)',
+          WebkitTransform: (keyboardOpen || hidden) ? 'translate3d(0, 100%, 0)' : 'translate3d(0, 0, 0)',
+          opacity: hidden ? 0 : 1,
+          transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
+          WebkitTransition: '-webkit-transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
+          willChange: 'transform, opacity',
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden',
           isolation: 'isolate',

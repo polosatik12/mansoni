@@ -64,7 +64,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </ScrollContainerProvider>
-      {!isChatOpen && <BottomNav />}
+      <BottomNav hidden={isChatOpen} />
 
       {/* Global Incoming Call Handler - shows on any page */}
       {incomingCall && !activeCall && (
