@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="reelsGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#A8C4E8"/>
+      <stop offset="100%" style="stop-color:#7BA3D4"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Left bar with notch -->
+  <path d="M14 8 
+           C14 4, 18 4, 18 8 
+           L18 28 
+           L22 28 
+           L22 8 
+           C22 4, 26 4, 26 8 
+           L26 56 
+           C26 60, 22 60, 22 56 
+           L22 36 
+           L18 36 
+           L18 56 
+           C18 60, 14 60, 14 56 
+           Z" 
+        fill="url(#reelsGradient)"/>
+  
+  <!-- Right bar -->
+  <rect x="38" y="8" width="12" height="48" rx="6" fill="url(#reelsGradient)"/>
+  
+  <!-- Play triangle (outline) -->
+  <path d="M24 30 L36 37 L24 44 Z" 
+        fill="none" 
+        stroke="url(#reelsGradient)" 
+        stroke-width="2.5"
+        stroke-linejoin="round"/>
+</svg>
