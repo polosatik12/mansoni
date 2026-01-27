@@ -79,23 +79,26 @@ export function ReelsPage() {
   // Navigate to specific reel with animation
   const goToReel = useCallback((newIndex: number) => {
     if (newIndex < 0 || newIndex >= reels.length || newIndex === currentIndex) {
+      // Quick snap back
+      setIsTransitioning(true);
       setDragOffset(0);
+      requestAnimationFrame(() => {
+        setTimeout(() => setIsTransitioning(false), 200);
+      });
       return;
     }
     
     setIsTransitioning(true);
-    const direction = newIndex > currentIndex ? -1 : 1;
-    const screenHeight = window.innerHeight - 64; // Subtract bottom nav
+    setCurrentIndex(newIndex);
+    setDragOffset(0);
+    setIsPlaying(true);
     
-    // Animate to final position
-    setDragOffset(direction * screenHeight);
-    
-    setTimeout(() => {
-      setCurrentIndex(newIndex);
-      setDragOffset(0);
-      setIsTransitioning(false);
-      setIsPlaying(true);
-    }, 300);
+    // Faster transition cleanup
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 250);
+    });
   }, [currentIndex, reels.length]);
 
   // Touch handlers for Instagram-style swipe
@@ -131,26 +134,31 @@ export function ReelsPage() {
     setIsDragging(false);
     
     const screenHeight = window.innerHeight - 64;
-    const threshold = screenHeight * 0.15; // 15% of screen to trigger swipe
-    const velocity = Math.abs(dragOffset) / (Date.now() - touchStartTime.current);
+    const threshold = screenHeight * 0.12; // Lower threshold for easier swipe
+    const timeDelta = Date.now() - touchStartTime.current;
+    const velocity = Math.abs(dragOffset) / Math.max(timeDelta, 1);
     
-    // Fast swipe or past threshold
-    if (Math.abs(dragOffset) > threshold || velocity > 0.5) {
+    // Fast swipe (high velocity) or past threshold
+    if (Math.abs(dragOffset) > threshold || velocity > 0.4) {
       if (dragOffset < 0 && currentIndex < reels.length - 1) {
         goToReel(currentIndex + 1);
       } else if (dragOffset > 0 && currentIndex > 0) {
         goToReel(currentIndex - 1);
       } else {
-        // Snap back with animation
+        // Snap back with quick animation
         setIsTransitioning(true);
         setDragOffset(0);
-        setTimeout(() => setIsTransitioning(false), 300);
+        requestAnimationFrame(() => {
+          setTimeout(() => setIsTransitioning(false), 200);
+        });
       }
     } else {
-      // Snap back
+      // Snap back quickly
       setIsTransitioning(true);
       setDragOffset(0);
-      setTimeout(() => setIsTransitioning(false), 300);
+      requestAnimationFrame(() => {
+        setTimeout(() => setIsTransitioning(false), 200);
+      });
     }
   }, [isDragging, dragOffset, currentIndex, reels.length, goToReel]);
 
@@ -227,11 +235,13 @@ export function ReelsPage() {
       opacity,
       zIndex,
       transition: isTransitioning 
-        ? 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease-out' 
+        ? 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease-out' 
         : isDragging 
           ? 'none' 
-          : 'transform 0.1s ease-out',
+          : 'transform 0.05s linear',
       willChange: 'transform, opacity',
+      backfaceVisibility: 'hidden' as const,
+      WebkitBackfaceVisibility: 'hidden' as const,
     };
   };
 
