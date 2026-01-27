@@ -28,6 +28,7 @@ export function usePullDownExpand(
   const isDragging = useRef(false);
   const wasAtTop = useRef(false);
   const rafId = useRef<number | null>(null);
+  const lastProgress = useRef(0);
 
   const toggleExpanded = useCallback(() => {
     setState(prev => ({
@@ -67,8 +68,15 @@ export function usePullDownExpand(
         if (rafId.current) cancelAnimationFrame(rafId.current);
         
         rafId.current = requestAnimationFrame(() => {
-          const progress = Math.min(deltaY / threshold, 1);
-          setState(prev => ({ ...prev, expandProgress: progress }));
+          const rawProgress = Math.min(deltaY / threshold, 1);
+          // Round to 0.02 steps for smoother updates
+          const progress = Math.round(rawProgress * 50) / 50;
+          
+          // Only update if changed significantly
+          if (Math.abs(progress - lastProgress.current) >= 0.02) {
+            lastProgress.current = progress;
+            setState(prev => ({ ...prev, expandProgress: progress }));
+          }
         });
       }
     };
@@ -80,6 +88,7 @@ export function usePullDownExpand(
       const progress = deltaY / threshold;
       
       isDragging.current = false;
+      lastProgress.current = 0;
       
       // If pulled past 50%, expand fully
       if (progress > 0.5 && !state.isExpanded) {
