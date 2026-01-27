@@ -182,7 +182,9 @@ export function UserProfilePage() {
       navigate("/chats", { 
         state: { 
           conversationId, 
-          chatName: profile.display_name || "Пользователь" 
+          otherUserId: profile.user_id,
+          otherDisplayName: profile.display_name || "Пользователь",
+          otherAvatarUrl: profile.avatar_url 
         } 
       });
 
