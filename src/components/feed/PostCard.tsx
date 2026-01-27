@@ -162,7 +162,10 @@ export function PostCard({
     : content;
 
   const goToProfile = () => {
-    navigate(`/user/${author.username}`);
+    // Use authorId (user_id) for reliable navigation
+    if (authorId) {
+      navigate(`/user/${authorId}`);
+    }
   };
 
   return (

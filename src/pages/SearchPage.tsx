@@ -40,8 +40,8 @@ export function SearchPage() {
     return () => clearTimeout(timer);
   }, [query, searchUsers]);
 
-  const handleUserClick = (displayName: string) => {
-    navigate(`/user/${encodeURIComponent(displayName)}`);
+  const handleUserClick = (userId: string) => {
+    navigate(`/user/${userId}`);
   };
 
   const handlePostClick = (index: number) => {
@@ -76,7 +76,7 @@ export function SearchPage() {
                 <div
                   key={user.user_id}
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => handleUserClick(user.display_name)}
+                  onClick={() => handleUserClick(user.user_id)}
                 >
                   <Avatar className="w-12 h-12">
                     <AvatarImage src={user.avatar_url || undefined} />
