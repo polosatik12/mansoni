@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
@@ -13,9 +12,6 @@ import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// Highlights - empty by default, will be populated when user adds them
-const highlights: { id: string; name: string; image: string; hasEmoji?: boolean }[] = [];
 
 const tabs = [
   { id: "posts", icon: Grid3X3 },
@@ -178,35 +174,6 @@ export function ProfilePage() {
             Поделиться профилем
           </Button>
         </div>
-      </div>
-
-      {/* Highlights */}
-      <div className="px-4 pb-4">
-        <ScrollArea className="w-full">
-          <div className="flex gap-4">
-            {/* Add New */}
-            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-              <div className="w-16 h-16 rounded-full border-2 border-border flex items-center justify-center bg-card">
-                <Plus className="w-6 h-6 text-foreground" />
-              </div>
-              <span className="text-xs text-foreground">Добавить</span>
-            </div>
-
-            {highlights.map((highlight) => (
-              <div key={highlight.id} className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                <div className="w-16 h-16 rounded-full p-0.5 bg-muted">
-                  <img
-                    src={highlight.image}
-                    alt={highlight.name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-                <span className="text-xs text-foreground">{highlight.name}</span>
-              </div>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" className="invisible" />
-        </ScrollArea>
       </div>
 
       {/* Content Tabs */}
