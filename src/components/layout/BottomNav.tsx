@@ -4,8 +4,8 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
 import ChatIcon from "@/assets/chat-icon.svg";
-import ProfileIcon from "@/assets/profile-icon.png";
-import ReelsIcon from "@/assets/reels-icon.png";
+import ProfileIcon from "@/assets/profile-icon.svg";
+import ReelsIcon from "@/assets/reels-icon.svg";
 import {
   Drawer,
   DrawerContent,
