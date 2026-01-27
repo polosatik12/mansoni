@@ -72,6 +72,14 @@ export function SimpleMediaEditor({
   useEffect(() => {
     if (!open || !mediaFile) return;
 
+    // Reset state when opening with new file
+    setBrightness(100);
+    setContrast(100);
+    setSaturation(100);
+    setRotation(0);
+    setFlipX(false);
+    setFlipY(false);
+    setSelectedFilter("none");
     setIsLoading(true);
 
     if (isVideo) {
@@ -84,16 +92,17 @@ export function SimpleMediaEditor({
 
     // Load image
     const img = new Image();
+    img.crossOrigin = "anonymous"; // Allow cross-origin images
     const url = URL.createObjectURL(mediaFile);
     
     img.onload = () => {
       imageRef.current = img;
       setPreviewUrl(url);
       setIsLoading(false);
-      renderCanvas();
     };
     
-    img.onerror = () => {
+    img.onerror = (e) => {
+      console.error("Error loading image:", e);
       setIsLoading(false);
     };
     
@@ -164,12 +173,15 @@ export function SimpleMediaEditor({
     ctx.restore();
   }, [brightness, contrast, saturation, rotation, flipX, flipY, selectedFilter, contentType]);
 
-  // Re-render when adjustments change
+  // Re-render when adjustments change or image loads
   useEffect(() => {
-    if (!isVideo && imageRef.current) {
-      renderCanvas();
+    if (!isVideo && imageRef.current && !isLoading) {
+      // Use requestAnimationFrame to ensure canvas is in DOM
+      requestAnimationFrame(() => {
+        renderCanvas();
+      });
     }
-  }, [renderCanvas, isVideo]);
+  }, [renderCanvas, isVideo, isLoading]);
 
   // Reset adjustments
   const handleReset = () => {
