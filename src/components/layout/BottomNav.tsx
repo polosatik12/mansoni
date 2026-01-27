@@ -166,14 +166,12 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
 
   return (
     <>
-      <nav 
-        ref={ref as React.Ref<HTMLElement>}
+      <div 
+        ref={ref as React.Ref<HTMLDivElement>}
         className={cn(
           "fixed bottom-0 left-0 right-0 z-[100]",
           "touch-none select-none",
-          isReelsPage 
-            ? "bg-black/80 backdrop-blur-md border-t border-white/10" 
-            : "bg-card border-t border-border",
+          "px-4",
           keyboardOpen && "pointer-events-none"
         )}
         style={{
@@ -192,11 +190,18 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
           isolation: 'isolate',
         }}
       >
-        <div 
-          className="flex items-center justify-around max-w-lg mx-auto"
+        {/* Glass pill navigation container */}
+        <nav 
+          className={cn(
+            "flex items-center justify-around max-w-lg mx-auto mb-2",
+            "rounded-full",
+            isReelsPage 
+              ? "bg-black/50 backdrop-blur-xl border border-white/10" 
+              : "bg-black/40 backdrop-blur-xl border border-white/10"
+          )}
           style={{
-            height: '50px',
-            minHeight: '50px',
+            height: '56px',
+            minHeight: '56px',
           }}
         >
           {navItems.map((item) => {
@@ -210,9 +215,7 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                     "transition-colors duration-150",
                     "active:opacity-70",
                     "min-w-[44px] min-h-[44px]",
-                    isReelsPage 
-                      ? "text-white/60 hover:text-white" 
-                      : "text-muted-foreground hover:text-foreground"
+                    "text-white/60 hover:text-white"
                   )}
                   style={{ 
                     WebkitTapHighlightColor: 'transparent',
@@ -245,9 +248,7 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                     "transition-colors duration-150",
                     "active:opacity-70",
                     "min-w-[44px] min-h-[44px]",
-                    isReelsPage
-                      ? isActive ? "text-white" : "text-white/60"
-                      : isActive ? "text-primary" : "text-muted-foreground"
+                    isActive ? "text-white" : "text-white/60"
                   )
                 }
                 style={{ 
@@ -297,9 +298,9 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                 )}
               </NavLink>
             );
-          })}
-        </div>
-      </nav>
+        })}
+        </nav>
+      </div>
 
       {/* Account Switcher Drawer */}
       <Drawer open={accountSwitcherOpen} onOpenChange={setAccountSwitcherOpen}>
