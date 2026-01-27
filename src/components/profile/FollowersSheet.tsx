@@ -1,7 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { User, Loader2 } from "lucide-react";
+import { User, Loader2, X } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -155,12 +155,19 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[100dvh] rounded-none" hideCloseButton>
-        <SheetHeader className="pb-4 border-b border-border">
-          <SheetTitle className="text-center">{title}</SheetTitle>
-        </SheetHeader>
+      <SheetContent side="bottom" className="h-[100dvh] rounded-none p-0" hideCloseButton>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="w-8" /> {/* Spacer */}
+          <SheetTitle className="text-center font-semibold">{title}</SheetTitle>
+          <button 
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-        <div className="py-4 overflow-y-auto h-[calc(100%-60px)]">
+        <div className="py-4 px-4 overflow-y-auto flex-1">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
