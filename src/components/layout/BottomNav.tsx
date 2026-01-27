@@ -1,11 +1,8 @@
 import { useState, useEffect, forwardRef, useRef, useCallback } from "react";
-import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, ChevronDown, Camera } from "lucide-react";
+import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, ChevronDown, Camera, MessageCircle, User, Film } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
-import ChatIcon from "@/assets/chat-icon.svg";
-import ProfileIcon from "@/assets/profile-icon.svg";
-import ReelsIcon from "@/assets/reels-icon.svg";
 import {
   Drawer,
   DrawerContent,
@@ -16,7 +13,6 @@ import {
 interface NavItem {
   to: string;
   icon?: LucideIcon;
-  customIcon?: string;
   label: string;
   hasBadge?: boolean;
   isAction?: boolean;
@@ -52,9 +48,9 @@ const mockAccounts: Account[] = [
 // Default nav items: Лента → Reels → Чаты → Профиль | AR (отдельная кнопка)
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Лента" },
-  { to: "/reels", customIcon: ReelsIcon, label: "Reels" },
-  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true },
-  { to: "/profile", customIcon: ProfileIcon, label: "Профиль", hasLongPress: true },
+  { to: "/reels", icon: Film, label: "Reels" },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
+  { to: "/profile", icon: User, label: "Профиль", hasLongPress: true },
   { to: "/ar", icon: Camera, label: "AR" },
 ];
 
@@ -62,14 +58,14 @@ const defaultNavItems: NavItem[] = [
 const realEstateNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "#search", icon: Search, label: "Поиск", isAction: true },
-  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "#favorites", icon: Heart, label: "Избранное", isAction: true },
 ];
 
 // Insurance service nav items
 const insuranceNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
-  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "/insurance/policies", icon: FileText, label: "Полисы" },
 ];
 
@@ -264,24 +260,15 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
                   {({ isActive }) => (
                     <>
                       <div className="relative flex items-center justify-center">
-                        {item.customIcon ? (
-                          <img 
-                            src={item.customIcon} 
-                            alt={item.label}
-                            className={cn(
-                              "w-10 h-10 transition-all duration-150",
-                              isActive && "scale-110"
-                            )}
-                          />
-                        ) : item.icon ? (
+                        {item.icon && (
                           <item.icon
                             className={cn(
-                              "w-7 h-7 transition-all duration-150",
+                              "w-6 h-6 transition-all duration-150",
                               isActive && "stroke-[2.2px]"
                             )}
                             strokeWidth={isActive ? 2.2 : 1.8}
                           />
-                        ) : null}
+                        )}
                         {item.hasBadge && unreadCount > 0 && (
                           <span 
                             className={cn(
@@ -335,16 +322,7 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
               >
                 {({ isActive }) => (
                   <div className="relative flex items-center justify-center">
-                    {lastItem.customIcon ? (
-                      <img 
-                        src={lastItem.customIcon} 
-                        alt={lastItem.label}
-                        className={cn(
-                          "w-10 h-10 transition-all duration-150",
-                          isActive && "scale-110"
-                        )}
-                      />
-                    ) : lastItem.icon ? (
+                    {lastItem.icon && (
                       <lastItem.icon
                         className={cn(
                           "w-6 h-6 transition-all duration-150",
@@ -352,7 +330,7 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
                         )}
                         strokeWidth={isActive ? 2.2 : 1.8}
                       />
-                    ) : null}
+                    )}
                   </div>
                 )}
               </NavLink>
