@@ -155,7 +155,7 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+      <SheetContent side="bottom" className="h-[100dvh] rounded-none" hideCloseButton>
         <SheetHeader className="pb-4 border-b border-border">
           <SheetTitle className="text-center">{title}</SheetTitle>
         </SheetHeader>
