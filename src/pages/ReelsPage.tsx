@@ -192,16 +192,46 @@ export function ReelsPage() {
     const baseOffset = (index - currentIndex) * screenHeight;
     const totalOffset = baseOffset + dragOffset;
     
-    // Scale effect for depth
-    const distance = Math.abs(index - currentIndex);
-    const scale = distance === 0 ? 1 : 0.92;
-    const opacity = distance <= 1 ? 1 : 0;
+    // Instagram-style dynamic scale and opacity based on position
+    const distance = index - currentIndex;
+    const dragProgress = Math.abs(dragOffset) / screenHeight;
+    
+    let scale = 1;
+    let opacity = 1;
+    let zIndex = 10;
+    
+    if (distance === 0) {
+      // Current reel - scale down slightly as user drags away
+      scale = 1 - (dragProgress * 0.08);
+      opacity = 1 - (dragProgress * 0.3);
+      zIndex = 20;
+    } else if (Math.abs(distance) === 1) {
+      // Adjacent reels - scale up as they come into view
+      const isComingIn = (distance > 0 && dragOffset < 0) || (distance < 0 && dragOffset > 0);
+      if (isComingIn) {
+        scale = 0.85 + (dragProgress * 0.15);
+        opacity = 0.5 + (dragProgress * 0.5);
+      } else {
+        scale = 0.85;
+        opacity = 0.5;
+      }
+      zIndex = 15;
+    } else {
+      scale = 0.8;
+      opacity = 0;
+      zIndex = 5;
+    }
     
     return {
       transform: `translate3d(0, ${totalOffset}px, 0) scale(${scale})`,
       opacity,
-      transition: isTransitioning ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease' : 'none',
-      willChange: 'transform',
+      zIndex,
+      transition: isTransitioning 
+        ? 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease-out' 
+        : isDragging 
+          ? 'none' 
+          : 'transform 0.1s ease-out',
+      willChange: 'transform, opacity',
     };
   };
 
