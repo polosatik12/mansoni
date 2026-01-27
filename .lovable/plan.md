@@ -1,88 +1,100 @@
 
+# Plan: Smoother Story Circle Animations
 
-# План: Фильтры для ленты публикаций
+## Problem Analysis
 
-## Обзор
-Добавляем под шапку с историями переключатель-фильтр между тремя типами контента:
-- **Все** (смешанная лента) — по умолчанию
-- **Публикации** (посты с медиа — фото/видео)
-- **Текст** (только текстовые посты без медиа)
+Currently, the story circles animation is janky because:
+1. JavaScript recalculates all styles on every scroll event (60+ times per second)
+2. No CSS transitions smooth out the frame-to-frame changes
+3. The `useMemo` dependency on `collapseProgress` causes recalculation on every scroll tick
+4. Multiple inline style updates per frame trigger layout thrashing
 
-Рядом с фильтрами будет минималистичный крестик (X) для сброса в "Все".
+## Solution Strategy
 
-## Визуальный дизайн
-```text
-┌──────────────────────────────────────┐
-│  [Все]  [Публикации]  [Текст]   ✕   │
-└──────────────────────────────────────┘
+Switch from **per-frame JavaScript calculations** to **CSS-driven transitions** with only minimal JavaScript for state changes. This lets the browser's compositor handle smooth interpolation.
+
+## Implementation Details
+
+### 1. Add CSS Transitions to Story Elements
+
+Update `src/index.css` to add smooth transitions:
+
+```css
+/* Story avatar button - smooth transitions */
+.story-avatar-btn {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              opacity 0.15s ease-out;
+}
+
+/* Story avatar container - smooth scale */
+.story-avatar {
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Story name - smooth fade */
+.story-name {
+  will-change: opacity, height;
+  transition: opacity 0.15s ease-out, 
+              height 0.15s ease-out, 
+              margin-top 0.15s ease-out;
+}
 ```
 
-- Фильтры в виде "chips" (pill-кнопок) в ряд
-- Активный фильтр выделен цветом (bg-primary)
-- Крестик показывается только когда выбран НЕ "Все"
-- Минималистичная иконка X справа
+### 2. Simplify FeedHeader Logic
 
-## Технические изменения
+Update `src/components/feed/FeedHeader.tsx`:
 
-### 1. Создание компонента FeedFilters
-**Файл:** `src/components/feed/FeedFilters.tsx`
+- **Reduce recalculation frequency**: Only update on significant progress changes (threshold-based)
+- **Use `requestAnimationFrame` batching**: Group style updates
+- **Simplify state transitions**: Use two states (expanded/collapsed) with CSS handling the animation
+- **Add transition classes** instead of inline transition styles
 
-- Три кнопки-фильтра: "Все", "Публикации", "Текст"
-- Кнопка сброса (X) справа, появляется только при активном фильтре
-- Props: `filter`, `onFilterChange`
-- Стилизация: горизонтальный скролл, pill-кнопки с анимацией
+### 3. Optimize useScrollCollapse Hook
 
-### 2. Обновление usePosts хука
-**Файл:** `src/hooks/usePosts.tsx`
+Update `src/hooks/useScrollCollapse.tsx`:
 
-- Добавить новый тип: `ContentFilter = 'all' | 'media' | 'text'`
-- Добавить параметр `contentFilter` в хук
-- Фильтрация на клиенте после загрузки:
-  - `media` — посты где `media.length > 0`
-  - `text` — посты где `media.length === 0`
-  - `all` — все посты (без фильтрации)
+- Add **hysteresis/debouncing** to prevent jitter at scroll boundaries
+- Use **rounded progress values** (e.g., 2 decimal places) to reduce unnecessary re-renders
+- Consider using CSS `scroll-timeline` for native browser scroll-linked animations (with fallback)
 
-### 3. Обновление HomePage
-**Файл:** `src/pages/HomePage.tsx`
+### 4. Optimize ChatStories Component
 
-- Добавить state для `contentFilter`
-- Импорт и рендер `FeedFilters` под `FeedHeader`
-- Передать `filter` и `onFilterChange` в компонент
-- Применить клиентскую фильтрацию к постам
+Update `src/components/chat/ChatStories.tsx`:
 
-## Порядок выполнения
-1. Создать `FeedFilters.tsx` с UI фильтров и крестиком сброса
-2. Обновить `HomePage.tsx` — добавить state и фильтрацию
-3. Применить фильтрацию на уровне рендера (без изменения usePosts для простоты)
+- Apply the same transition-based approach
+- Ensure consistent animation timing between FeedHeader and ChatStories
 
-## Детали реализации
+## Technical Details
 
-### FeedFilters компонент
-```typescript
-const filters = [
-  { id: 'all', label: 'Все' },
-  { id: 'media', label: 'Публикации' },
-  { id: 'text', label: 'Текст' },
-];
+### CSS Easing Curve
+Use `cubic-bezier(0.25, 0.1, 0.25, 1)` - a slightly modified ease-out that feels natural for scroll-linked UI
 
-// Крестик виден только если filter !== 'all'
-{filter !== 'all' && (
-  <button onClick={() => onFilterChange('all')}>
-    <X className="w-4 h-4" />
-  </button>
-)}
-```
+### Transition Duration
+- Position/transform: 200ms (fast enough to feel responsive)
+- Opacity: 150ms (slightly faster for snappier visibility changes)
+- Scale: 200ms (matches position for coordinated movement)
 
-### Фильтрация в HomePage
-```typescript
-const filteredPosts = useMemo(() => {
-  if (contentFilter === 'media') {
-    return posts.filter(p => (p.media?.length ?? 0) > 0);
-  }
-  if (contentFilter === 'text') {
-    return posts.filter(p => (p.media?.length ?? 0) === 0);
-  }
-  return posts;
-}, [posts, contentFilter]);
-```
+### GPU Optimization
+- Keep `will-change: transform, opacity` on animated elements
+- Use `transform: translate3d()` and `scale()` only
+- Avoid animating `width`, `height`, `left`, `top` properties
 
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/index.css` | Add/update transition styles for `.story-avatar-btn`, `.story-avatar`, `.story-name` |
+| `src/components/feed/FeedHeader.tsx` | Simplify style calculations, add transition classes |
+| `src/hooks/useScrollCollapse.tsx` | Add progress value rounding/debouncing |
+| `src/components/chat/ChatStories.tsx` | Apply same transition approach for consistency |
+
+## Expected Result
+
+- Smooth 60fps animations when scrolling
+- No visible jankiness or stuttering
+- Consistent behavior across different scroll speeds
+- Proper GPU acceleration maintaining battery efficiency
