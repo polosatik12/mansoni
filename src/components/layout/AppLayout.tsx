@@ -41,7 +41,10 @@ export function AppLayout() {
 
   return (
     <div 
-      className="h-full flex flex-col bg-background safe-area-top safe-area-left safe-area-right"
+      className={cn(
+        "h-full flex flex-col safe-area-top safe-area-left safe-area-right",
+        isReelsPage ? "bg-black" : "bg-background"
+      )}
       style={{ 
         position: 'relative',
         overflow: 'hidden',
