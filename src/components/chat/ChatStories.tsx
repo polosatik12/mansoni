@@ -119,7 +119,7 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
             return (
               <div
                 key={user.user_id}
-                className="absolute top-0"
+                className="story-avatar-btn absolute top-0"
                 style={{
                   left: index * COLLAPSED_OVERLAP,
                   zIndex,
@@ -127,7 +127,7 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
               >
                 <div
                   className={cn(
-                    "rounded-full flex-shrink-0",
+                    "story-avatar rounded-full flex-shrink-0",
                     user.hasNew
                       ? "p-[1.5px] bg-gradient-to-tr from-primary via-accent to-primary"
                       : hasStories

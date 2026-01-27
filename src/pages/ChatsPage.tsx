@@ -233,20 +233,21 @@ export function ChatsPage() {
       <div className="h-full flex flex-col overflow-hidden">
         {/* Dynamic Header with stories stack/row */}
         <div 
-          className="flex-shrink-0 border-b border-border bg-background will-change-auto overflow-hidden"
+          className="flex-shrink-0 border-b border-border bg-background overflow-hidden"
           style={{ 
             height: headerHeight,
-            transition: expandProgress === 0 || expandProgress === 1 ? 'height 0.2s ease-out' : 'none',
+            transition: 'height 0.25s cubic-bezier(0.25, 0.1, 0.25, 1)',
           }}
         >
           {/* Top row: stack (when collapsed) + title + actions */}
           <div className="flex items-center justify-between px-4 h-14">
             {/* Stories stack (collapsed) - left side */}
             <div 
-              className="flex-shrink-0 transition-opacity"
+              className="flex-shrink-0"
               style={{ 
                 opacity: 1 - expandProgress,
                 pointerEvents: expandProgress > 0.5 ? 'none' : 'auto',
+                transition: 'opacity 0.2s ease-out',
               }}
             >
               <ChatStories 
@@ -258,9 +259,10 @@ export function ChatsPage() {
             
             {/* Title - shifts based on expand */}
             <h1 
-              className="text-lg font-semibold absolute left-1/2 -translate-x-1/2"
+              className="text-lg font-semibold absolute left-1/2"
               style={{
                 transform: `translateX(-50%) translateX(${(1 - expandProgress) * 30}px)`,
+                transition: 'transform 0.25s cubic-bezier(0.25, 0.1, 0.25, 1)',
               }}
             >
               Чаты
@@ -285,11 +287,12 @@ export function ChatsPage() {
           
           {/* Stories row (expanded) - appears below title */}
           <div 
-            className="overflow-hidden"
             style={{ 
               opacity: expandProgress,
               height: STORIES_ROW_HEIGHT * expandProgress,
               pointerEvents: expandProgress < 0.5 ? 'none' : 'auto',
+              transition: 'opacity 0.2s ease-out, height 0.25s cubic-bezier(0.25, 0.1, 0.25, 1)',
+              overflow: 'hidden',
             }}
           >
             <ChatStories 
