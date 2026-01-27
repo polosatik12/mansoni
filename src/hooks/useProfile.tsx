@@ -231,14 +231,16 @@ export function useProfileByUsername(username?: string) {
         profileData = data;
       } else {
         // Fetch profile by display_name (case-insensitive)
+        // Use limit(1) instead of maybeSingle() to handle duplicate names
         const { data, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .ilike('display_name', username)
-          .maybeSingle();
+          .order('created_at', { ascending: false })
+          .limit(1);
 
         if (profileError) throw profileError;
-        profileData = data;
+        profileData = data?.[0] || null;
       }
       
       if (!profileData) {
