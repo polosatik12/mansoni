@@ -1848,6 +1848,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_stories: { Args: never; Returns: number }
       create_channel: {
         Args: {
           p_avatar_url?: string

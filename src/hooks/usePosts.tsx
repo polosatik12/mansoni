@@ -67,78 +67,68 @@ export function usePosts(filter: FeedFilter = 'all') {
         }
       }
       
-      // Fetch posts - first try with join
-      const { data: postsData, error: postsError } = await supabase
+      // F2: Optimized query with JOINs - single query for posts + media + likes
+      let query = supabase
         .from('posts')
-        .select('*')
+        .select(`
+          *,
+          post_media (
+            id,
+            media_url,
+            media_type,
+            sort_order
+          )
+        `)
         .eq('is_published', true)
-         // Stable ordering to avoid "jumping" when rows share the same created_at
-         .order('created_at', { ascending: false })
-         .order('id', { ascending: false })
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .limit(50);
+
+      // Apply following filter if needed
+      if (filter === 'following' && followingIds.length > 0) {
+        query = query.in('author_id', followingIds);
+      }
+
+      const { data: postsData, error: postsError } = await query;
 
       if (postsError) throw postsError;
 
-      // Filter by following if needed
-      let filteredPosts = postsData || [];
-      if (filter === 'following' && followingIds.length > 0) {
-        filteredPosts = filteredPosts.filter(p => followingIds.includes(p.author_id));
-      }
-      
-      if (filteredPosts.length === 0) {
+      if (!postsData || postsData.length === 0) {
         setPosts([]);
         setLoading(false);
         return;
       }
         
-      // Fetch profiles separately
-      const authorIds = [...new Set(filteredPosts.map(p => p.author_id))];
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, avatar_url')
-        .in('user_id', authorIds);
-      
-      const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
-      
-      const postsWithAuthors = filteredPosts.map(post => ({
+      // Fetch profiles and likes in parallel for remaining data
+      const authorIds = [...new Set(postsData.map(p => p.author_id))];
+      const postIds = postsData.map(p => p.id);
+
+      const [profilesRes, likesRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', authorIds),
+        user 
+          ? supabase
+              .from('post_likes')
+              .select('post_id')
+              .eq('user_id', user.id)
+              .in('post_id', postIds)
+          : Promise.resolve({ data: [] })
+      ]);
+
+      const profilesMap = new Map(profilesRes.data?.map(p => [p.user_id, p]) || []);
+      const likedPostIds = new Set(likesRes.data?.map(l => l.post_id) || []);
+
+      const finalPosts: Post[] = postsData.map(post => ({
         ...post,
         author: profilesMap.get(post.author_id) ? {
           id: post.author_id,
           display_name: profilesMap.get(post.author_id)?.display_name,
           avatar_url: profilesMap.get(post.author_id)?.avatar_url
-        } : undefined
-      }));
-
-      // Fetch media for posts
-      const postIds = postsWithAuthors.map(p => p.id);
-      const { data: mediaData } = await supabase
-        .from('post_media')
-        .select('*')
-        .in('post_id', postIds)
-        .order('sort_order', { ascending: true });
-
-      const mediaMap = new Map<string, typeof mediaData>();
-      mediaData?.forEach(m => {
-        const existing = mediaMap.get(m.post_id) || [];
-        existing.push(m);
-        mediaMap.set(m.post_id, existing);
-      });
-
-      // Check if user liked posts
-      let likedPostIds: string[] = [];
-      if (user) {
-        const { data: likesData } = await supabase
-          .from('post_likes')
-          .select('post_id')
-          .eq('user_id', user.id)
-          .in('post_id', postIds);
-        likedPostIds = likesData?.map(l => l.post_id) || [];
-      }
-
-      const finalPosts = postsWithAuthors.map(post => ({
-        ...post,
-        media: mediaMap.get(post.id) || [],
-        is_liked: likedPostIds.includes(post.id)
+        } : undefined,
+        media: (post.post_media || []).sort((a: any, b: any) => a.sort_order - b.sort_order),
+        is_liked: likedPostIds.has(post.id)
       }));
 
       setPosts(finalPosts);
