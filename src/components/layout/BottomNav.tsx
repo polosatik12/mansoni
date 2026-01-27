@@ -190,64 +190,136 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
           isolation: 'isolate',
         }}
       >
-        {/* Glass pill navigation container */}
-        <nav 
-          className={cn(
-            "flex items-center justify-around max-w-lg mx-auto mb-2",
-            "rounded-full",
-            isReelsPage 
-              ? "bg-black/50 backdrop-blur-xl border border-white/10" 
-              : "bg-black/40 backdrop-blur-xl border border-white/10"
-          )}
-          style={{
-            height: '56px',
-            minHeight: '56px',
-          }}
-        >
-          {navItems.map((item) => {
-            // For action items (not real routes), use button
-            if (item.isAction) {
+        <div className="flex items-center gap-3 max-w-lg mx-auto mb-2">
+          {/* Main glass pill navigation container */}
+          <nav 
+            className={cn(
+              "flex-1 flex items-center justify-around",
+              "rounded-full",
+              "bg-black/40 backdrop-blur-xl border border-white/10"
+            )}
+            style={{
+              height: '56px',
+              minHeight: '56px',
+            }}
+          >
+            {/* Render all items except the last one */}
+            {navItems.slice(0, -1).map((item) => {
+              // For action items (not real routes), use button
+              if (item.isAction) {
+                return (
+                  <button
+                    key={item.to}
+                    className={cn(
+                      "flex flex-col items-center justify-center flex-1 h-full",
+                      "transition-colors duration-150",
+                      "active:opacity-70",
+                      "min-w-[44px] min-h-[44px]",
+                      "text-white/60 hover:text-white"
+                    )}
+                    style={{ 
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'manipulation',
+                    }}
+                  >
+                    <div className="relative flex items-center justify-center">
+                      {item.icon && <item.icon className="w-[22px] h-[22px]" strokeWidth={1.8} />}
+                    </div>
+                    <span className="text-[10px] font-medium mt-0.5 leading-tight">
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              }
+
               return (
-                <button
+                <NavLink
                   key={item.to}
-                  className={cn(
-                    "flex flex-col items-center justify-center flex-1 h-full",
-                    "transition-colors duration-150",
-                    "active:opacity-70",
-                    "min-w-[44px] min-h-[44px]",
-                    "text-white/60 hover:text-white"
-                  )}
+                  to={item.to}
+                  onTouchStart={() => handleTouchStart(item)}
+                  onTouchEnd={(e) => handleTouchEnd(item, e)}
+                  onMouseDown={() => handleTouchStart(item)}
+                  onMouseUp={(e) => handleTouchEnd(item, e)}
+                  onMouseLeave={(e) => handleTouchEnd(item, e)}
+                  onContextMenu={(e) => handleContextMenu(item, e)}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex flex-col items-center justify-center flex-1 h-full",
+                      "transition-colors duration-150",
+                      "active:opacity-70",
+                      "min-w-[44px] min-h-[44px]",
+                      isActive ? "text-white" : "text-white/60"
+                    )
+                  }
                   style={{ 
                     WebkitTapHighlightColor: 'transparent',
                     touchAction: 'manipulation',
                   }}
                 >
-                  <div className="relative flex items-center justify-center">
-                    <item.icon className="w-[22px] h-[22px]" strokeWidth={1.8} />
-                  </div>
-                  <span className="text-[10px] font-medium mt-0.5 leading-tight">
-                    {item.label}
-                  </span>
-                </button>
+                  {({ isActive }) => (
+                    <>
+                      <div className="relative flex items-center justify-center">
+                        {item.customIcon ? (
+                          <img 
+                            src={item.customIcon} 
+                            alt={item.label}
+                            className={cn(
+                              "w-10 h-10 transition-all duration-150",
+                              isActive && "scale-110"
+                            )}
+                          />
+                        ) : item.icon ? (
+                          <item.icon
+                            className={cn(
+                              "w-7 h-7 transition-all duration-150",
+                              isActive && "stroke-[2.2px]"
+                            )}
+                            strokeWidth={isActive ? 2.2 : 1.8}
+                          />
+                        ) : null}
+                        {item.hasBadge && unreadCount > 0 && (
+                          <span 
+                            className={cn(
+                              "absolute -top-1 -right-1",
+                              "bg-primary text-primary-foreground",
+                              "text-[10px] font-semibold leading-none",
+                              "rounded-full min-w-[18px] h-[18px]",
+                              "flex items-center justify-center px-1"
+                            )}
+                          >
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-medium mt-0.5 leading-tight">
+                        {item.label}
+                      </span>
+                    </>
+                  )}
+                </NavLink>
               );
-            }
+            })}
+          </nav>
 
+          {/* Separate circular button for the last item (Profile) */}
+          {(() => {
+            const lastItem = navItems[navItems.length - 1];
             return (
               <NavLink
-                key={item.to}
-                to={item.to}
-                onTouchStart={() => handleTouchStart(item)}
-                onTouchEnd={(e) => handleTouchEnd(item, e)}
-                onMouseDown={() => handleTouchStart(item)}
-                onMouseUp={(e) => handleTouchEnd(item, e)}
-                onMouseLeave={(e) => handleTouchEnd(item, e)}
-                onContextMenu={(e) => handleContextMenu(item, e)}
+                to={lastItem.to}
+                onTouchStart={() => handleTouchStart(lastItem)}
+                onTouchEnd={(e) => handleTouchEnd(lastItem, e)}
+                onMouseDown={() => handleTouchStart(lastItem)}
+                onMouseUp={(e) => handleTouchEnd(lastItem, e)}
+                onMouseLeave={(e) => handleTouchEnd(lastItem, e)}
+                onContextMenu={(e) => handleContextMenu(lastItem, e)}
                 className={({ isActive }) =>
                   cn(
-                    "flex flex-col items-center justify-center flex-1 h-full",
+                    "flex items-center justify-center",
+                    "w-14 h-14 rounded-full",
+                    "bg-black/40 backdrop-blur-xl border border-white/10",
                     "transition-colors duration-150",
                     "active:opacity-70",
-                    "min-w-[44px] min-h-[44px]",
                     isActive ? "text-white" : "text-white/60"
                   )
                 }
@@ -257,49 +329,31 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                 }}
               >
                 {({ isActive }) => (
-                  <>
-                    <div className="relative flex items-center justify-center">
-                      {item.customIcon ? (
-                        <img 
-                          src={item.customIcon} 
-                          alt={item.label}
-                          className={cn(
-                            "w-10 h-10 transition-all duration-150",
-                            isActive && "scale-110"
-                          )}
-                        />
-                      ) : item.icon ? (
-                        <item.icon
-                          className={cn(
-                            "w-7 h-7 transition-all duration-150",
-                            isActive && "stroke-[2.2px]"
-                          )}
-                          strokeWidth={isActive ? 2.2 : 1.8}
-                        />
-                      ) : null}
-                      {item.hasBadge && unreadCount > 0 && (
-                        <span 
-                          className={cn(
-                            "absolute -top-1 -right-1",
-                            "bg-primary text-primary-foreground",
-                            "text-[10px] font-semibold leading-none",
-                            "rounded-full min-w-[18px] h-[18px]",
-                            "flex items-center justify-center px-1"
-                          )}
-                        >
-                          {unreadCount > 9 ? "9+" : unreadCount}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] font-medium mt-0.5 leading-tight">
-                      {item.label}
-                    </span>
-                  </>
+                  <div className="relative flex items-center justify-center">
+                    {lastItem.customIcon ? (
+                      <img 
+                        src={lastItem.customIcon} 
+                        alt={lastItem.label}
+                        className={cn(
+                          "w-10 h-10 transition-all duration-150",
+                          isActive && "scale-110"
+                        )}
+                      />
+                    ) : lastItem.icon ? (
+                      <lastItem.icon
+                        className={cn(
+                          "w-6 h-6 transition-all duration-150",
+                          isActive && "stroke-[2.2px]"
+                        )}
+                        strokeWidth={isActive ? 2.2 : 1.8}
+                      />
+                    ) : null}
+                  </div>
                 )}
               </NavLink>
             );
-        })}
-        </nav>
+          })()}
+        </div>
       </div>
 
       {/* Account Switcher Drawer */}
