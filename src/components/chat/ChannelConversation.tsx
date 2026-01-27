@@ -3,6 +3,7 @@ import { ArrowLeft, Eye, Share2, Search, Volume2, VolumeX, ChevronDown, MoreVert
 import { Button } from "@/components/ui/button";
 import { useChannelMessages, useJoinChannel, Channel } from "@/hooks/useChannels";
 import { useAuth } from "@/hooks/useAuth";
+import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -45,6 +46,7 @@ const sampleReactions = [
 
 export function ChannelConversation({ channel, onBack, onLeave }: ChannelConversationProps) {
   const { user } = useAuth();
+  const { setIsChatOpen } = useChatOpen();
   const { theme } = useTheme();
   const { messages, loading } = useChannelMessages(channel.id);
   const { joinChannel, leaveChannel } = useJoinChannel();
@@ -56,6 +58,12 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
 
   const isDark = theme === "dark";
   const chatBackground = isDark ? chatBackgroundDark : chatBackgroundLight;
+
+  // Mark chat as open/closed for hiding bottom nav
+  useEffect(() => {
+    setIsChatOpen(true);
+    return () => setIsChatOpen(false);
+  }, [setIsChatOpen]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
