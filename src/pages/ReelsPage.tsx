@@ -284,9 +284,9 @@ export function ReelsPage() {
               className="relative"
               onClick={(e) => {
                 e.stopPropagation();
-                // Navigate by user_id for reliability (display_name can have duplicates)
+                // Always navigate by author_id (user_id) to ensure correct profile
                 if (reel.author_id) {
-                  navigate(`/user/${encodeURIComponent(reel.author?.display_name || reel.author_id)}`);
+                  navigate(`/user/${reel.author_id}`);
                 }
               }}
             >

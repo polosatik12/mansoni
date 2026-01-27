@@ -148,11 +148,9 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
     }
   };
 
-  const handleUserClick = (displayName: string | null) => {
-    if (displayName) {
-      onClose();
-      navigate(`/user/${encodeURIComponent(displayName)}`);
-    }
+  const handleUserClick = (userId: string) => {
+    onClose();
+    navigate(`/user/${userId}`);
   };
 
   return (
@@ -180,7 +178,7 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
                 <div key={user.id} className="flex items-center justify-between px-1">
                   <div 
                     className="flex items-center gap-3 flex-1 cursor-pointer"
-                    onClick={() => handleUserClick(user.display_name)}
+                    onClick={() => handleUserClick(user.user_id)}
                   >
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={user.avatar_url || undefined} alt={user.display_name || "User"} />

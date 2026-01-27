@@ -86,7 +86,7 @@ export function ReelCommentsSheet({
     <div key={comment.id} className={cn("flex gap-3", isReply && "ml-10 mt-3")}>
       <Avatar
         className="w-8 h-8 cursor-pointer flex-shrink-0"
-        onClick={() => navigate(`/user/${comment.author.display_name}`)}
+        onClick={() => navigate(`/user/${comment.author.user_id}`)}
       >
         <AvatarImage src={comment.author.avatar_url || undefined} />
         <AvatarFallback className="bg-muted text-xs">
@@ -99,7 +99,7 @@ export function ReelCommentsSheet({
           <div className="flex-1 min-w-0">
             <span
               className="font-semibold text-sm cursor-pointer hover:underline"
-              onClick={() => navigate(`/user/${comment.author.display_name}`)}
+              onClick={() => navigate(`/user/${comment.author.user_id}`)}
             >
               {comment.author.display_name}
             </span>
