@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Grid3X3, Bookmark, Heart, Play, MoreHorizontal, BadgeCheck, MessageCircle, Loader2, User, Eye, AtSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,6 +41,36 @@ export function UserProfilePage() {
 
   const { profile, loading: profileLoading, error, follow, unfollow } = useProfileByUsername(username);
   const { posts, loading: postsLoading } = useUserPosts(profile?.user_id);
+  const [hasActiveStories, setHasActiveStories] = useState(false);
+
+  // Check if user has active stories
+  useEffect(() => {
+    const checkUserStories = async () => {
+      if (!profile?.user_id) {
+        setHasActiveStories(false);
+        return;
+      }
+
+      try {
+        const { count, error } = await supabase
+          .from('stories')
+          .select('*', { count: 'exact', head: true })
+          .eq('author_id', profile.user_id)
+          .gt('expires_at', new Date().toISOString());
+
+        if (!error && count && count > 0) {
+          setHasActiveStories(true);
+        } else {
+          setHasActiveStories(false);
+        }
+      } catch (err) {
+        console.error('Error checking stories:', err);
+        setHasActiveStories(false);
+      }
+    };
+
+    checkUserStories();
+  }, [profile?.user_id]);
 
   const handleFollowToggle = async () => {
     if (!currentUser) {
@@ -162,9 +192,14 @@ export function UserProfilePage() {
       {/* Profile Info Row - Same layout as ProfilePage */}
       <div className="px-4 py-4">
         <div className="flex items-start gap-4">
-          {/* Avatar with gradient ring */}
+          {/* Avatar with gradient ring - only show if user has active stories */}
           <div className="relative">
-            <div className="w-20 h-20 rounded-full p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400">
+            <div className={cn(
+              "w-20 h-20 rounded-full p-[2.5px]",
+              hasActiveStories 
+                ? "bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400" 
+                : "bg-muted"
+            )}>
               <div className="w-full h-full rounded-full bg-background p-[2px]">
                 <Avatar className="w-full h-full">
                   <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
