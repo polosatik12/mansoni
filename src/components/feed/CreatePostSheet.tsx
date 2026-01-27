@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { X, Image, MapPin, Users, Smile, MoreHorizontal, ChevronDown, Loader2 } from "lucide-react";
+import { X, Image, MapPin, Users, Smile, MoreHorizontal, ChevronDown, Loader2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { usePostActions } from "@/hooks/usePosts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SimpleMediaEditor } from "@/components/editor";
 
 interface CreatePostSheetProps {
   isOpen: boolean;
@@ -16,9 +17,13 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
   const { user } = useAuth();
   const { createPost } = usePostActions();
   const [text, setText] = useState("");
-  const [selectedImages, setSelectedImages] = useState<{ file: File; preview: string }[]>([]);
+  const [selectedImages, setSelectedImages] = useState<{ file: File; preview: string; edited?: boolean }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Editor state
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const handleAddPhoto = () => {
     fileInputRef.current?.click();
@@ -60,6 +65,41 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
   const handleRemoveImage = (index: number) => {
     URL.revokeObjectURL(selectedImages[index].preview);
     setSelectedImages(selectedImages.filter((_, i) => i !== index));
+  };
+
+  // Open editor for a specific image
+  const handleEditImage = (index: number) => {
+    setEditingIndex(index);
+    setEditorOpen(true);
+  };
+
+  // Handle edited image save
+  const handleEditorSave = (blob: Blob) => {
+    if (editingIndex === null) return;
+
+    // Create new preview from the edited blob
+    const newPreview = URL.createObjectURL(blob);
+    
+    // Replace the file and preview at the edited index
+    setSelectedImages(prev => prev.map((img, i) => {
+      if (i === editingIndex) {
+        URL.revokeObjectURL(img.preview);
+        return {
+          file: new File([blob], img.file.name, { type: blob.type }),
+          preview: newPreview,
+          edited: true,
+        };
+      }
+      return img;
+    }));
+
+    setEditorOpen(false);
+    setEditingIndex(null);
+  };
+
+  const handleEditorCancel = () => {
+    setEditorOpen(false);
+    setEditingIndex(null);
   };
 
   const uploadImages = async (): Promise<string[]> => {
@@ -204,24 +244,40 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
           <div className="px-4 py-3">
             <div className="grid grid-cols-2 gap-2">
               {selectedImages.map((image, index) => (
-                <div key={index} className="relative aspect-square rounded-xl overflow-hidden">
+                <div key={index} className="relative aspect-square rounded-xl overflow-hidden group">
                   <img
                     src={image.preview}
                     alt={`Selected ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
-                  <button
-                    onClick={() => handleRemoveImage(index)}
-                    disabled={isUploading}
-                    className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center disabled:opacity-50"
-                  >
-                    <X className="w-4 h-4 text-white" />
-                  </button>
+                  {/* Edit badge if edited */}
+                  {image.edited && (
+                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-primary/90 rounded-full text-[10px] text-primary-foreground font-medium">
+                      Изменено
+                    </div>
+                  )}
+                  {/* Action buttons overlay */}
+                  <div className="absolute top-2 right-2 flex gap-1.5">
+                    <button
+                      onClick={() => handleEditImage(index)}
+                      disabled={isUploading}
+                      className="w-7 h-7 bg-primary/90 rounded-full flex items-center justify-center disabled:opacity-50"
+                    >
+                      <Wand2 className="w-3.5 h-3.5 text-primary-foreground" />
+                    </button>
+                    <button
+                      onClick={() => handleRemoveImage(index)}
+                      disabled={isUploading}
+                      className="w-7 h-7 bg-black/60 rounded-full flex items-center justify-center disabled:opacity-50"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              {selectedImages.length}/10 изображений
+              {selectedImages.length}/10 изображений • Нажмите ✨ для редактирования
             </p>
           </div>
         )}
@@ -272,6 +328,16 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
           </button>
         </div>
       </div>
+
+      {/* Media Editor Modal */}
+      <SimpleMediaEditor
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        mediaFile={editingIndex !== null ? selectedImages[editingIndex]?.file : null}
+        contentType="post"
+        onSave={handleEditorSave}
+        onCancel={handleEditorCancel}
+      />
     </div>
   );
 }
