@@ -53,7 +53,7 @@ const mockAccounts: Account[] = [
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/search", icon: Search, label: "Поиск" },
-  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true, isCenter: true },
+  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true },
   { to: "/reels", customIcon: ReelsIcon, label: "Reels" },
   { to: "/profile", customIcon: ProfileIcon, label: "Профиль", hasLongPress: true },
 ];
@@ -62,14 +62,14 @@ const defaultNavItems: NavItem[] = [
 const realEstateNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "#search", icon: Search, label: "Поиск", isAction: true },
-  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true, isCenter: true },
+  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true },
   { to: "#favorites", icon: Heart, label: "Избранное", isAction: true },
 ];
 
 // Insurance service nav items
 const insuranceNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
-  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true, isCenter: true },
+  { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true },
   { to: "/insurance/policies", icon: FileText, label: "Полисы" },
 ];
 
@@ -257,25 +257,16 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
               >
                 {({ isActive }) => (
                   <>
-                    <div className={cn(
-                      "relative flex items-center justify-center",
-                      item.isCenter && "-mt-6"
-                    )}>
+                    <div className="relative flex items-center justify-center">
                       {item.customIcon ? (
-                        <div className={cn(
-                          "flex items-center justify-center rounded-full",
-                          "w-14 h-14 bg-card shadow-lg border border-border",
-                          isActive && "ring-2 ring-primary/30"
-                        )}>
-                          <img 
-                            src={item.customIcon} 
-                            alt={item.label}
-                            className={cn(
-                              "w-9 h-9 transition-all duration-150",
-                              isActive && "scale-110"
-                            )}
-                          />
-                        </div>
+                        <img 
+                          src={item.customIcon} 
+                          alt={item.label}
+                          className={cn(
+                            "w-6 h-6 transition-all duration-150",
+                            isActive && "scale-110"
+                          )}
+                        />
                       ) : item.icon ? (
                         <item.icon
                           className={cn(
@@ -299,11 +290,9 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                         </span>
                       )}
                     </div>
-                    {!item.isCenter && (
-                      <span className="text-[10px] font-medium mt-0.5 leading-tight">
-                        {item.label}
-                      </span>
-                    )}
+                    <span className="text-[10px] font-medium mt-0.5 leading-tight">
+                      {item.label}
+                    </span>
                   </>
                 )}
               </NavLink>
