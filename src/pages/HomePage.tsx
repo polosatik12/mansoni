@@ -1,4 +1,6 @@
+import { useState, useMemo } from "react";
 import { FeedHeader } from "@/components/feed/FeedHeader";
+import { FeedFilters, ContentFilter } from "@/components/feed/FeedFilters";
 import { PostCard } from "@/components/feed/PostCard";
 import { PullToRefresh } from "@/components/feed/PullToRefresh";
 import { usePosts } from "@/hooks/usePosts";
@@ -10,6 +12,7 @@ import { ru } from "date-fns/locale";
 
 export function HomePage() {
   const { posts, loading, refetch } = usePosts();
+  const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
   
   // Initialize presence tracking
   usePresence();
@@ -30,26 +33,49 @@ export function HomePage() {
     }
   };
 
+  // Client-side filtering based on content type
+  const filteredPosts = useMemo(() => {
+    if (contentFilter === 'media') {
+      return posts.filter(p => (p.media?.length ?? 0) > 0);
+    }
+    if (contentFilter === 'text') {
+      return posts.filter(p => (p.media?.length ?? 0) === 0);
+    }
+    return posts;
+  }, [posts, contentFilter]);
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="min-h-screen">
         <FeedHeader />
         
+        <FeedFilters 
+          filter={contentFilter} 
+          onFilterChange={setContentFilter} 
+        />
         
         {loading && posts.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : posts.length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-            <p className="text-muted-foreground text-lg">Пока нет публикаций</p>
+            <p className="text-muted-foreground text-lg">
+              {contentFilter === 'all' 
+                ? "Пока нет публикаций" 
+                : contentFilter === 'media' 
+                  ? "Нет публикаций с медиа"
+                  : "Нет текстовых публикаций"}
+            </p>
             <p className="text-muted-foreground/70 text-sm mt-1">
-              Создайте первую запись или подпишитесь на авторов
+              {contentFilter === 'all' 
+                ? "Создайте первую запись или подпишитесь на авторов"
+                : "Попробуйте другой фильтр"}
             </p>
           </div>
         ) : (
           <div className="space-y-0">
-            {posts.map((post) => (
+            {filteredPosts.map((post) => (
               <PostCard
                 key={post.id}
                 id={post.id}
