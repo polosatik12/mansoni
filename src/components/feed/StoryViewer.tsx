@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useChatOpen } from "@/contexts/ChatOpenContext";
 
 interface StoryViewerProps {
   usersWithStories: UserWithStories[];
@@ -14,6 +15,7 @@ interface StoryViewerProps {
 
 export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClose }: StoryViewerProps) {
   const { markAsViewed } = useStories();
+  const { setIsStoryOpen } = useChatOpen();
   const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
   const [currentStoryInUser, setCurrentStoryInUser] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -28,6 +30,12 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
   const STORY_DURATION = 5000;
   const PROGRESS_INTERVAL = 50;
   const MIN_SWIPE_DISTANCE = 50;
+
+  // Sync story open state with context for hiding BottomNav
+  useEffect(() => {
+    setIsStoryOpen(isOpen);
+    return () => setIsStoryOpen(false);
+  }, [isOpen, setIsStoryOpen]);
 
   // Stabilize activeUsers with useMemo to prevent reset on every render
   const activeUsers = useMemo(

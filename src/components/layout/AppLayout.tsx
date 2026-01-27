@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export function AppLayout() {
   const mainRef = useRef<HTMLElement>(null);
   const location = useLocation();
-  const { isChatOpen } = useChatOpen();
+  const { shouldHideBottomNav } = useChatOpen();
   const { user } = useAuth();
   const isReelsPage = location.pathname === "/reels";
   
@@ -67,7 +67,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </ScrollContainerProvider>
-      <BottomNav hidden={isChatOpen} />
+      <BottomNav hidden={shouldHideBottomNav} />
 
       {/* Global Incoming Call Handler - shows on any page */}
       {incomingCall && !activeCall && (
