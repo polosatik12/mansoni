@@ -49,11 +49,14 @@ export function ReelsPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const viewedReels = useRef<Set<string>>(new Set());
+  const rafRef = useRef<number>(0);
   
   // Touch tracking
   const touchStartY = useRef(0);
   const touchStartTime = useRef(0);
   const lastTouchY = useRef(0);
+  const velocityRef = useRef(0);
+  const lastMoveTime = useRef(0);
 
   const currentReel = reels[currentIndex];
 
@@ -105,9 +108,16 @@ export function ReelsPage() {
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (isTransitioning) return;
     
+    // Cancel any pending animation frame
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    
     touchStartY.current = e.touches[0].clientY;
     lastTouchY.current = e.touches[0].clientY;
     touchStartTime.current = Date.now();
+    lastMoveTime.current = Date.now();
+    velocityRef.current = 0;
     setIsDragging(true);
   }, [isTransitioning]);
 
@@ -116,49 +126,66 @@ export function ReelsPage() {
     
     const currentY = e.touches[0].clientY;
     const deltaY = currentY - touchStartY.current;
+    const now = Date.now();
+    const timeDelta = now - lastMoveTime.current;
+    
+    // Calculate velocity for momentum
+    if (timeDelta > 0) {
+      const moveDelta = currentY - lastTouchY.current;
+      velocityRef.current = moveDelta / timeDelta;
+    }
+    
     lastTouchY.current = currentY;
+    lastMoveTime.current = now;
     
     // Add resistance at boundaries
     const isAtStart = currentIndex === 0 && deltaY > 0;
     const isAtEnd = currentIndex === reels.length - 1 && deltaY < 0;
     
-    if (isAtStart || isAtEnd) {
-      setDragOffset(deltaY * 0.3); // Rubber band effect
-    } else {
-      setDragOffset(deltaY);
-    }
+    // Use RAF for smoother updates
+    rafRef.current = requestAnimationFrame(() => {
+      if (isAtStart || isAtEnd) {
+        setDragOffset(deltaY * 0.25); // Rubber band effect
+      } else {
+        setDragOffset(deltaY);
+      }
+    });
   }, [isDragging, isTransitioning, currentIndex, reels.length]);
 
   const handleTouchEnd = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
     
-    const screenHeight = window.innerHeight - 64;
-    const threshold = screenHeight * 0.12; // Lower threshold for easier swipe
-    const timeDelta = Date.now() - touchStartTime.current;
-    const velocity = Math.abs(dragOffset) / Math.max(timeDelta, 1);
+    // Cancel pending RAF
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
     
-    // Fast swipe (high velocity) or past threshold
-    if (Math.abs(dragOffset) > threshold || velocity > 0.4) {
-      if (dragOffset < 0 && currentIndex < reels.length - 1) {
+    const screenHeight = window.innerHeight - 64;
+    const threshold = screenHeight * 0.1; // 10% threshold for easier swipe
+    const absVelocity = Math.abs(velocityRef.current);
+    
+    // Use velocity for momentum-based navigation
+    const shouldNavigate = Math.abs(dragOffset) > threshold || absVelocity > 0.3;
+    
+    if (shouldNavigate) {
+      const direction = dragOffset < 0 || velocityRef.current < -0.3 ? 1 : -1;
+      
+      if (direction > 0 && currentIndex < reels.length - 1) {
         goToReel(currentIndex + 1);
-      } else if (dragOffset > 0 && currentIndex > 0) {
+      } else if (direction < 0 && currentIndex > 0) {
         goToReel(currentIndex - 1);
       } else {
-        // Snap back with quick animation
+        // Snap back
         setIsTransitioning(true);
         setDragOffset(0);
-        requestAnimationFrame(() => {
-          setTimeout(() => setIsTransitioning(false), 200);
-        });
+        setTimeout(() => setIsTransitioning(false), 180);
       }
     } else {
       // Snap back quickly
       setIsTransitioning(true);
       setDragOffset(0);
-      requestAnimationFrame(() => {
-        setTimeout(() => setIsTransitioning(false), 200);
-      });
+      setTimeout(() => setIsTransitioning(false), 180);
     }
   }, [isDragging, dragOffset, currentIndex, reels.length, goToReel]);
 
@@ -194,52 +221,28 @@ export function ReelsPage() {
     lastTap.current = now;
   }, [handleLike]);
 
-  // Calculate transforms for each reel
+  // Calculate transforms for each reel - simplified for performance
   const getReelStyle = (index: number) => {
     const screenHeight = window.innerHeight - 64;
     const baseOffset = (index - currentIndex) * screenHeight;
     const totalOffset = baseOffset + dragOffset;
     
-    // Instagram-style dynamic scale and opacity based on position
     const distance = index - currentIndex;
-    const dragProgress = Math.abs(dragOffset) / screenHeight;
+    const isCurrent = distance === 0;
+    const isAdjacent = Math.abs(distance) === 1;
     
-    let scale = 1;
-    let opacity = 1;
-    let zIndex = 10;
-    
-    if (distance === 0) {
-      // Current reel - scale down slightly as user drags away
-      scale = 1 - (dragProgress * 0.08);
-      opacity = 1 - (dragProgress * 0.3);
-      zIndex = 20;
-    } else if (Math.abs(distance) === 1) {
-      // Adjacent reels - scale up as they come into view
-      const isComingIn = (distance > 0 && dragOffset < 0) || (distance < 0 && dragOffset > 0);
-      if (isComingIn) {
-        scale = 0.85 + (dragProgress * 0.15);
-        opacity = 0.5 + (dragProgress * 0.5);
-      } else {
-        scale = 0.85;
-        opacity = 0.5;
-      }
-      zIndex = 15;
-    } else {
-      scale = 0.8;
-      opacity = 0;
-      zIndex = 5;
-    }
+    // Simplified: no scale effects, just smooth translation
+    const zIndex = isCurrent ? 20 : isAdjacent ? 15 : 5;
+    const opacity = isCurrent ? 1 : isAdjacent ? 1 : 0;
     
     return {
-      transform: `translate3d(0, ${totalOffset}px, 0) scale(${scale})`,
+      transform: `translate3d(0, ${totalOffset}px, 0)`,
       opacity,
       zIndex,
       transition: isTransitioning 
-        ? 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease-out' 
-        : isDragging 
-          ? 'none' 
-          : 'transform 0.05s linear',
-      willChange: 'transform, opacity',
+        ? 'transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)' 
+        : 'none',
+      willChange: 'transform',
       backfaceVisibility: 'hidden' as const,
       WebkitBackfaceVisibility: 'hidden' as const,
     };
