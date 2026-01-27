@@ -51,7 +51,7 @@ const defaultNavItems: NavItem[] = [
   { to: "/reels", icon: PlaySquare, label: "Reels" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "/profile", icon: User, label: "Профиль", hasLongPress: true },
-  { to: "/ar", icon: Camera, label: "AR" },
+  { to: "/ar", label: "AR" },
 ];
 
 // Real estate service nav items
@@ -322,7 +322,7 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
               >
                 {({ isActive }) => (
                   <div className="relative flex items-center justify-center">
-                    {lastItem.icon && (
+                    {lastItem.icon ? (
                       <lastItem.icon
                         className={cn(
                           "w-6 h-6 transition-all duration-150",
@@ -330,6 +330,22 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
                         )}
                         strokeWidth={isActive ? 2.2 : 1.8}
                       />
+                    ) : (
+                      <span 
+                        className={cn(
+                          "font-black text-sm tracking-tight",
+                          "bg-gradient-to-br from-white via-white/90 to-white/70",
+                          "bg-clip-text text-transparent",
+                          "drop-shadow-sm",
+                          isActive && "scale-110"
+                        )}
+                        style={{
+                          fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                          letterSpacing: '-0.02em',
+                        }}
+                      >
+                        AR
+                      </span>
                     )}
                   </div>
                 )}
