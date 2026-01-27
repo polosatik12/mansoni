@@ -5,6 +5,7 @@ import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
+import { useNavigate } from "react-router-dom";
 
 interface StoryViewerProps {
   usersWithStories: UserWithStories[];
@@ -16,6 +17,7 @@ interface StoryViewerProps {
 export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClose }: StoryViewerProps) {
   const { markAsViewed } = useStories();
   const { setIsStoryOpen } = useChatOpen();
+  const navigate = useNavigate();
   const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
   const [currentStoryInUser, setCurrentStoryInUser] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -272,17 +274,31 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
 
         {/* Header with user info */}
         <div className="absolute top-6 left-0 right-0 z-30 px-3 flex items-center gap-3">
-          <img 
-            src={currentUser.avatar_url || `https://i.pravatar.cc/150?u=${currentUser.user_id}`} 
-            alt={currentUser.display_name || ''}
-            className="w-9 h-9 rounded-full border-2 border-white/50 object-cover"
-          />
-          <div className="flex-1">
-            <p className="text-white font-semibold text-sm">
-              {currentUser.isOwn ? 'Вы' : currentUser.display_name}
-            </p>
-            <p className="text-white/60 text-xs">{timeAgo} назад</p>
-          </div>
+          <button
+            type="button"
+            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Always navigate by user_id for reliability (display_name can be duplicated)
+              const targetId = currentUser.user_id;
+              if (!targetId) return;
+              onClose();
+              navigate(`/user/${targetId}`);
+            }}
+            aria-label="Open profile"
+          >
+            <img 
+              src={currentUser.avatar_url || `https://i.pravatar.cc/150?u=${currentUser.user_id}`} 
+              alt={currentUser.display_name || ''}
+              className="w-9 h-9 rounded-full border-2 border-white/50 object-cover flex-shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold text-sm truncate">
+                {currentUser.isOwn ? 'Вы' : currentUser.display_name}
+              </p>
+              <p className="text-white/60 text-xs">{timeAgo} назад</p>
+            </div>
+          </button>
           <button 
             onClick={(e) => {
               e.stopPropagation();
