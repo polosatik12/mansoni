@@ -1,7 +1,11 @@
 import { useState, useRef } from "react";
-import { X, ChevronDown, Camera, Smile, Music, AtSign, ArrowRight, Eye, ImagePlus } from "lucide-react";
+import { X, ChevronDown, Camera, Smile, Music, AtSign, ArrowRight, Eye, ImagePlus, Wand2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SimpleMediaEditor } from "@/components/editor";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface StoryEditorFlowProps {
   isOpen: boolean;
@@ -23,9 +27,14 @@ const mockGalleryImages = [
 type Step = "gallery" | "editor";
 
 export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("gallery");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [deviceImages, setDeviceImages] = useState<{ id: string; src: string }[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [editedBlob, setEditedBlob] = useState<Blob | null>(null);
+  const [deviceImages, setDeviceImages] = useState<{ id: string; src: string; file: File }[]>([]);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [showAdvancedEditor, setShowAdvancedEditor] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,6 +42,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     const newImages = files.map((file, index) => ({
       id: `device-${Date.now()}-${index}`,
       src: URL.createObjectURL(file),
+      file,
     }));
     setDeviceImages(prev => [...newImages, ...prev]);
   };
@@ -42,8 +52,10 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     : mockGalleryImages;
   const [caption, setCaption] = useState("");
 
-  const handleSelectImage = (src: string) => {
+  const handleSelectImage = (src: string, file?: File) => {
     setSelectedImage(src);
+    setSelectedFile(file || null);
+    setEditedBlob(null);
     setStep("editor");
   };
 
@@ -54,17 +66,85 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     }
   };
 
-  const handlePublish = (type: "story" | "close-friends") => {
-    console.log("Publishing story:", { selectedImage, caption, type });
-    setStep("gallery");
-    setSelectedImage(null);
-    setCaption("");
-    onClose();
+  const handlePublish = async (type: "story" | "close-friends") => {
+    if (!user) {
+      toast.error("Войдите, чтобы опубликовать историю");
+      return;
+    }
+
+    setIsPublishing(true);
+
+    try {
+      // Get the media to upload (edited or original)
+      let mediaToUpload: Blob | null = editedBlob;
+      
+      // If no edited blob, fetch the original image
+      if (!mediaToUpload && selectedImage) {
+        if (selectedFile) {
+          mediaToUpload = selectedFile;
+        } else {
+          // Fetch from URL (mock images)
+          const response = await fetch(selectedImage);
+          mediaToUpload = await response.blob();
+        }
+      }
+
+      if (!mediaToUpload) {
+        throw new Error("Нет медиа для загрузки");
+      }
+
+      // Upload to storage
+      const isVideo = mediaToUpload.type.startsWith("video/");
+      const extension = isVideo ? "mp4" : "jpg";
+      const fileName = `${user.id}/${Date.now()}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("stories-media")
+        .upload(fileName, mediaToUpload, {
+          contentType: mediaToUpload.type,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("stories-media")
+        .getPublicUrl(fileName);
+
+      // Create story record
+      const { error: insertError } = await supabase
+        .from("stories")
+        .insert({
+          author_id: user.id,
+          media_url: urlData.publicUrl,
+          media_type: isVideo ? "video" : "image",
+          caption: caption.trim() || null,
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success("История опубликована!");
+      handleClose();
+    } catch (error: any) {
+      console.error("Error publishing story:", error);
+      toast.error("Ошибка публикации", { description: error.message });
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
+  // Handle edited media from SimpleMediaEditor
+  const handleEditorSave = (blob: Blob) => {
+    setEditedBlob(blob);
+    // Update the preview
+    const newPreviewUrl = URL.createObjectURL(blob);
+    setSelectedImage(newPreviewUrl);
+    setShowAdvancedEditor(false);
+  };
   const handleClose = () => {
     setStep("gallery");
     setSelectedImage(null);
+    setSelectedFile(null);
+    setEditedBlob(null);
     setCaption("");
     // Clean up object URLs
     deviceImages.forEach(img => URL.revokeObjectURL(img.src));
@@ -130,7 +210,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               {allImages.map((img) => (
                 <button
                   key={img.id}
-                  onClick={() => handleSelectImage(img.src)}
+                  onClick={() => handleSelectImage(img.src, 'file' in img ? img.file : undefined)}
                   className="aspect-square relative"
                 >
                   <img 
@@ -174,6 +254,15 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
 
             {/* Right Side Tools */}
             <div className="absolute top-16 right-4 flex flex-col gap-3 safe-area-top">
+              {/* Advanced Editor Button */}
+              {selectedFile && (
+                <button 
+                  onClick={() => setShowAdvancedEditor(true)}
+                  className="w-10 h-10 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center"
+                >
+                  <Wand2 className="w-5 h-5 text-primary-foreground" strokeWidth={1.5} />
+                </button>
+              )}
               <button className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
                 <span className="text-white font-semibold text-[15px]">Aa</span>
               </button>
@@ -187,6 +276,13 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                 <AtSign className="w-5 h-5 text-white" strokeWidth={1.5} />
               </button>
             </div>
+
+            {/* Edited badge */}
+            {editedBlob && (
+              <div className="absolute top-4 right-16 px-3 py-1 bg-primary/90 rounded-full text-xs text-primary-foreground font-medium safe-area-top">
+                Изменено ✨
+              </div>
+            )}
           </div>
 
           {/* Bottom Actions - More visible */}
@@ -195,6 +291,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               <Button
                 variant="outline"
                 onClick={() => handlePublish("close-friends")}
+                disabled={isPublishing}
                 className="flex-1 h-12 rounded-full bg-green-500/90 border-green-500 text-white hover:bg-green-600 hover:text-white"
               >
                 <span className="text-lg mr-2">⭐</span>
@@ -202,14 +299,29 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               </Button>
               <Button
                 onClick={() => handlePublish("story")}
+                disabled={isPublishing}
                 className="flex-1 h-12 rounded-full bg-primary text-primary-foreground font-semibold"
               >
-                Опубликовать
+                {isPublishing ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Опубликовать"
+                )}
               </Button>
             </div>
           </div>
         </>
       )}
+
+      {/* Advanced Media Editor */}
+      <SimpleMediaEditor
+        open={showAdvancedEditor}
+        onOpenChange={setShowAdvancedEditor}
+        mediaFile={selectedFile}
+        contentType="story"
+        onSave={handleEditorSave}
+        onCancel={() => setShowAdvancedEditor(false)}
+      />
     </div>
   );
 }

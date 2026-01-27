@@ -9,11 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Video, Upload, X, Loader2, Music } from "lucide-react";
+import { Video, Upload, X, Loader2, Music, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useReels } from "@/hooks/useReels";
 import { toast } from "sonner";
+import { SimpleMediaEditor } from "@/components/editor";
 
 interface CreateReelSheetProps {
   open: boolean;
@@ -28,6 +29,8 @@ export function CreateReelSheet({ open, onOpenChange }: CreateReelSheetProps) {
   const [description, setDescription] = useState("");
   const [musicTitle, setMusicTitle] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [isEdited, setIsEdited] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,9 +58,26 @@ export function CreateReelSheet({ open, onOpenChange }: CreateReelSheetProps) {
     }
     setVideoFile(null);
     setVideoPreview(null);
+    setIsEdited(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  // Handle video edit save
+  const handleEditorSave = (blob: Blob) => {
+    if (videoPreview) {
+      URL.revokeObjectURL(videoPreview);
+    }
+    
+    const newFile = new File([blob], videoFile?.name || "reel.mp4", { type: blob.type });
+    const newPreview = URL.createObjectURL(blob);
+    
+    setVideoFile(newFile);
+    setVideoPreview(newPreview);
+    setIsEdited(true);
+    setShowEditor(false);
+    toast.success("Видео отредактировано");
   };
 
   const handleSubmit = async () => {
@@ -161,14 +181,30 @@ export function CreateReelSheet({ open, onOpenChange }: CreateReelSheetProps) {
                 muted
                 loop
               />
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2"
-                onClick={handleRemoveVideo}
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              {/* Edited badge */}
+              {isEdited && (
+                <div className="absolute top-2 left-2 px-2 py-0.5 bg-primary/90 rounded-full text-[10px] text-primary-foreground font-medium">
+                  Изменено ✨
+                </div>
+              )}
+              {/* Action buttons */}
+              <div className="absolute top-2 right-2 flex gap-1.5">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => setShowEditor(true)}
+                  className="bg-primary/90 hover:bg-primary"
+                >
+                  <Wand2 className="w-4 h-4 text-primary-foreground" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={handleRemoveVideo}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           )}
 
@@ -231,6 +267,16 @@ export function CreateReelSheet({ open, onOpenChange }: CreateReelSheetProps) {
           </Button>
         </div>
       </SheetContent>
+
+      {/* Video Editor Modal */}
+      <SimpleMediaEditor
+        open={showEditor}
+        onOpenChange={setShowEditor}
+        mediaFile={videoFile}
+        contentType="reel"
+        onSave={handleEditorSave}
+        onCancel={() => setShowEditor(false)}
+      />
     </Sheet>
   );
 }
