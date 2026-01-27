@@ -173,8 +173,9 @@ export function UserProfilePage() {
     setIsCreatingChat(true);
 
     try {
+      // Use user_id directly instead of display_name to avoid ambiguity
       const { data: conversationId, error: rpcError } = await supabase
-        .rpc("get_or_create_dm_by_display_name", { target_display_name: profile.display_name });
+        .rpc("get_or_create_dm", { target_user_id: profile.user_id });
 
       if (rpcError) throw rpcError;
 
