@@ -137,7 +137,7 @@ export function FeedHeader() {
                 user.isOwn && !hasStories
                   ? "p-0.5 bg-muted"
                   : user.hasNew
-                    ? "p-[2.5px] bg-gradient-to-tr from-blue-500 via-sky-400 to-cyan-400"
+                    ? "p-[2.5px] bg-gradient-to-tr from-primary via-accent to-primary"
                     : hasStories
                       ? "p-0.5 bg-muted-foreground/30"
                       : "p-0.5 bg-muted"
@@ -163,18 +163,20 @@ export function FeedHeader() {
                   )}
                 </div>
               </div>
-              {/* Plus icon */}
+              {/* Plus icon - use CSS class for transition */}
               {showPlusIcon && (
                 <div 
-                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center"
-                  style={{ opacity: 1 - collapseProgress * 2 }}
+                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center story-avatar"
+                  style={{ 
+                    opacity: collapseProgress < 0.5 ? 1 : 0,
+                  }}
                 >
                   <Plus className="w-3 h-3 text-primary-foreground" />
                 </div>
               )}
             </div>
 
-            {/* Name - simplified animation */}
+            {/* Name - CSS handles transition */}
             <span
               className="story-name text-xs text-foreground font-medium max-w-16 truncate overflow-hidden"
               style={{

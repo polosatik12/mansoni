@@ -236,26 +236,31 @@ html, body, #root {
    GPU-ACCELERATED STORY ANIMATIONS
    ============================================ */
 
-/* Story avatar button - GPU layer promotion */
+/* Story avatar button - smooth CSS transitions */
 .story-avatar-btn {
   will-change: transform, opacity;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              opacity 0.15s ease-out;
 }
 
-/* Story avatar container - GPU compositing */
+/* Story avatar container - smooth scale transition */
 .story-avatar {
   will-change: transform;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-/* Story name - simplified transitions */
+/* Story name - smooth fade transitions */
 .story-name {
-  will-change: opacity;
-  transition: opacity 0.1s linear, height 0.1s linear, margin-top 0.1s linear;
+  will-change: opacity, height;
+  transition: opacity 0.15s ease-out, 
+              height 0.15s ease-out, 
+              margin-top 0.15s ease-out;
 }
