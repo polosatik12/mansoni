@@ -52,11 +52,28 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     : mockGalleryImages;
   const [caption, setCaption] = useState("");
 
-  const handleSelectImage = (src: string, file?: File) => {
+  const handleSelectImage = async (src: string, file?: File) => {
     setSelectedImage(src);
-    setSelectedFile(file || null);
     setEditedBlob(null);
     setStep("editor");
+    
+    // If we have a file, use it directly
+    if (file) {
+      setSelectedFile(file);
+      return;
+    }
+    
+    // For URL-based images (mock gallery), fetch as blob and convert to File
+    try {
+      const response = await fetch(src);
+      const blob = await response.blob();
+      const fileName = `gallery-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+      const fetchedFile = new File([blob], fileName, { type: blob.type });
+      setSelectedFile(fetchedFile);
+    } catch (error) {
+      console.error("Error fetching image as file:", error);
+      setSelectedFile(null);
+    }
   };
 
   const handleBack = () => {
@@ -254,15 +271,14 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
 
             {/* Right Side Tools */}
             <div className="absolute top-16 right-4 flex flex-col gap-3 safe-area-top">
-              {/* Advanced Editor Button */}
-              {selectedFile && (
-                <button 
-                  onClick={() => setShowAdvancedEditor(true)}
-                  className="w-10 h-10 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center"
-                >
-                  <Wand2 className="w-5 h-5 text-primary-foreground" strokeWidth={1.5} />
-                </button>
-              )}
+              {/* Advanced Editor Button - always visible when we have an image */}
+              <button 
+                onClick={() => setShowAdvancedEditor(true)}
+                disabled={!selectedFile}
+                className="w-10 h-10 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center disabled:opacity-50"
+              >
+                <Wand2 className="w-5 h-5 text-primary-foreground" strokeWidth={1.5} />
+              </button>
               <button className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
                 <span className="text-white font-semibold text-[15px]">Aa</span>
               </button>
