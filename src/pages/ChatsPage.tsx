@@ -23,6 +23,9 @@ import { usePullDownExpand } from "@/hooks/usePullDownExpand";
 interface LocationState {
   conversationId?: string;
   chatName?: string;
+  otherUserId?: string;
+  otherDisplayName?: string;
+  otherAvatarUrl?: string | null;
 }
 
 // Animation constants
@@ -67,11 +70,22 @@ export function ChatsPage() {
   // Handle incoming conversationId from navigation state
   useEffect(() => {
     if (locationState?.conversationId) {
+      // Build participant from passed data (if available)
+      const participants = locationState.otherUserId 
+        ? [{
+            user_id: locationState.otherUserId,
+            profile: {
+              display_name: locationState.otherDisplayName || "Пользователь",
+              avatar_url: locationState.otherAvatarUrl || null
+            }
+          }]
+        : [];
+
       const immediateConv: Conversation = {
         id: locationState.conversationId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        participants: [],
+        participants,
         unread_count: 0
       };
       
@@ -80,6 +94,17 @@ export function ChatsPage() {
       refetch();
     }
   }, [locationState, refetch]);
+
+  // Hydrate selectedConversation with full data once conversations load
+  useEffect(() => {
+    if (selectedConversation && conversations.length > 0) {
+      const fullConv = conversations.find(c => c.id === selectedConversation.id);
+      if (fullConv && fullConv.participants.length > 0) {
+        // Replace with the fully-loaded conversation (has last_message, unread_count, etc.)
+        setSelectedConversation(fullConv);
+      }
+    }
+  }, [conversations, selectedConversation?.id]);
 
   const formatTime = (dateStr: string) => {
     try {
