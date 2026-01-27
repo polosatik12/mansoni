@@ -1,9 +1,11 @@
 import { useState, useEffect, forwardRef, useRef, useCallback } from "react";
-import { Home, Search, Heart, FileText, User, LucideIcon, Play, Plus, Check, ChevronDown } from "lucide-react";
+import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, ChevronDown } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
 import ChatIcon from "@/assets/chat-icon.svg";
+import ProfileIcon from "@/assets/profile-icon.png";
+import ReelsIcon from "@/assets/reels-icon.png";
 import {
   Drawer,
   DrawerContent,
@@ -52,8 +54,8 @@ const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Главная" },
   { to: "/search", icon: Search, label: "Поиск" },
   { to: "/chats", customIcon: ChatIcon, label: "Чаты", hasBadge: true, isCenter: true },
-  { to: "/reels", icon: Play, label: "Reels" },
-  { to: "/profile", icon: User, label: "Профиль", hasLongPress: true },
+  { to: "/reels", customIcon: ReelsIcon, label: "Reels" },
+  { to: "/profile", customIcon: ProfileIcon, label: "Профиль", hasLongPress: true },
 ];
 
 // Real estate service nav items
