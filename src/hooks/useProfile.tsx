@@ -214,14 +214,36 @@ export function useProfileByUsername(username?: string) {
       setLoading(true);
       setError(null);
 
-      // Fetch profile by display_name
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('display_name', username)
-        .single();
+      let profileData = null;
+      
+      // Check if username looks like a UUID (user_id)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username);
+      
+      if (isUUID) {
+        // Fetch profile by user_id
+        const { data, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', username)
+          .maybeSingle();
+        
+        if (profileError) throw profileError;
+        profileData = data;
+      } else {
+        // Fetch profile by display_name (case-insensitive)
+        const { data, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .ilike('display_name', username)
+          .maybeSingle();
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
+        profileData = data;
+      }
+      
+      if (!profileData) {
+        throw new Error('Profile not found');
+      }
 
       const targetUserId = profileData.user_id;
 
