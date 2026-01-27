@@ -1,5 +1,5 @@
 import { useState, useEffect, forwardRef, useRef, useCallback } from "react";
-import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, ChevronDown, Camera, MessageCircle, User, Film } from "lucide-react";
+import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, ChevronDown, Camera, MessageCircle, User, Clapperboard } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
@@ -48,7 +48,7 @@ const mockAccounts: Account[] = [
 // Default nav items: Лента → Reels → Чаты → Профиль | AR (отдельная кнопка)
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Лента" },
-  { to: "/reels", icon: Film, label: "Reels" },
+  { to: "/reels", icon: Clapperboard, label: "Reels" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "/profile", icon: User, label: "Профиль", hasLongPress: true },
   { to: "/ar", icon: Camera, label: "AR" },
