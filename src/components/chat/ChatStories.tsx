@@ -204,7 +204,7 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
             <button
               key={user.user_id}
               onClick={() => handleStoryClick(index, user)}
-              className="absolute flex flex-col items-center cursor-pointer"
+              className="story-avatar-btn absolute flex flex-col items-center cursor-pointer"
               style={{
                 left: 0,
                 top: 4,
@@ -217,7 +217,7 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
               {/* Avatar with border */}
               <div
                 className={cn(
-                  "rounded-full flex-shrink-0 relative",
+                  "story-avatar rounded-full flex-shrink-0 relative",
                   user.isOwn && !hasStories
                     ? "p-0.5 bg-muted"
                     : user.hasNew
@@ -252,16 +252,16 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
                 {/* Plus icon for own story with existing stories */}
                 {showPlusIcon && hasStories && (
                   <div 
-                    className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center"
+                    className="story-avatar absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center"
                   >
                     <Plus className="w-3 h-3 text-primary-foreground" />
                   </div>
                 )}
               </div>
 
-              {/* Name - only in row mode with opacity */}
+              {/* Name - CSS handles transition */}
               <span
-                className="text-xs text-foreground font-medium max-w-16 truncate overflow-hidden mt-1"
+                className="story-name text-xs text-foreground font-medium max-w-16 truncate overflow-hidden mt-1"
                 style={{
                   opacity: styles.nameOpacity,
                   height: styles.nameOpacity > 0.1 ? '16px' : '0px',
