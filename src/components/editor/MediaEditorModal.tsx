@@ -8,6 +8,8 @@ import type { ContentType } from "@/hooks/useMediaEditor";
 // Lazy load the SDK
 let CreativeEditorSDK: any = null;
 
+const CESDK_VERSION = "1.67.0";
+
 interface MediaEditorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -57,15 +59,38 @@ export function MediaEditorModal({
 
   // Initialize CreativeEditor SDK
   useEffect(() => {
-    if (!open || !mediaFile || !containerRef.current) return;
+    if (!open || !mediaFile) return;
 
     let isMounted = true;
+    let mediaUrl: string | null = null;
 
     const initEditor = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
+        // Ensure container is mounted and has size (Dialog portals can mount async)
+        const container = containerRef.current;
+        if (!container) {
+          console.warn("[CESDK] containerRef is null (mount timing)");
+          return;
+        }
+
+        const license = import.meta.env.VITE_IMGLY_LICENSE_KEY || "";
+        console.log("[CESDK] init", {
+          hasLicense: Boolean(license),
+          contentType,
+          isVideo,
+          containerRect: container.getBoundingClientRect(),
+        });
+
+        // CE.SDK requires a non-zero sized container to render reliably
+        const rect = container.getBoundingClientRect();
+        if (rect.width < 10 || rect.height < 10) {
+          console.warn("[CESDK] container has zero size, retrying next frame", rect);
+          await new Promise<void>((r) => requestAnimationFrame(() => r()));
+        }
+
         // Dynamically import SDK
         if (!CreativeEditorSDK) {
           const module = await import("@cesdk/cesdk-js");
@@ -75,18 +100,18 @@ export function MediaEditorModal({
         if (!isMounted || !containerRef.current) return;
 
         // Create object URL for the media file
-        const mediaUrl = URL.createObjectURL(mediaFile);
+        mediaUrl = URL.createObjectURL(mediaFile);
 
         // Initialize the editor
         const config = {
           // License key - use environment variable or empty for trial
-          license: import.meta.env.VITE_IMGLY_LICENSE_KEY || "",
+          license,
           
           // Locale
           locale: "ru",
           
-          // Base URL for assets
-          baseURL: "https://cdn.img.ly/packages/imgly/cesdk-js/1.33.0/assets",
+          // Base URL for assets must match installed SDK version
+          baseURL: `https://cdn.img.ly/packages/imgly/cesdk-js/${CESDK_VERSION}/assets`,
           
           // Theme
           theme: "dark",
@@ -136,6 +161,14 @@ export function MediaEditorModal({
         }
 
         editorInstanceRef.current = editor;
+
+        // Register built-in + demo assets. Without this the UI can look empty.
+        try {
+          await editor.addDefaultAssetSources();
+          await editor.addDemoAssetSources({ sceneMode: isVideo ? "Video" : "Design" });
+        } catch (e) {
+          console.warn("[CESDK] add asset sources failed", e);
+        }
 
         // Load the appropriate scene based on media type
         const engine = editor.engine;
@@ -202,7 +235,10 @@ export function MediaEditorModal({
       } catch (err: any) {
         console.error("Error initializing CreativeEditor:", err);
         if (isMounted) {
-          setError(err.message || "Не удалось загрузить редактор");
+          setError(
+            err?.message ||
+              "Не удалось загрузить редактор (проверьте license/baseURL и CSS импорты)"
+          );
           setIsLoading(false);
         }
       }
@@ -213,6 +249,7 @@ export function MediaEditorModal({
     return () => {
       isMounted = false;
       cleanupEditor();
+      if (mediaUrl) URL.revokeObjectURL(mediaUrl);
     };
   }, [open, mediaFile, isVideo, preset, onSave, cleanupEditor]);
 
@@ -331,11 +368,17 @@ export function MediaEditorModal({
             </div>
           )}
 
-          <div 
-            ref={containerRef} 
-            className="w-full h-full"
-            style={{ 
-              visibility: isLoading || error ? "hidden" : "visible",
+          <div
+            ref={containerRef}
+            className={cn(
+              "w-full h-full",
+              // Important: allow CE.SDK to own pointer/touch gestures inside the editor
+              "touch-none"
+            )}
+            style={{
+              // Keep it mounted even during loading so create() has a real DOM node
+              opacity: isLoading || error ? 0 : 1,
+              pointerEvents: isLoading || error ? "none" : "auto",
               minHeight: "400px",
             }}
           />
