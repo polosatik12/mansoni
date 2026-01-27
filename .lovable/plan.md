@@ -1,100 +1,77 @@
 
-# Plan: Smoother Story Circle Animations
+Цель: исправить открытие чата из профиля пользователя, чтобы по кнопке «Сообщение» всегда открывался чат именно с этим человеком (имя/аватар корректные, не “Пользователь”, и не “хрен пойми кто”).
 
-## Problem Analysis
+---
 
-Currently, the story circles animation is janky because:
-1. JavaScript recalculates all styles on every scroll event (60+ times per second)
-2. No CSS transitions smooth out the frame-to-frame changes
-3. The `useMemo` dependency on `collapseProgress` causes recalculation on every scroll tick
-4. Multiple inline style updates per frame trigger layout thrashing
+## Что сейчас происходит (почему баг)
+1) На странице профиля (`UserProfilePage`) при нажатии «Сообщение» мы создаём/получаем `conversationId` правильно, но при переходе на `/chats` передаём только `conversationId` и `chatName`.
+2) На странице чатов (`ChatsPage`) есть код, который при наличии `location.state.conversationId` создаёт “пустой” объект беседы:
+   - `participants: []`
+   - из-за этого `getOtherParticipant()` не находит собеседника и подставляет заглушку: `display_name: "Пользователь"`, `user_id: ""`.
+3) В итоге `ChatConversation` получает `otherUserId=""`, а заголовок/аватар строятся по фолбэкам (как на вашем скрине). Иногда это выглядит так, будто чат “с кем-то другим”, хотя на самом деле часто это просто “неподтянутая шапка” (без данных собеседника).
 
-## Solution Strategy
+Дополнительно: `ChatsPage` не “гидратирует” выбранный чат после `refetch()` — даже когда список чатов подгрузится с участниками, `selectedConversation` остаётся пустым объектом, поэтому шапка так и остаётся некорректной.
 
-Switch from **per-frame JavaScript calculations** to **CSS-driven transitions** with only minimal JavaScript for state changes. This lets the browser's compositor handle smooth interpolation.
+---
 
-## Implementation Details
+## Решение (в двух слоях, чтобы было надёжно)
+### A) Передавать в `/chats` не только conversationId, но и данные собеседника
+Из `UserProfilePage` при `navigate("/chats", { state: ... })` будем передавать:
+- `conversationId`
+- `otherUserId` = `profile.user_id`
+- `otherDisplayName` = `profile.display_name`
+- `otherAvatarUrl` = `profile.avatar_url`
 
-### 1. Add CSS Transitions to Story Elements
+Это позволит моментально построить корректную шапку чата без ожидания загрузки списка чатов.
 
-Update `src/index.css` to add smooth transitions:
+### B) В `ChatsPage` правильно формировать “immediateConv” и затем заменять его на реальный объект из `useConversations`
+1) При получении `locationState.conversationId` будем создавать `immediateConv` уже с `participants`, минимум:
+   - один participant: `{ user_id: otherUserId, profile: { display_name, avatar_url } }`
+   - (опционально можно добавить текущего пользователя, но это не обязательно — текущий не нужен, чтобы `getOtherParticipant` работал)
+2) Добавим эффект “гидратации”:
+   - когда `conversations` обновились после `refetch()`,
+   - если `selectedConversation.id` совпадает с одной из загруженных бесед,
+   - заменить `selectedConversation` на найденную реальную беседу (там будут корректные участники, last_message, unread_count).
+Это уберёт любые случаи, когда после загрузки всё ещё отображается заглушка.
 
-```css
-/* Story avatar button - smooth transitions */
-.story-avatar-btn {
-  will-change: transform, opacity;
-  transform: translateZ(0);
-  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
-              opacity 0.15s ease-out;
-}
+---
 
-/* Story avatar container - smooth scale */
-.story-avatar {
-  will-change: transform;
-  transform: translateZ(0);
-  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
+## Конкретные изменения в коде (файлы)
+### 1) `src/pages/UserProfilePage.tsx`
+- В `handleMessage()` расширить `navigate("/chats", { state: ... })`:
+  - добавить `otherUserId`, `otherDisplayName`, `otherAvatarUrl`.
 
-/* Story name - smooth fade */
-.story-name {
-  will-change: opacity, height;
-  transition: opacity 0.15s ease-out, 
-              height 0.15s ease-out, 
-              margin-top 0.15s ease-out;
-}
-```
+### 2) `src/pages/ChatsPage.tsx`
+- Расширить `LocationState`:
+  - `otherUserId?: string`
+  - `otherDisplayName?: string`
+  - `otherAvatarUrl?: string | null`
+- В `useEffect` (где создаётся immediateConv) — заполнить `participants`.
+- Добавить `useEffect`, который после загрузки `conversations` подменит `selectedConversation` на “полный” объект из списка по совпадению `id`.
+- (Небольшая защита) если `locationState.conversationId` есть, но `otherUserId` не передан, всё равно ставим immediateConv как раньше, но тогда гидратация из списка станет обязательной и быстро исправит шапку.
 
-### 2. Simplify FeedHeader Logic
+---
 
-Update `src/components/feed/FeedHeader.tsx`:
+## Проверка после правок (сценарии)
+1) Открыть профиль “Хана” → нажать «Сообщение»:
+   - шапка должна сразу показывать “Хана” и его аватар
+   - `otherUserId` не пустой (звонки/действия завязанные на otherUserId не ломаются)
+2) Повторить с 2–3 другими профилями.
+3) Если чат уже существовал ранее:
+   - открывается тот же `conversationId`
+   - после `refetch()` подтянется last_message/участники, список чатов корректный.
+4) Если чат новый:
+   - “Начните переписку!” остаётся (это нормально), но имя/аватар в шапке корректные.
 
-- **Reduce recalculation frequency**: Only update on significant progress changes (threshold-based)
-- **Use `requestAnimationFrame` batching**: Group style updates
-- **Simplify state transitions**: Use two states (expanded/collapsed) with CSS handling the animation
-- **Add transition classes** instead of inline transition styles
+---
 
-### 3. Optimize useScrollCollapse Hook
+## Возможные дополнительные причины (если вдруг после этого всё ещё “не тот человек”)
+Если после этих правок реально будет открываться не тот диалог (не только шапка), тогда нужно проверить:
+- корректность `profile.user_id` в `useProfileByUsername` (не возвращает ли он “не того” пользователя при одинаковых display_name/username).
+В таком случае следующим шагом будет аудит `useProfileByUsername` и поиска профиля по `username`.
 
-Update `src/hooks/useScrollCollapse.tsx`:
+---
 
-- Add **hysteresis/debouncing** to prevent jitter at scroll boundaries
-- Use **rounded progress values** (e.g., 2 decimal places) to reduce unnecessary re-renders
-- Consider using CSS `scroll-timeline` for native browser scroll-linked animations (with fallback)
+## Технические примечания (для стабильности)
+- `window.history.replaceState({}, document.title);` сейчас очищает state не очень надёжно. Если увидим повторные “ложные” открытия чата при возвратах, заменим на `navigate(location.pathname, { replace: true, state: null })` или аналогичный безопасный паттерн. Но сначала сделаем минимально необходимую правку с участником/гидратацией.
 
-### 4. Optimize ChatStories Component
-
-Update `src/components/chat/ChatStories.tsx`:
-
-- Apply the same transition-based approach
-- Ensure consistent animation timing between FeedHeader and ChatStories
-
-## Technical Details
-
-### CSS Easing Curve
-Use `cubic-bezier(0.25, 0.1, 0.25, 1)` - a slightly modified ease-out that feels natural for scroll-linked UI
-
-### Transition Duration
-- Position/transform: 200ms (fast enough to feel responsive)
-- Opacity: 150ms (slightly faster for snappier visibility changes)
-- Scale: 200ms (matches position for coordinated movement)
-
-### GPU Optimization
-- Keep `will-change: transform, opacity` on animated elements
-- Use `transform: translate3d()` and `scale()` only
-- Avoid animating `width`, `height`, `left`, `top` properties
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/index.css` | Add/update transition styles for `.story-avatar-btn`, `.story-avatar`, `.story-name` |
-| `src/components/feed/FeedHeader.tsx` | Simplify style calculations, add transition classes |
-| `src/hooks/useScrollCollapse.tsx` | Add progress value rounding/debouncing |
-| `src/components/chat/ChatStories.tsx` | Apply same transition approach for consistency |
-
-## Expected Result
-
-- Smooth 60fps animations when scrolling
-- No visible jankiness or stuttering
-- Consistent behavior across different scroll speeds
-- Proper GPU acceleration maintaining battery efficiency
