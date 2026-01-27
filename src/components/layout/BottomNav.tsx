@@ -263,7 +263,7 @@ export const BottomNav = forwardRef<HTMLElement, {}>(function BottomNav(_, ref) 
                           src={item.customIcon} 
                           alt={item.label}
                           className={cn(
-                            "w-8 h-8 transition-all duration-150",
+                            "w-10 h-10 transition-all duration-150",
                             isActive && "scale-110"
                           )}
                         />
