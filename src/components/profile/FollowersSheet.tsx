@@ -7,12 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 interface FollowUser {
   id: string;
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
+  verified: boolean;
   isFollowing: boolean;
 }
 
@@ -67,7 +69,7 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
       // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, user_id, display_name, avatar_url")
+        .select("id, user_id, display_name, avatar_url, verified")
         .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
@@ -88,6 +90,7 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
         user_id: p.user_id,
         display_name: p.display_name,
         avatar_url: p.avatar_url,
+        verified: p.verified || false,
         isFollowing: currentUserFollowing.includes(p.user_id),
       }));
 
@@ -194,9 +197,12 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">
-                        {user.display_name || "Пользователь"}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <p className="font-semibold text-sm truncate">
+                          {user.display_name || "Пользователь"}
+                        </p>
+                        {user.verified && <VerifiedBadge size="xs" />}
+                      </div>
                     </div>
                   </div>
 

@@ -20,6 +20,7 @@ import { CreateReelSheet } from "@/components/reels/CreateReelSheet";
 import { ReelCommentsSheet } from "@/components/reels/ReelCommentsSheet";
 import { ReelShareSheet } from "@/components/reels/ReelShareSheet";
 import { Button } from "@/components/ui/button";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 function formatNumber(num: number): string {
   if (num >= 1000000) {
@@ -302,12 +303,12 @@ export function ReelsPage() {
             </button>
           </div>
 
-          {/* Bottom info */}
           <div className="absolute left-4 right-20 bottom-4 z-10">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-white font-semibold">
                 @{reel.author?.display_name || "user"}
               </span>
+              {reel.author?.verified && <VerifiedBadge size="sm" className="text-white fill-white stroke-white/80" />}
             </div>
             {reel.description && (
               <p className="text-white/90 text-sm line-clamp-2 mb-3">

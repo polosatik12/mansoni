@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { ShareSheet } from "./ShareSheet";
 import { PostOptionsSheet } from "./PostOptionsSheet";
 import { usePostActions } from "@/hooks/usePosts";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 interface PostCardProps {
   id?: string;
@@ -181,18 +182,19 @@ export function PostCard({
             />
             {author.verified && (
               <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                <BadgeCheck className="w-3 h-3 text-primary-foreground" />
+                <VerifiedBadge size="xs" className="text-primary-foreground fill-primary-foreground stroke-primary" />
               </div>
             )}
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <span 
                 className="font-semibold text-foreground text-sm cursor-pointer hover:underline"
                 onClick={goToProfile}
               >
                 {author.username}
               </span>
+              {author.verified && <VerifiedBadge size="sm" />}
             </div>
             {isRecommended && (
               <p className="text-xs text-muted-foreground">Рекомендации для вас</p>

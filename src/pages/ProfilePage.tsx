@@ -12,6 +12,7 @@ import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 const tabs = [
   { id: "posts", icon: Grid3X3 },
@@ -96,7 +97,10 @@ export function ProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="w-10" />
-        <h1 className="font-semibold text-lg">{profile.display_name || 'Профиль'}</h1>
+        <div className="flex items-center gap-1.5">
+          <h1 className="font-semibold text-lg">{profile.display_name || 'Профиль'}</h1>
+          {profile.verified && <VerifiedBadge size="md" />}
+        </div>
         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
           <Settings className="w-6 h-6" />
         </Button>
@@ -124,7 +128,10 @@ export function ProfilePage() {
 
           {/* Stats */}
           <div className="flex-1">
-            <h1 className="text-lg font-semibold mb-2">{profile.display_name || 'Пользователь'}</h1>
+            <div className="flex items-center gap-1.5 mb-2">
+              <h1 className="text-lg font-semibold">{profile.display_name || 'Пользователь'}</h1>
+              {profile.verified && <VerifiedBadge size="md" />}
+            </div>
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <p className="font-bold text-foreground">{profile.stats.postsCount}</p>

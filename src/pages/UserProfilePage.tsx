@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Grid3X3, Bookmark, Heart, Play, MoreHorizontal, BadgeCheck, MessageCircle, Loader2, User, Eye, AtSign } from "lucide-react";
+import { ArrowLeft, Grid3X3, Bookmark, Heart, Play, MoreHorizontal, MessageCircle, Loader2, User, Eye, AtSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { useProfileByUsername, useUserPosts } from "@/hooks/useProfile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowersSheet } from "@/components/profile/FollowersSheet";
 import { StoryViewer } from "@/components/feed/StoryViewer";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 import type { Story, UserWithStories } from "@/hooks/useStories";
 
 const tabs = [
@@ -68,6 +69,7 @@ export function UserProfilePage() {
         user_id: profile.user_id,
         display_name: profile.display_name,
         avatar_url: profile.avatar_url,
+        verified: profile.verified,
         stories: activeStories,
         // viewed влияет только на UI, но не на возможность открыть
         hasNew: hasUnviewedStories,
@@ -252,9 +254,7 @@ export function UserProfilePage() {
         </Button>
         <div className="flex items-center gap-1.5">
           <h2 className="font-semibold text-foreground">{profile.display_name}</h2>
-          {profile.verified && (
-            <BadgeCheck className="w-4 h-4 text-primary fill-primary stroke-primary-foreground" />
-          )}
+          {profile.verified && <VerifiedBadge size="md" />}
         </div>
         <Button variant="ghost" size="icon">
           <MoreHorizontal className="w-5 h-5" />
@@ -292,7 +292,10 @@ export function UserProfilePage() {
 
           {/* Stats */}
           <div className="flex-1">
-            <h1 className="text-lg font-semibold mb-2">{profile.display_name || 'Пользователь'}</h1>
+            <div className="flex items-center gap-1.5 mb-2">
+              <h1 className="text-lg font-semibold">{profile.display_name || 'Пользователь'}</h1>
+              {profile.verified && <VerifiedBadge size="md" />}
+            </div>
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <p className="font-bold text-foreground">{profile.stats.postsCount}</p>

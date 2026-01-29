@@ -16,6 +16,7 @@ export interface UserWithStories {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
+  verified: boolean;
   stories: Story[];
   hasNew: boolean;
   isOwn: boolean;
@@ -40,6 +41,7 @@ interface ProfileRow {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
+  verified: boolean | null;
 }
 
 export function useStories() {
@@ -69,7 +71,7 @@ export function useStories() {
         if (user) {
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('user_id, display_name, avatar_url')
+            .select('user_id, display_name, avatar_url, verified')
             .eq('user_id', user.id)
             .single();
 
@@ -77,6 +79,7 @@ export function useStories() {
             user_id: user.id,
             display_name: profileData?.display_name || 'Вы',
             avatar_url: profileData?.avatar_url,
+            verified: profileData?.verified || false,
             stories: [],
             hasNew: false,
             isOwn: true
@@ -93,7 +96,7 @@ export function useStories() {
       // Fetch profiles for authors
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, avatar_url')
+        .select('user_id, display_name, avatar_url, verified')
         .in('user_id', authorIds);
 
       if (profilesError) throw profilesError;
@@ -135,6 +138,7 @@ export function useStories() {
           user_id: user.id,
           display_name: profile?.display_name || 'Вы',
           avatar_url: profile?.avatar_url,
+          verified: profile?.verified || false,
           stories: ownStories,
           hasNew: false, // Own stories don't show as "new"
           isOwn: true
@@ -153,6 +157,7 @@ export function useStories() {
           user_id: authorId,
           display_name: profile?.display_name || 'Пользователь',
           avatar_url: profile?.avatar_url,
+          verified: profile?.verified || false,
           stories: userStories,
           hasNew: hasUnviewedStories,
           isOwn: false

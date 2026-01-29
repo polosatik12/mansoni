@@ -14,6 +14,7 @@ export interface ReelComment {
     display_name: string;
     avatar_url: string | null;
     user_id: string;
+    verified: boolean;
   };
   liked_by_user: boolean;
   replies?: ReelComment[];
@@ -67,12 +68,12 @@ export function useReelComments(reelId: string) {
       const authorIds = [...new Set(commentRows.map((c) => c.author_id))];
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("user_id, display_name, avatar_url")
+        .select("user_id, display_name, avatar_url, verified")
         .in("user_id", authorIds);
 
-      const profilesMap: Record<string, { display_name: string; avatar_url: string | null }> = {};
-      (profilesData || []).forEach((p) => {
-        profilesMap[p.user_id] = { display_name: p.display_name || "Пользователь", avatar_url: p.avatar_url };
+      const profilesMap: Record<string, { display_name: string; avatar_url: string | null; verified: boolean }> = {};
+      (profilesData || []).forEach((p: any) => {
+        profilesMap[p.user_id] = { display_name: p.display_name || "Пользователь", avatar_url: p.avatar_url, verified: p.verified || false };
       });
 
       // Fetch likes by current user
@@ -100,6 +101,7 @@ export function useReelComments(reelId: string) {
           user_id: c.author_id,
           display_name: profilesMap[c.author_id]?.display_name || "Пользователь",
           avatar_url: profilesMap[c.author_id]?.avatar_url || null,
+          verified: profilesMap[c.author_id]?.verified || false,
         },
         liked_by_user: userLikes.has(c.id),
       }));
