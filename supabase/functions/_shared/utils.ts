@@ -7,8 +7,8 @@
 
 // E1: Restrict CORS to specific origins
 const ALLOWED_ORIGINS = [
-  "https://thoughtful-query.lovable.app",
-  "https://id-preview--877aae79-ef22-4313-84b2-9015063a6825.lovable.app",
+  "https://mansoni.app",
+  "https://app.mansoni.ru",
   "http://localhost:5173",
   "http://localhost:3000",
 ];
