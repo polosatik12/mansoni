@@ -298,7 +298,7 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
                 <p className="text-white font-semibold text-sm truncate">
                   {currentUser.isOwn ? 'Вы' : currentUser.display_name}
                 </p>
-                {currentUser.verified && <VerifiedBadge size="sm" className="text-white fill-white stroke-white/80" />}
+                {currentUser.verified && <VerifiedBadge size="sm" />}
               </div>
               <p className="text-white/60 text-xs">{timeAgo} назад</p>
             </div>
