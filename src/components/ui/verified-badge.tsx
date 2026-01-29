@@ -1,11 +1,10 @@
 import { BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface VerifiedBadgeProps {
   className?: string;
@@ -21,9 +20,13 @@ const sizeClasses = {
 
 export function VerifiedBadge({ className, size = "sm" }: VerifiedBadgeProps) {
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={0}>
-        <TooltipTrigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button 
+          type="button" 
+          className="inline-flex items-center justify-center focus:outline-none"
+          onClick={(e) => e.stopPropagation()}
+        >
           <BadgeCheck 
             className={cn(
               sizeClasses[size],
@@ -31,14 +34,15 @@ export function VerifiedBadge({ className, size = "sm" }: VerifiedBadgeProps) {
               className
             )} 
           />
-        </TooltipTrigger>
-        <TooltipContent 
-          side="top" 
-          className="bg-background border border-border shadow-lg"
-        >
-          <p className="text-sm font-medium">Владелец соцсети Mansoni</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent 
+        side="top" 
+        className="w-auto px-3 py-2 text-sm font-medium"
+        onClick={(e) => e.stopPropagation()}
+      >
+        Владелец соцсети Mansoni
+      </PopoverContent>
+    </Popover>
   );
 }
