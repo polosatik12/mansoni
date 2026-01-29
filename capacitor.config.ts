@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.project877aae79',
-  appName: 'A Lovable project',
+  appId: 'com.mansoni.app',
+  appName: 'Mansoni',
   webDir: 'dist',
 };
 
