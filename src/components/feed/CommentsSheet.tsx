@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 import {
   Drawer,
   DrawerContent,
@@ -242,15 +243,18 @@ function CommentItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <span 
-              className="font-semibold text-sm cursor-pointer hover:underline" 
-              onClick={() => onGoToProfile(comment.author.user_id)}
-            >
-              {comment.author.display_name}
-            </span>
-            <span className="text-xs text-muted-foreground ml-2">
-              {formatTimeAgo(comment.created_at)}
-            </span>
+            <div className="flex items-center gap-1">
+              <span 
+                className="font-semibold text-sm cursor-pointer hover:underline" 
+                onClick={() => onGoToProfile(comment.author.user_id)}
+              >
+                {comment.author.display_name}
+              </span>
+              {comment.author.verified && <VerifiedBadge size="xs" />}
+              <span className="text-xs text-muted-foreground ml-1">
+                {formatTimeAgo(comment.created_at)}
+              </span>
+            </div>
             <p className="text-sm text-foreground mt-1">{comment.content}</p>
             <div className="flex items-center gap-4 mt-2">
               <button 

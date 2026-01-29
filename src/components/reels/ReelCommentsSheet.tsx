@@ -12,6 +12,7 @@ import { useReelComments, ReelComment } from "@/hooks/useReelComments";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 interface ReelCommentsSheetProps {
   isOpen: boolean;

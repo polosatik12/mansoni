@@ -14,6 +14,7 @@ export interface Comment {
     display_name: string;
     avatar_url: string | null;
     user_id: string;
+    verified: boolean;
   };
   liked_by_user: boolean;
   replies?: Comment[];
@@ -76,7 +77,7 @@ export function useComments(postId: string) {
       // Fetch author profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("user_id, display_name, avatar_url")
+        .select("user_id, display_name, avatar_url, verified")
         .in("user_id", authorIds);
 
       if (profilesError) throw profilesError;
@@ -112,6 +113,7 @@ export function useComments(postId: string) {
             display_name: profile?.display_name || "Пользователь",
             avatar_url: profile?.avatar_url || null,
             user_id: comment.author_id,
+            verified: profile?.verified || false,
           },
           liked_by_user: likedCommentIds.has(comment.id),
         };

@@ -16,6 +16,7 @@ export interface Reel {
   author?: {
     display_name: string;
     avatar_url: string;
+    verified: boolean;
   };
   isLiked?: boolean;
 }
@@ -41,7 +42,7 @@ export function useReels() {
       const authorIds = [...new Set((data || []).map((r: any) => r.author_id))] as string[];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, avatar_url")
+        .select("user_id, display_name, avatar_url, verified")
         .in("user_id", authorIds);
 
       const profileMap = new Map(
@@ -64,6 +65,7 @@ export function useReels() {
         author: profileMap.get(r.author_id) || {
           display_name: "Пользователь",
           avatar_url: null,
+          verified: false,
         },
         isLiked: userLikedReels.includes(r.id),
       }));

@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Play, Hash, User, BadgeCheck, Loader2 } from "lucide-react";
+import { Search, Play, Hash, User, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSearch } from "@/hooks/useSearch";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 const trends = [
   { tag: "новости", posts: "12.5K" },
@@ -89,9 +90,7 @@ export function SearchPage() {
                       <span className="font-semibold text-foreground truncate">
                         {user.display_name}
                       </span>
-                      {user.verified && (
-                        <BadgeCheck className="w-4 h-4 text-primary fill-primary stroke-primary-foreground shrink-0" />
-                      )}
+                      {user.verified && <VerifiedBadge size="sm" />}
                     </div>
                     {user.bio && (
                       <p className="text-sm text-muted-foreground line-clamp-1">

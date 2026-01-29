@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { useNavigate } from "react-router-dom";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 interface StoryViewerProps {
   usersWithStories: UserWithStories[];
@@ -293,9 +294,12 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
               className="w-9 h-9 rounded-full border-2 border-white/50 object-cover flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-white font-semibold text-sm truncate">
-                {currentUser.isOwn ? 'Вы' : currentUser.display_name}
-              </p>
+              <div className="flex items-center gap-1">
+                <p className="text-white font-semibold text-sm truncate">
+                  {currentUser.isOwn ? 'Вы' : currentUser.display_name}
+                </p>
+                {currentUser.verified && <VerifiedBadge size="sm" className="text-white fill-white stroke-white/80" />}
+              </div>
               <p className="text-white/60 text-xs">{timeAgo} назад</p>
             </div>
           </button>
