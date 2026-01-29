@@ -1,77 +1,89 @@
 
-Цель: исправить открытие чата из профиля пользователя, чтобы по кнопке «Сообщение» всегда открывался чат именно с этим человеком (имя/аватар корректные, не “Пользователь”, и не “хрен пойми кто”).
+
+# План: Удаление всех упоминаний Lovable из кода
+
+## Найденные упоминания
+
+### 1. `src/lib/supabase.ts`
+Комментарии содержат "Lovable Cloud":
+- Строка 2: `// The app runs on Lovable Cloud; keep a single client everywhere...`
+- Строка 3: `import { supabase as lovableSupabase }`
+- Строка 7: `// Kept for older imports; values come from the environment managed by Lovable Cloud.`
+
+**Исправление:** Убрать все комментарии с упоминанием Lovable и переименовать `lovableSupabase` в `supabaseClient`
+
+### 2. `playwright.config.ts`
+Использует пакет от Lovable:
+- Строка 1: `import { createLovableConfig } from "lovable-agent-playwright-config/config"`
+- Строка 3: `export default createLovableConfig({...})`
+
+**Исправление:** Переписать на стандартный Playwright конфиг
+
+### 3. `package.json`
+- Строка 91: `"lovable-tagger": "^1.1.13"`
+
+**Исправление:** Удалить эту зависимость из devDependencies
+
+### 4. Edge Functions (AI Gateway URL)
+В двух файлах используется URL `ai.gateway.lovable.dev`:
+- `supabase/functions/property-assistant/index.ts` (строки 50-60)
+- `supabase/functions/insurance-assistant/index.ts` (строки 51-61)
+
+**ВАЖНО:** Эти edge functions используют внутренний AI Gateway, который работает через переменную окружения `LOVABLE_API_KEY`. Этот API является рабочим backend-сервисом, и его нельзя просто заменить на другой URL без потери функциональности AI-ассистентов. 
+
+**Варианты:**
+1. Оставить как есть (функционал важнее) - URL не виден пользователям приложения
+2. Если нужно полностью избавиться - потребуется подключить свой AI-провайдер (OpenAI/Google) с собственным API ключом
+
+### 5. Lock-файлы (автоматически)
+- `package-lock.json` и `bun.lock` обновятся автоматически после удаления зависимости из package.json
 
 ---
 
-## Что сейчас происходит (почему баг)
-1) На странице профиля (`UserProfilePage`) при нажатии «Сообщение» мы создаём/получаем `conversationId` правильно, но при переходе на `/chats` передаём только `conversationId` и `chatName`.
-2) На странице чатов (`ChatsPage`) есть код, который при наличии `location.state.conversationId` создаёт “пустой” объект беседы:
-   - `participants: []`
-   - из-за этого `getOtherParticipant()` не находит собеседника и подставляет заглушку: `display_name: "Пользователь"`, `user_id: ""`.
-3) В итоге `ChatConversation` получает `otherUserId=""`, а заголовок/аватар строятся по фолбэкам (как на вашем скрине). Иногда это выглядит так, будто чат “с кем-то другим”, хотя на самом деле часто это просто “неподтянутая шапка” (без данных собеседника).
+## Технические детали изменений
 
-Дополнительно: `ChatsPage` не “гидратирует” выбранный чат после `refetch()` — даже когда список чатов подгрузится с участниками, `selectedConversation` остаётся пустым объектом, поэтому шапка так и остаётся некорректной.
+### Файл 1: `src/lib/supabase.ts`
+```typescript
+// До:
+// Backwards-compatible wrapper.
+// The app runs on Lovable Cloud; keep a single client everywhere...
+import { supabase as lovableSupabase } from "@/integrations/supabase/client";
+export const supabase = lovableSupabase;
+// Kept for older imports; values come from the environment managed by Lovable Cloud.
 
----
+// После:
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
+export const supabase = supabaseClient;
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+```
 
-## Решение (в двух слоях, чтобы было надёжно)
-### A) Передавать в `/chats` не только conversationId, но и данные собеседника
-Из `UserProfilePage` при `navigate("/chats", { state: ... })` будем передавать:
-- `conversationId`
-- `otherUserId` = `profile.user_id`
-- `otherDisplayName` = `profile.display_name`
-- `otherAvatarUrl` = `profile.avatar_url`
+### Файл 2: `playwright.config.ts`
+```typescript
+// До:
+import { createLovableConfig } from "lovable-agent-playwright-config/config";
+export default createLovableConfig({...});
 
-Это позволит моментально построить корректную шапку чата без ожидания загрузки списка чатов.
+// После:
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  testDir: './e2e',
+  timeout: 60000,
+  use: {
+    baseURL: 'http://localhost:8080',
+  },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } }
+  ]
+});
+```
 
-### B) В `ChatsPage` правильно формировать “immediateConv” и затем заменять его на реальный объект из `useConversations`
-1) При получении `locationState.conversationId` будем создавать `immediateConv` уже с `participants`, минимум:
-   - один participant: `{ user_id: otherUserId, profile: { display_name, avatar_url } }`
-   - (опционально можно добавить текущего пользователя, но это не обязательно — текущий не нужен, чтобы `getOtherParticipant` работал)
-2) Добавим эффект “гидратации”:
-   - когда `conversations` обновились после `refetch()`,
-   - если `selectedConversation.id` совпадает с одной из загруженных бесед,
-   - заменить `selectedConversation` на найденную реальную беседу (там будут корректные участники, last_message, unread_count).
-Это уберёт любые случаи, когда после загрузки всё ещё отображается заглушка.
-
----
-
-## Конкретные изменения в коде (файлы)
-### 1) `src/pages/UserProfilePage.tsx`
-- В `handleMessage()` расширить `navigate("/chats", { state: ... })`:
-  - добавить `otherUserId`, `otherDisplayName`, `otherAvatarUrl`.
-
-### 2) `src/pages/ChatsPage.tsx`
-- Расширить `LocationState`:
-  - `otherUserId?: string`
-  - `otherDisplayName?: string`
-  - `otherAvatarUrl?: string | null`
-- В `useEffect` (где создаётся immediateConv) — заполнить `participants`.
-- Добавить `useEffect`, который после загрузки `conversations` подменит `selectedConversation` на “полный” объект из списка по совпадению `id`.
-- (Небольшая защита) если `locationState.conversationId` есть, но `otherUserId` не передан, всё равно ставим immediateConv как раньше, но тогда гидратация из списка станет обязательной и быстро исправит шапку.
+### Файл 3: `package.json`
+Удалить строку `"lovable-tagger": "^1.1.13"` из `devDependencies`
 
 ---
 
-## Проверка после правок (сценарии)
-1) Открыть профиль “Хана” → нажать «Сообщение»:
-   - шапка должна сразу показывать “Хана” и его аватар
-   - `otherUserId` не пустой (звонки/действия завязанные на otherUserId не ломаются)
-2) Повторить с 2–3 другими профилями.
-3) Если чат уже существовал ранее:
-   - открывается тот же `conversationId`
-   - после `refetch()` подтянется last_message/участники, список чатов корректный.
-4) Если чат новый:
-   - “Начните переписку!” остаётся (это нормально), но имя/аватар в шапке корректные.
+## Что остаётся без изменений
 
----
-
-## Возможные дополнительные причины (если вдруг после этого всё ещё “не тот человек”)
-Если после этих правок реально будет открываться не тот диалог (не только шапка), тогда нужно проверить:
-- корректность `profile.user_id` в `useProfileByUsername` (не возвращает ли он “не того” пользователя при одинаковых display_name/username).
-В таком случае следующим шагом будет аудит `useProfileByUsername` и поиска профиля по `username`.
-
----
-
-## Технические примечания (для стабильности)
-- `window.history.replaceState({}, document.title);` сейчас очищает state не очень надёжно. Если увидим повторные “ложные” открытия чата при возвратах, заменим на `navigate(location.pathname, { replace: true, state: null })` или аналогичный безопасный паттерн. Но сначала сделаем минимально необходимую правку с участником/гидратацией.
+Edge functions (`property-assistant` и `insurance-assistant`) продолжат использовать AI Gateway, так как это рабочий backend-сервис. URL `ai.gateway.lovable.dev` находится только в серверном коде и не виден пользователям приложения.
 
