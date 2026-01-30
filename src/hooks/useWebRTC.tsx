@@ -24,20 +24,26 @@ async function getCloudflareIceServers(): Promise<RTCConfiguration> {
       return DEFAULT_ICE_CONFIG;
     }
 
-    // Cloudflare returns { iceServers: { iceServers: [...] } }
-    const iceServers = data?.iceServers?.iceServers || data?.iceServers;
+    console.log("[WebRTC] TURN response data:", JSON.stringify(data));
+
+    // Cloudflare returns { iceServers: [...] } directly
+    const iceServers = data?.iceServers;
     
     if (iceServers && Array.isArray(iceServers) && iceServers.length > 0) {
       console.log("[WebRTC] Got Cloudflare TURN servers:", iceServers.length);
-      return {
+      
+      const config: RTCConfiguration = {
         iceServers: [
-          // Add Google STUN as fallback
+          // Add Google STUN as fallback first
           { urls: "stun:stun.l.google.com:19302" },
           ...iceServers,
         ],
         iceCandidatePoolSize: 10,
         iceTransportPolicy: "all",
       };
+      
+      console.log("[WebRTC] Using ICE config with", config.iceServers?.length, "servers");
+      return config;
     }
 
     console.warn("[WebRTC] No ICE servers in response, using defaults");
