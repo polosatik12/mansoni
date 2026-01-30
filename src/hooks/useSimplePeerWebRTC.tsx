@@ -260,7 +260,7 @@ export function useSimplePeerWebRTC({
         console.error("[SimplePeer] Connection timeout - could not establish connection within 45 seconds");
       }
     }, 45000);
-  }, [callId, isInitiator, getLocalStream, createPeer, setupSignaling]);
+  }, [callId, isInitiator, user, getLocalStream, createPeer, setupSignaling]);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
