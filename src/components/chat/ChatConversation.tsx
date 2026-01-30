@@ -250,12 +250,35 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             </p>
           </div>
           
-          {/* Right - Avatar */}
-          <div className="px-2">
+          {/* Right - Call buttons + Avatar */}
+          <div className="flex items-center gap-1">
+            {/* Audio call button */}
+            {!isGroup && (
+              <button
+                onClick={handleStartAudioCall}
+                className="p-2 rounded-full hover:bg-white/10 active:bg-white/15 transition-colors"
+                aria-label="Аудиозвонок"
+              >
+                <Phone className="w-5 h-5 text-[#6ab3f3]" />
+              </button>
+            )}
+            
+            {/* Video call button */}
+            {!isGroup && (
+              <button
+                onClick={handleStartVideoCall}
+                className="p-2 rounded-full hover:bg-white/10 active:bg-white/15 transition-colors"
+                aria-label="Видеозвонок"
+              >
+                <Video className="w-5 h-5 text-[#6ab3f3]" />
+              </button>
+            )}
+            
+            {/* Avatar */}
             <img
               src={chatAvatar}
               alt={chatName}
-              className="w-10 h-10 rounded-full object-cover bg-[#6ab3f3]"
+              className="w-10 h-10 rounded-full object-cover bg-[#6ab3f3] ml-1"
             />
           </div>
         </div>
