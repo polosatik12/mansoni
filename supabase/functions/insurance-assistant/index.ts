@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { handleCors, getCorsHeaders, checkRateLimit, getClientId, rateLimitResponse } from "../_shared/utils.ts";
+import { 
+  handleCors, 
+  getCorsHeaders, 
+  checkRateLimit, 
+  getClientId, 
+  rateLimitResponse 
+} from "../_shared/utils.ts";
 
 const systemPrompt = `Ты — эксперт по страхованию. Помогаешь пользователям выбрать подходящую страховку и отвечаешь на вопросы.
 
@@ -25,6 +31,7 @@ const systemPrompt = `Ты — эксперт по страхованию. По�
 - Спрашивай детали для точного расчёта`;
 
 serve(async (req) => {
+  // E1: Handle CORS with restricted origins
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -32,48 +39,69 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(origin);
 
   try {
+    // A1: Rate limiting
     const clientId = getClientId(req);
     const rateLimit = checkRateLimit(clientId);
-    if (!rateLimit.allowed) return rateLimitResponse(rateLimit.resetIn, origin);
+    
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetIn, origin);
+    }
 
     const { messages } = await req.json();
-    const apiKey = Deno.env.get("AI_API_KEY");
-    if (!apiKey) throw new Error("AI_API_KEY not set");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
 
-    const resp = await fetch("https://api.mansoni.ru/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        model: "gemini-3-flash",
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages,
+        ],
         stream: true,
       }),
     });
 
-    if (!resp.ok) {
-      if (resp.status === 429) {
+    if (!response.ok) {
+      if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Слишком много запросов." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (resp.status === 402) {
+      if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Превышен лимит AI." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      console.error("AI err:", resp.status);
+      console.error("AI error:", response.status);
       return new Response(JSON.stringify({ error: "Ошибка AI" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(resp.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-RateLimit-Remaining": String(rateLimit.remaining) },
+    return new Response(response.body, {
+      headers: { 
+        ...corsHeaders, 
+        "Content-Type": "text/event-stream",
+        "X-RateLimit-Remaining": String(rateLimit.remaining),
+      },
     });
   } catch (e) {
-    console.error("err:", e);
+    console.error("insurance-assistant error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
