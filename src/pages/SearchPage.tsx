@@ -76,21 +76,32 @@ export function SearchPage() {
               {users.map((user) => (
                 <div
                   key={user.user_id}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 active:bg-muted transition-colors cursor-pointer"
                   onClick={() => handleUserClick(user.user_id)}
+                  onTouchEnd={(e) => {
+                    // Prevent issues with touch events in Telegram Mini App
+                    const target = e.target as HTMLElement;
+                    // Don't navigate if clicking on button or verified badge
+                    if (target.closest('button')) return;
+                    handleUserClick(user.user_id);
+                  }}
                 >
-                  <Avatar className="w-12 h-12">
+                  <Avatar className="w-12 h-12 pointer-events-none">
                     <AvatarImage src={user.avatar_url || undefined} />
                     <AvatarFallback className="bg-muted">
                       <User className="w-5 h-5 text-muted-foreground" />
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pointer-events-none">
                     <div className="flex items-center gap-1">
                       <span className="font-semibold text-foreground truncate">
                         {user.display_name}
                       </span>
-                      {user.verified && <VerifiedBadge size="sm" />}
+                      {user.verified && (
+                        <span className="pointer-events-auto">
+                          <VerifiedBadge size="sm" />
+                        </span>
+                      )}
                     </div>
                     {user.bio && (
                       <p className="text-sm text-muted-foreground line-clamp-1">
