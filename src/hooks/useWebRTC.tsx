@@ -24,13 +24,18 @@ async function getCloudflareIceServers(): Promise<RTCConfiguration> {
       return DEFAULT_ICE_CONFIG;
     }
 
-    console.log("[WebRTC] TURN response data:", JSON.stringify(data));
+    console.log("[WebRTC] TURN response data:", JSON.stringify(data, null, 2));
 
     // Cloudflare returns { iceServers: [...] } directly
     const iceServers = data?.iceServers;
     
     if (iceServers && Array.isArray(iceServers) && iceServers.length > 0) {
       console.log("[WebRTC] Got Cloudflare TURN servers:", iceServers.length);
+      // Log the server types for debugging
+      iceServers.forEach((server: any, i: number) => {
+        console.log(`[WebRTC] ICE Server ${i}:`, server.urls);
+      
+      });
       
       const config: RTCConfiguration = {
         iceServers: [
@@ -42,7 +47,7 @@ async function getCloudflareIceServers(): Promise<RTCConfiguration> {
         iceTransportPolicy: "all",
       };
       
-      console.log("[WebRTC] Using ICE config with", config.iceServers?.length, "servers");
+      console.log("[WebRTC] Final ICE config with", config.iceServers?.length, "servers");
       return config;
     }
 
