@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { CallType } from "./useCalls";
 
+// Environment-based relay mode (set VITE_FORCE_RELAY=true to force TURN only)
+const FORCE_RELAY = import.meta.env.VITE_FORCE_RELAY === "true";
+
 // Default fallback ICE servers
 const DEFAULT_ICE_CONFIG: RTCConfiguration = {
   iceServers: [
@@ -15,30 +18,31 @@ const DEFAULT_ICE_CONFIG: RTCConfiguration = {
 // Fetch Cloudflare TURN credentials from edge function
 async function getIceServers(): Promise<RTCIceServer[]> {
   try {
-    console.log("[SimplePeer] Fetching TURN credentials...");
+    const ts = Date.now();
+    console.log(`[WebRTC] [${ts}] Fetching TURN credentials...`);
     const { data, error } = await supabase.functions.invoke("turn-credentials");
     
     if (error) {
-      console.error("[SimplePeer] Error fetching TURN credentials:", error);
+      console.error(`[WebRTC] [${Date.now()}] Error fetching TURN credentials:`, error);
       return DEFAULT_ICE_CONFIG.iceServers!;
     }
 
-    console.log("[SimplePeer] TURN response:", JSON.stringify(data, null, 2));
+    console.log(`[WebRTC] [${Date.now()}] TURN response received (took ${Date.now() - ts}ms)`);
 
     const iceServers = data?.iceServers;
     
     if (iceServers && Array.isArray(iceServers) && iceServers.length > 0) {
-      console.log("[SimplePeer] Got", iceServers.length, "ICE servers from Cloudflare");
+      console.log(`[WebRTC] Got ${iceServers.length} ICE servers from Cloudflare`);
       return [
         { urls: "stun:stun.l.google.com:19302" },
         ...iceServers,
       ];
     }
 
-    console.warn("[SimplePeer] No ICE servers in response, using defaults");
+    console.warn("[WebRTC] No ICE servers in response, using defaults");
     return DEFAULT_ICE_CONFIG.iceServers!;
   } catch (error) {
-    console.error("[SimplePeer] Failed to fetch TURN credentials:", error);
+    console.error("[WebRTC] Failed to fetch TURN credentials:", error);
     return DEFAULT_ICE_CONFIG.iceServers!;
   }
 }
@@ -52,10 +56,22 @@ interface UseSimplePeerOptions {
   onConnectionFailed?: () => void;
 }
 
+// Connection status for UI
+export type WebRTCStatus = 
+  | "idle"
+  | "getting_media"
+  | "subscribing"
+  | "waiting_ready"
+  | "exchanging_signals"
+  | "ice_connecting"
+  | "connected"
+  | "failed";
+
 // Constants for timing
-const READY_TIMEOUT_MS = 8000;
-const CONNECTION_TIMEOUT_MS = 20000;
-const RETRY_DELAY_MS = 1000;
+const READY_TIMEOUT_MS = 10000;
+const CONNECTION_TIMEOUT_MS = 25000;
+const RETRY_DELAY_MS = 1500;
+const MAX_RETRIES = 2;
 
 export function useSimplePeerWebRTC({
   callId,
@@ -71,7 +87,7 @@ export function useSimplePeerWebRTC({
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<"idle" | "waiting_ready" | "connecting" | "connected" | "failed">("idle");
+  const [connectionStatus, setConnectionStatus] = useState<WebRTCStatus>("idle");
 
   const peerRef = useRef<Peer.Instance | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -84,16 +100,27 @@ export function useSimplePeerWebRTC({
   const remoteReadyRef = useRef(false);
   const localStreamRef = useRef<MediaStream | null>(null);
   const iceServersRef = useRef<RTCIceServer[] | null>(null);
+  const signalListenerAttachedRef = useRef(false);
+  const isStartingRef = useRef(false);
 
   // Track connection state with ref for timeout callback
   useEffect(() => {
     isConnectedRef.current = isConnected;
   }, [isConnected]);
 
-  // Get local media stream
+  // Get local media stream (can be called early)
   const getLocalStream = useCallback(async () => {
+    // Return cached stream if available
+    if (localStreamRef.current) {
+      console.log("[WebRTC] Using cached local stream");
+      return localStreamRef.current;
+    }
+
     try {
-      console.log("[SimplePeer] Requesting media access...");
+      const ts = Date.now();
+      console.log(`[WebRTC] [${ts}] Requesting media access (${callType})...`);
+      setConnectionStatus("getting_media");
+      
       const constraints: MediaStreamConstraints = {
         audio: {
           echoCancellation: true,
@@ -110,12 +137,14 @@ export function useSimplePeerWebRTC({
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log("[SimplePeer] Got local stream with tracks:", stream.getTracks().map(t => `${t.kind}:${t.readyState}`));
+      console.log(`[WebRTC] [${Date.now()}] Got local stream (took ${Date.now() - ts}ms), tracks:`, 
+        stream.getTracks().map(t => `${t.kind}:${t.readyState}`));
+      
       setLocalStream(stream);
       localStreamRef.current = stream;
       return stream;
     } catch (error) {
-      console.error("[SimplePeer] Error getting local stream:", error);
+      console.error("[WebRTC] Error getting local stream:", error);
       return null;
     }
   }, [callType]);
@@ -123,12 +152,13 @@ export function useSimplePeerWebRTC({
   // Apply any pending signals to the peer
   const flushPendingSignals = useCallback((peer: Peer.Instance) => {
     if (pendingSignalsRef.current.length > 0) {
-      console.log(`[SimplePeer] Flushing ${pendingSignalsRef.current.length} pending signals`);
-      pendingSignalsRef.current.forEach((signalData) => {
+      console.log(`[WebRTC] Flushing ${pendingSignalsRef.current.length} pending signals`);
+      pendingSignalsRef.current.forEach((signalData, idx) => {
         try {
+          console.log(`[WebRTC] Applying buffered signal ${idx + 1}:`, signalData.type || "candidate");
           peer.signal(signalData);
         } catch (error) {
-          console.error("[SimplePeer] Error applying pending signal:", error);
+          console.error("[WebRTC] Error applying pending signal:", error);
         }
       });
       pendingSignalsRef.current = [];
@@ -144,22 +174,32 @@ export function useSimplePeerWebRTC({
       }
       const iceServers = iceServersRef.current;
       
-      console.log("[SimplePeer] Creating peer, initiator:", isInitiator, "ICE servers:", iceServers.length);
+      const config: RTCConfiguration = {
+        iceServers: iceServers,
+      };
+      
+      // Force relay mode if enabled (for NAT/firewall debugging)
+      if (FORCE_RELAY) {
+        config.iceTransportPolicy = "relay";
+        console.log("[WebRTC] ⚠️ FORCE_RELAY enabled - using TURN servers only");
+      }
+      
+      console.log(`[WebRTC] [${Date.now()}] Creating peer, initiator: ${isInitiator}, ICE servers: ${iceServers.length}, relay-only: ${FORCE_RELAY}`);
       
       const peer = new Peer({
         initiator: isInitiator,
         trickle: true,
         stream: stream,
-        config: {
-          iceServers: iceServers,
-        },
+        config: config,
       });
 
       // Handle signals (SDP offers/answers and ICE candidates)
       peer.on("signal", async (signalData) => {
         const signalType = signalData.type || "candidate";
         const signalSize = JSON.stringify(signalData).length;
-        console.log(`[SimplePeer] Signal generated, type: ${signalType}, size: ${signalSize} bytes`);
+        console.log(`[WebRTC] [${Date.now()}] Signal generated: ${signalType}, size: ${signalSize} bytes`);
+        
+        setConnectionStatus("exchanging_signals");
         
         if (channel && user) {
           try {
@@ -169,25 +209,26 @@ export function useSimplePeerWebRTC({
               payload: {
                 signalData,
                 from: user.id,
+                timestamp: Date.now(),
               },
             });
-            console.log(`[SimplePeer] Signal sent, result:`, result);
+            console.log(`[WebRTC] Signal sent (${signalType}), broadcast result:`, result);
           } catch (error) {
-            console.error("[SimplePeer] Error sending signal:", error);
+            console.error("[WebRTC] ❌ Error sending signal:", error);
           }
         }
       });
 
       // Handle incoming stream
       peer.on("stream", (remoteMediaStream) => {
-        console.log("[SimplePeer] Received remote stream with", remoteMediaStream.getTracks().length, "tracks");
+        console.log(`[WebRTC] [${Date.now()}] Received remote stream with ${remoteMediaStream.getTracks().length} tracks`);
         setRemoteStream(remoteMediaStream);
         onRemoteStream?.(remoteMediaStream);
       });
 
       // Handle connection
       peer.on("connect", () => {
-        console.log("[SimplePeer] ✓ Connected!");
+        console.log(`[WebRTC] [${Date.now()}] ✅ DATA CHANNEL CONNECTED!`);
         setIsConnected(true);
         setConnectionStatus("connected");
         onConnectionStateChange?.("connected");
@@ -205,21 +246,24 @@ export function useSimplePeerWebRTC({
 
       // Handle errors
       peer.on("error", (error) => {
-        console.error("[SimplePeer] Error:", error.message);
+        console.error(`[WebRTC] [${Date.now()}] ❌ Peer error:`, error.message);
         setConnectionStatus("failed");
         onConnectionStateChange?.("failed");
       });
 
       // Handle close
       peer.on("close", () => {
-        console.log("[SimplePeer] Connection closed");
+        console.log(`[WebRTC] [${Date.now()}] Connection closed`);
         setIsConnected(false);
         onConnectionStateChange?.("closed" as RTCPeerConnectionState);
       });
 
       // Handle ICE connection state for debugging
       peer.on("iceStateChange", (iceConnectionState: string) => {
-        console.log("[SimplePeer] ICE state:", iceConnectionState);
+        console.log(`[WebRTC] [${Date.now()}] ICE state: ${iceConnectionState}`);
+        if (iceConnectionState === "checking" || iceConnectionState === "connected") {
+          setConnectionStatus("ice_connecting");
+        }
       });
 
       peerRef.current = peer;
@@ -233,11 +277,13 @@ export function useSimplePeerWebRTC({
     [isInitiator, user, onRemoteStream, onConnectionStateChange, flushPendingSignals]
   );
 
-  // Setup signaling channel with signal listener attached immediately
+  // Setup signaling channel with signal listener attached IMMEDIATELY
   const setupSignaling = useCallback(async () => {
     if (!callId || !user) return null;
 
-    console.log(`[SimplePeer] Setting up signaling for call:${callId}, isInitiator: ${isInitiator}`);
+    const ts = Date.now();
+    console.log(`[WebRTC] [${ts}] Setting up signaling channel call:${callId}, role: ${isInitiator ? "initiator" : "callee"}`);
+    setConnectionStatus("subscribing");
 
     const channel = supabase.channel(`call:${callId}`, {
       config: {
@@ -245,42 +291,62 @@ export function useSimplePeerWebRTC({
       },
     });
 
-    // IMPORTANT: Attach signal listener BEFORE subscribing
-    // This ensures we never miss any signals
-    channel.on("broadcast", { event: "signal" }, ({ payload }) => {
-      if (payload.from === user.id) return;
-      
-      const signalType = payload.signalData?.type || "candidate";
-      console.log(`[SimplePeer] Received signal: ${signalType}`);
-      
-      // If peer exists, apply signal directly; otherwise buffer it
-      if (peerRef.current && peerReadyRef.current) {
-        try {
-          peerRef.current.signal(payload.signalData);
-        } catch (error) {
-          console.error("[SimplePeer] Error processing signal:", error);
+    // CRITICAL: Attach signal listener BEFORE subscribing
+    // This ensures we NEVER miss any signals, even if they arrive instantly after subscribe
+    if (!signalListenerAttachedRef.current) {
+      channel.on("broadcast", { event: "signal" }, ({ payload }) => {
+        if (payload.from === user.id) return;
+        
+        const signalType = payload.signalData?.type || "candidate";
+        const signalTs = payload.timestamp || "unknown";
+        console.log(`[WebRTC] [${Date.now()}] 📥 Received signal: ${signalType} (sent at ${signalTs})`);
+        
+        // If peer exists and ready, apply signal directly; otherwise buffer it
+        if (peerRef.current && peerReadyRef.current) {
+          try {
+            peerRef.current.signal(payload.signalData);
+            console.log(`[WebRTC] Signal applied to peer: ${signalType}`);
+          } catch (error) {
+            console.error("[WebRTC] Error processing signal:", error);
+          }
+        } else {
+          console.log(`[WebRTC] Peer not ready, buffering signal (${signalType}). Buffer size: ${pendingSignalsRef.current.length + 1}`);
+          pendingSignalsRef.current.push(payload.signalData);
         }
-      } else {
-        console.log("[SimplePeer] Peer not ready, buffering signal");
-        pendingSignalsRef.current.push(payload.signalData);
-      }
-    });
+      });
+      
+      signalListenerAttachedRef.current = true;
+    }
 
-    // Subscribe and wait for SUBSCRIBED status
+    // Subscribe and wait for SUBSCRIBED status with error handling
     const subscribed = await new Promise<boolean>((resolve) => {
-      channel.subscribe((status) => {
-        console.log("[SimplePeer] Channel status:", status);
-        if (status === "SUBSCRIBED") resolve(true);
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") resolve(false);
+      const subscribeTimeout = setTimeout(() => {
+        console.error(`[WebRTC] [${Date.now()}] ❌ Channel subscribe timeout after 10s`);
+        resolve(false);
+      }, 10000);
+      
+      channel.subscribe((status, err) => {
+        console.log(`[WebRTC] [${Date.now()}] Channel status: ${status} (took ${Date.now() - ts}ms)`, err || "");
+        
+        if (status === "SUBSCRIBED") {
+          clearTimeout(subscribeTimeout);
+          resolve(true);
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          clearTimeout(subscribeTimeout);
+          console.error(`[WebRTC] ❌ Channel error: ${status}`, err);
+          resolve(false);
+        }
       });
     });
 
     if (!subscribed) {
-      console.error("[SimplePeer] Failed to subscribe signaling channel");
+      console.error("[WebRTC] Failed to subscribe to signaling channel");
       supabase.removeChannel(channel);
       return null;
     }
 
+    console.log(`[WebRTC] [${Date.now()}] ✅ Signaling channel SUBSCRIBED`);
     channelRef.current = channel;
     return channel;
   }, [callId, user, isInitiator]);
@@ -289,34 +355,43 @@ export function useSimplePeerWebRTC({
   const sendReady = useCallback(async (channel: ReturnType<typeof supabase.channel>) => {
     if (!user) return;
     
-    console.log("[SimplePeer] Sending ready event");
+    const ts = Date.now();
+    console.log(`[WebRTC] [${ts}] Sending READY event...`);
+    
     try {
       const result = await channel.send({
         type: "broadcast",
         event: "ready",
-        payload: { from: user.id },
+        payload: { 
+          from: user.id,
+          timestamp: ts,
+          role: isInitiator ? "initiator" : "callee",
+        },
       });
-      console.log("[SimplePeer] Ready event sent, result:", result);
+      console.log(`[WebRTC] [${Date.now()}] READY sent, result:`, result);
     } catch (error) {
-      console.error("[SimplePeer] Error sending ready:", error);
+      console.error("[WebRTC] ❌ Error sending ready:", error);
     }
-  }, [user]);
+  }, [user, isInitiator]);
 
   // Wait for remote ready event
   const waitForRemoteReady = useCallback((channel: ReturnType<typeof supabase.channel>): Promise<boolean> => {
     return new Promise((resolve) => {
       // If already received, resolve immediately
       if (remoteReadyRef.current) {
-        console.log("[SimplePeer] Remote already ready");
+        console.log("[WebRTC] Remote already ready (from earlier)");
         resolve(true);
         return;
       }
 
-      const handleReady = ({ payload }: { payload: { from: string } }) => {
+      const handleReady = ({ payload }: { payload: { from: string; timestamp?: number; role?: string } }) => {
         if (payload.from !== user?.id) {
-          console.log("[SimplePeer] ✓ Received ready from remote");
+          console.log(`[WebRTC] [${Date.now()}] ✅ Received READY from remote (role: ${payload.role}, sent at: ${payload.timestamp})`);
           remoteReadyRef.current = true;
-          clearTimeout(readyTimeoutRef.current!);
+          if (readyTimeoutRef.current) {
+            clearTimeout(readyTimeoutRef.current);
+            readyTimeoutRef.current = null;
+          }
           resolve(true);
         }
       };
@@ -325,7 +400,7 @@ export function useSimplePeerWebRTC({
 
       // Set timeout for waiting
       readyTimeoutRef.current = setTimeout(() => {
-        console.warn("[SimplePeer] Timeout waiting for remote ready");
+        console.warn(`[WebRTC] [${Date.now()}] ⚠️ Timeout waiting for remote READY after ${READY_TIMEOUT_MS}ms`);
         resolve(false);
       }, READY_TIMEOUT_MS);
     });
@@ -333,7 +408,7 @@ export function useSimplePeerWebRTC({
 
   // Cleanup function
   const cleanup = useCallback(() => {
-    console.log("[SimplePeer] Cleaning up...");
+    console.log(`[WebRTC] [${Date.now()}] Cleaning up resources...`);
     
     // Clear timeouts
     if (connectionTimeoutRef.current) {
@@ -361,93 +436,156 @@ export function useSimplePeerWebRTC({
     peerReadyRef.current = false;
     remoteReadyRef.current = false;
     pendingSignalsRef.current = [];
+    signalListenerAttachedRef.current = false;
+    isStartingRef.current = false;
   }, []);
 
-  // Start the call with handshake
-  const startCall = useCallback(async () => {
-    console.log("[SimplePeer] startCall() invoked", { callId, isInitiator, userId: user?.id, retry: retryCountRef.current });
+  // Retry the connection
+  const retryConnection = useCallback(async () => {
+    if (retryCountRef.current >= MAX_RETRIES) {
+      console.error(`[WebRTC] [${Date.now()}] ❌ Max retries (${MAX_RETRIES}) reached, giving up`);
+      setConnectionStatus("failed");
+      onConnectionFailed?.();
+      return;
+    }
+    
+    retryCountRef.current++;
+    console.log(`[WebRTC] [${Date.now()}] 🔄 Retry attempt ${retryCountRef.current}/${MAX_RETRIES}...`);
+    
+    // Partial cleanup - keep the stream
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+    if (readyTimeoutRef.current) {
+      clearTimeout(readyTimeoutRef.current);
+      readyTimeoutRef.current = null;
+    }
+    if (peerRef.current) {
+      peerRef.current.destroy();
+      peerRef.current = null;
+    }
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    peerReadyRef.current = false;
+    remoteReadyRef.current = false;
+    pendingSignalsRef.current = [];
+    signalListenerAttachedRef.current = false;
+    isStartingRef.current = false;
+    
+    // Delay before retry
+    await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+    
+    // Re-start
+    startCallInternal();
+  }, [onConnectionFailed]);
+
+  // Internal start call logic
+  const startCallInternal = useCallback(async () => {
+    if (isStartingRef.current) {
+      console.log("[WebRTC] startCall already in progress, skipping");
+      return;
+    }
+    isStartingRef.current = true;
+    
+    const startTs = Date.now();
+    console.log(`[WebRTC] [${startTs}] ========== START CALL ==========`);
+    console.log(`[WebRTC] callId: ${callId}, role: ${isInitiator ? "INITIATOR" : "CALLEE"}, userId: ${user?.id}, retry: ${retryCountRef.current}`);
 
     if (!callId) {
-      console.error("[SimplePeer] Cannot start call: no callId");
+      console.error("[WebRTC] Cannot start call: no callId");
+      isStartingRef.current = false;
       return;
     }
     
     if (!user) {
-      console.error("[SimplePeer] Cannot start call: no user");
+      console.error("[WebRTC] Cannot start call: no user");
+      isStartingRef.current = false;
       return;
     }
 
-    setConnectionStatus("waiting_ready");
-
-    // 1) Subscribe to signaling first (with signal listener already attached)
+    // STEP 1: Subscribe to signaling channel FIRST (before anything else!)
     const channel = await setupSignaling();
     if (!channel) {
-      console.error("[SimplePeer] Cannot start call: signaling channel not ready");
+      console.error("[WebRTC] Cannot start call: signaling channel not ready");
       setConnectionStatus("failed");
       onConnectionFailed?.();
+      isStartingRef.current = false;
       return;
     }
 
-    // 2) Set up ready event listener before sending our ready
+    // STEP 2: Set up ready event listener
     const remoteReadyPromise = waitForRemoteReady(channel);
+    setConnectionStatus("waiting_ready");
 
-    // 3) Get local stream
-    const stream = localStreamRef.current || await getLocalStream();
-    if (!stream) {
-      console.error("[SimplePeer] Failed to get local stream");
-      setConnectionStatus("failed");
-      onConnectionFailed?.();
-      return;
-    }
-
-    // 4) Send our ready event
+    // STEP 3: Send our READY event IMMEDIATELY after subscription
+    // This tells the other side we're listening
     await sendReady(channel);
 
-    // 5) Behavior differs based on role
+    // STEP 4: Get local stream (this might take time for permission dialog)
+    const stream = localStreamRef.current || await getLocalStream();
+    if (!stream) {
+      console.error("[WebRTC] Failed to get local stream");
+      setConnectionStatus("failed");
+      onConnectionFailed?.();
+      isStartingRef.current = false;
+      return;
+    }
+
+    // STEP 5: Different behavior for initiator vs callee
     if (isInitiator) {
-      // Initiator waits for remote ready before creating peer
-      console.log("[SimplePeer] Initiator waiting for remote ready...");
+      // INITIATOR: Wait for callee's READY before creating peer (generating offer)
+      console.log("[WebRTC] Initiator waiting for callee READY...");
       const remoteReady = await remoteReadyPromise;
       
       if (!remoteReady) {
-        console.warn("[SimplePeer] Remote not ready, but proceeding anyway (might work if they join late)");
+        console.warn("[WebRTC] ⚠️ Callee not ready, proceeding anyway (they might be slow)");
+        // Continue anyway - callee might still connect if they're just slow
       }
       
-      setConnectionStatus("connecting");
+      console.log(`[WebRTC] [${Date.now()}] Initiator creating peer...`);
+      setConnectionStatus("exchanging_signals");
       await createPeer(stream, channel);
     } else {
-      // Callee creates peer immediately (to be ready to receive offer)
-      setConnectionStatus("connecting");
+      // CALLEE: Create peer immediately (to be ready to receive offer)
+      // We already subscribed and sent ready, so we're safe
+      console.log(`[WebRTC] [${Date.now()}] Callee creating peer immediately...`);
+      setConnectionStatus("exchanging_signals");
       await createPeer(stream, channel);
       
-      // Also wait for remote ready (mostly for logging)
+      // Also track when initiator is ready (for logging)
       remoteReadyPromise.then((ready) => {
-        if (ready) console.log("[SimplePeer] Initiator is ready");
+        if (ready) console.log("[WebRTC] Initiator confirmed ready");
       });
     }
     
-    // 6) Set connection timeout with auto-retry
-    connectionTimeoutRef.current = setTimeout(async () => {
+    // STEP 6: Set connection timeout
+    connectionTimeoutRef.current = setTimeout(() => {
       if (!isConnectedRef.current) {
-        console.warn(`[SimplePeer] Connection timeout after ${CONNECTION_TIMEOUT_MS}ms`);
-        
-        // Try one retry
-        if (retryCountRef.current < 1) {
-          console.log("[SimplePeer] Attempting retry...");
-          retryCountRef.current++;
-          cleanup();
-          
-          // Small delay before retry
-          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
-          startCall();
-        } else {
-          console.error("[SimplePeer] Connection failed after retry");
-          setConnectionStatus("failed");
-          onConnectionFailed?.();
-        }
+        console.warn(`[WebRTC] [${Date.now()}] ⚠️ Connection timeout after ${CONNECTION_TIMEOUT_MS}ms`);
+        retryConnection();
       }
     }, CONNECTION_TIMEOUT_MS);
-  }, [callId, isInitiator, user, getLocalStream, createPeer, setupSignaling, sendReady, waitForRemoteReady, cleanup, onConnectionFailed]);
+    
+    console.log(`[WebRTC] [${Date.now()}] startCall setup complete (took ${Date.now() - startTs}ms)`);
+  }, [callId, isInitiator, user, getLocalStream, createPeer, setupSignaling, sendReady, waitForRemoteReady, onConnectionFailed, retryConnection]);
+
+  // Public start call method
+  const startCall = useCallback(() => {
+    startCallInternal();
+  }, [startCallInternal]);
+
+  // Pre-warm media (call this early, e.g., when incoming call arrives)
+  const preWarmMedia = useCallback(async () => {
+    if (localStreamRef.current) {
+      console.log("[WebRTC] Media already warmed up");
+      return localStreamRef.current;
+    }
+    console.log("[WebRTC] Pre-warming media...");
+    return await getLocalStream();
+  }, [getLocalStream]);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
@@ -501,18 +639,18 @@ export function useSimplePeerWebRTC({
       localStream.addTrack(newTrack);
       currentTrack.stop();
     } catch (error) {
-      console.error("[SimplePeer] Error switching camera:", error);
+      console.error("[WebRTC] Error switching camera:", error);
     }
   }, [localStream]);
 
   // End call and cleanup
   const endCall = useCallback(() => {
-    console.log("[SimplePeer] Ending call...");
+    console.log(`[WebRTC] [${Date.now()}] Ending call...`);
     
     // Stop all local tracks
     localStream?.getTracks().forEach((track) => {
       track.stop();
-      console.log("[SimplePeer] Stopped track:", track.kind);
+      console.log("[WebRTC] Stopped track:", track.kind);
     });
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
     localStreamRef.current = null;
@@ -525,6 +663,14 @@ export function useSimplePeerWebRTC({
     setIsConnected(false);
     setConnectionStatus("idle");
   }, [localStream, cleanup]);
+
+  // Manual retry (exposed to UI)
+  const manualRetry = useCallback(() => {
+    console.log("[WebRTC] Manual retry requested");
+    retryCountRef.current = 0; // Reset retry counter for manual retry
+    cleanup();
+    setTimeout(() => startCallInternal(), 500);
+  }, [cleanup, startCallInternal]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -557,5 +703,7 @@ export function useSimplePeerWebRTC({
     toggleMute,
     toggleVideo,
     switchCamera,
+    preWarmMedia,
+    manualRetry,
   };
 }
