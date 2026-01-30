@@ -12,6 +12,7 @@ interface UseWebRTCOptions {
   isInitiator: boolean;
   onRemoteStream?: (stream: MediaStream) => void;
   onConnectionStateChange?: (state: RTCPeerConnectionState) => void;
+  onConnectionFailed?: () => void;
 }
 
 export function useWebRTC(options: UseWebRTCOptions) {

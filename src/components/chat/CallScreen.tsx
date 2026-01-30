@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   ChevronLeft,
   Volume2,
@@ -7,6 +7,7 @@ import {
   Mic,
   MicOff,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import type { Call } from "@/hooks/useCalls";
@@ -25,6 +26,7 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
   const [connectionState, setConnectionState] = useState<string>("connecting");
   const [webrtcStarted, setWebrtcStarted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+  const [connectionFailed, setConnectionFailed] = useState(false);
 
   const otherUser = isInitiator ? call.callee_profile : call.caller_profile;
   const otherName = otherUser?.display_name || "Собеседник";
@@ -32,12 +34,17 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
   const isVideoCall = call.call_type === "video";
   const isCallActive = call.status === "active";
 
+  const handleConnectionFailed = useCallback(() => {
+    setConnectionFailed(true);
+  }, []);
+
   const {
     localStream,
     remoteStream,
     isConnected,
     isMuted,
     isVideoOff,
+    connectionStatus,
     startCall,
     endCall,
     toggleMute,
@@ -47,6 +54,7 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
     callType: call.call_type,
     isInitiator,
     onConnectionStateChange: (state) => setConnectionState(state),
+    onConnectionFailed: handleConnectionFailed,
   });
 
   // Start WebRTC only when call becomes active
@@ -109,6 +117,9 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
   };
 
   const getStatusText = () => {
+    if (connectionFailed) {
+      return "Ошибка соединения";
+    }
     if (call.status === "calling") {
       return "Запрос";
     }
@@ -118,8 +129,16 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
     if (connectionState === "connected" || isConnected) {
       return formatDuration(callDuration);
     }
+    if (connectionStatus === "waiting_ready") {
+      return "Ожидание";
+    }
     return "Соединение";
   };
+
+  const handleRetry = useCallback(() => {
+    setConnectionFailed(false);
+    setWebrtcStarted(false);
+  }, []);
 
   const handleEndCall = () => {
     endCall();
@@ -130,7 +149,7 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
     setIsSpeakerOn(!isSpeakerOn);
   };
 
-  const showWaitingUI = !isConnected || call.status !== "active";
+  const showWaitingUI = !isConnected || call.status !== "active" || connectionFailed;
 
   // Video call with active connection - show video streams
   if (isVideoCall && isConnected && !isVideoOff) {
@@ -268,6 +287,17 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
             </span>
           )}
         </div>
+        
+        {/* Retry button when connection failed */}
+        {connectionFailed && (
+          <button
+            onClick={handleRetry}
+            className="mt-6 flex items-center gap-2 px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+          >
+            <RefreshCw className="w-5 h-5" />
+            <span>Попробовать снова</span>
+          </button>
+        )}
       </div>
 
       {/* Hidden audio element for remote stream in audio calls */}
