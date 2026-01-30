@@ -104,42 +104,40 @@ export function useSimplePeerWebRTC({
     }
   }, [callType]);
 
-  // Setup signaling channel
-  const setupSignaling = useCallback(
-    (peer: Peer.Instance) => {
-      if (!callId || !user) return;
+  // Setup signaling channel and wait until it's SUBSCRIBED.
+  // This prevents losing the very first offer/ICE candidates that simple-peer can emit immediately.
+  const setupSignaling = useCallback(async () => {
+    if (!callId || !user) return null;
 
-      console.log(`[SimplePeer] Setting up signaling for call:${callId}, isInitiator: ${isInitiator}`);
-      
-      const channel = supabase.channel(`call:${callId}`, {
-        config: {
-          broadcast: { self: false },
-        },
+    console.log(`[SimplePeer] Setting up signaling for call:${callId}, isInitiator: ${isInitiator}`);
+
+    const channel = supabase.channel(`call:${callId}`, {
+      config: {
+        broadcast: { self: false },
+      },
+    });
+
+    const subscribed = await new Promise<boolean>((resolve) => {
+      channel.subscribe((status) => {
+        console.log("[SimplePeer] Channel status:", status);
+        if (status === "SUBSCRIBED") resolve(true);
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") resolve(false);
       });
+    });
 
-      channel
-        .on("broadcast", { event: "signal" }, ({ payload }) => {
-          if (payload.from === user.id) return;
+    if (!subscribed) {
+      console.error("[SimplePeer] Failed to subscribe signaling channel");
+      supabase.removeChannel(channel);
+      return null;
+    }
 
-          console.log("[SimplePeer] Received signal from peer");
-          try {
-            peer.signal(payload.signalData);
-          } catch (error) {
-            console.error("[SimplePeer] Error processing signal:", error);
-          }
-        })
-        .subscribe((status) => {
-          console.log("[SimplePeer] Channel status:", status);
-        });
-
-      channelRef.current = channel;
-    },
-    [callId, user, isInitiator]
-  );
+    channelRef.current = channel;
+    return channel;
+  }, [callId, user, isInitiator]);
 
   // Create peer connection
   const createPeer = useCallback(
-    async (stream: MediaStream) => {
+    async (stream: MediaStream, channel: ReturnType<typeof supabase.channel> | null) => {
       const iceServers = await getIceServers();
       
       console.log("[SimplePeer] Creating peer, initiator:", isInitiator, "ICE servers:", iceServers.length);
@@ -157,8 +155,8 @@ export function useSimplePeerWebRTC({
       peer.on("signal", async (signalData) => {
         console.log("[SimplePeer] Signal generated, type:", signalData.type || "candidate");
         
-        if (channelRef.current && user) {
-          await channelRef.current.send({
+        if (channel && user) {
+          await channel.send({
             type: "broadcast",
             event: "signal",
             payload: {
@@ -169,6 +167,19 @@ export function useSimplePeerWebRTC({
           console.log("[SimplePeer] Signal sent to peer");
         }
       });
+
+      // Receive signals from the other peer
+      if (channel && user) {
+        channel.on("broadcast", { event: "signal" }, ({ payload }) => {
+          if (payload.from === user.id) return;
+          console.log("[SimplePeer] Received signal from peer");
+          try {
+            peer.signal(payload.signalData);
+          } catch (error) {
+            console.error("[SimplePeer] Error processing signal:", error);
+          }
+        });
+      }
 
       // Handle incoming stream
       peer.on("stream", (remoteMediaStream) => {
@@ -217,6 +228,13 @@ export function useSimplePeerWebRTC({
   // Start the call
   const startCall = useCallback(async () => {
     console.log("[SimplePeer] Starting call...", { callId, isInitiator });
+
+    // 1) Subscribe to signaling first to avoid dropping the first offer/candidates
+    const channel = await setupSignaling();
+    if (!channel) {
+      console.error("[SimplePeer] Cannot start call: signaling channel not ready");
+      return;
+    }
     
     const stream = await getLocalStream();
     if (!stream) {
@@ -224,8 +242,7 @@ export function useSimplePeerWebRTC({
       return;
     }
 
-    const peer = await createPeer(stream);
-    setupSignaling(peer);
+    await createPeer(stream, channel);
     
     // Set connection timeout (45 seconds)
     connectionTimeoutRef.current = setTimeout(() => {
