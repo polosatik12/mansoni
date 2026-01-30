@@ -49,7 +49,13 @@ interface UseSimplePeerOptions {
   isInitiator: boolean;
   onRemoteStream?: (stream: MediaStream) => void;
   onConnectionStateChange?: (state: RTCPeerConnectionState) => void;
+  onConnectionFailed?: () => void;
 }
+
+// Constants for timing
+const READY_TIMEOUT_MS = 8000;
+const CONNECTION_TIMEOUT_MS = 20000;
+const RETRY_DELAY_MS = 1000;
 
 export function useSimplePeerWebRTC({
   callId,
@@ -57,6 +63,7 @@ export function useSimplePeerWebRTC({
   isInitiator,
   onRemoteStream,
   onConnectionStateChange,
+  onConnectionFailed,
 }: UseSimplePeerOptions) {
   const { user } = useAuth();
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -64,11 +71,19 @@ export function useSimplePeerWebRTC({
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<"idle" | "waiting_ready" | "connecting" | "connected" | "failed">("idle");
 
   const peerRef = useRef<Peer.Instance | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const readyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isConnectedRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const pendingSignalsRef = useRef<any[]>([]);
+  const peerReadyRef = useRef(false);
+  const remoteReadyRef = useRef(false);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const iceServersRef = useRef<RTCIceServer[] | null>(null);
 
   // Track connection state with ref for timeout callback
   useEffect(() => {
@@ -97,6 +112,7 @@ export function useSimplePeerWebRTC({
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       console.log("[SimplePeer] Got local stream with tracks:", stream.getTracks().map(t => `${t.kind}:${t.readyState}`));
       setLocalStream(stream);
+      localStreamRef.current = stream;
       return stream;
     } catch (error) {
       console.error("[SimplePeer] Error getting local stream:", error);
@@ -104,8 +120,120 @@ export function useSimplePeerWebRTC({
     }
   }, [callType]);
 
-  // Setup signaling channel and wait until it's SUBSCRIBED.
-  // This prevents losing the very first offer/ICE candidates that simple-peer can emit immediately.
+  // Apply any pending signals to the peer
+  const flushPendingSignals = useCallback((peer: Peer.Instance) => {
+    if (pendingSignalsRef.current.length > 0) {
+      console.log(`[SimplePeer] Flushing ${pendingSignalsRef.current.length} pending signals`);
+      pendingSignalsRef.current.forEach((signalData) => {
+        try {
+          peer.signal(signalData);
+        } catch (error) {
+          console.error("[SimplePeer] Error applying pending signal:", error);
+        }
+      });
+      pendingSignalsRef.current = [];
+    }
+  }, []);
+
+  // Create peer connection
+  const createPeer = useCallback(
+    async (stream: MediaStream, channel: ReturnType<typeof supabase.channel>) => {
+      // Get ICE servers (cache them)
+      if (!iceServersRef.current) {
+        iceServersRef.current = await getIceServers();
+      }
+      const iceServers = iceServersRef.current;
+      
+      console.log("[SimplePeer] Creating peer, initiator:", isInitiator, "ICE servers:", iceServers.length);
+      
+      const peer = new Peer({
+        initiator: isInitiator,
+        trickle: true,
+        stream: stream,
+        config: {
+          iceServers: iceServers,
+        },
+      });
+
+      // Handle signals (SDP offers/answers and ICE candidates)
+      peer.on("signal", async (signalData) => {
+        const signalType = signalData.type || "candidate";
+        const signalSize = JSON.stringify(signalData).length;
+        console.log(`[SimplePeer] Signal generated, type: ${signalType}, size: ${signalSize} bytes`);
+        
+        if (channel && user) {
+          try {
+            const result = await channel.send({
+              type: "broadcast",
+              event: "signal",
+              payload: {
+                signalData,
+                from: user.id,
+              },
+            });
+            console.log(`[SimplePeer] Signal sent, result:`, result);
+          } catch (error) {
+            console.error("[SimplePeer] Error sending signal:", error);
+          }
+        }
+      });
+
+      // Handle incoming stream
+      peer.on("stream", (remoteMediaStream) => {
+        console.log("[SimplePeer] Received remote stream with", remoteMediaStream.getTracks().length, "tracks");
+        setRemoteStream(remoteMediaStream);
+        onRemoteStream?.(remoteMediaStream);
+      });
+
+      // Handle connection
+      peer.on("connect", () => {
+        console.log("[SimplePeer] ✓ Connected!");
+        setIsConnected(true);
+        setConnectionStatus("connected");
+        onConnectionStateChange?.("connected");
+        
+        // Clear all timeouts on success
+        if (connectionTimeoutRef.current) {
+          clearTimeout(connectionTimeoutRef.current);
+          connectionTimeoutRef.current = null;
+        }
+        if (readyTimeoutRef.current) {
+          clearTimeout(readyTimeoutRef.current);
+          readyTimeoutRef.current = null;
+        }
+      });
+
+      // Handle errors
+      peer.on("error", (error) => {
+        console.error("[SimplePeer] Error:", error.message);
+        setConnectionStatus("failed");
+        onConnectionStateChange?.("failed");
+      });
+
+      // Handle close
+      peer.on("close", () => {
+        console.log("[SimplePeer] Connection closed");
+        setIsConnected(false);
+        onConnectionStateChange?.("closed" as RTCPeerConnectionState);
+      });
+
+      // Handle ICE connection state for debugging
+      peer.on("iceStateChange", (iceConnectionState: string) => {
+        console.log("[SimplePeer] ICE state:", iceConnectionState);
+      });
+
+      peerRef.current = peer;
+      peerReadyRef.current = true;
+      
+      // Flush any pending signals that arrived before peer was ready
+      flushPendingSignals(peer);
+      
+      return peer;
+    },
+    [isInitiator, user, onRemoteStream, onConnectionStateChange, flushPendingSignals]
+  );
+
+  // Setup signaling channel with signal listener attached immediately
   const setupSignaling = useCallback(async () => {
     if (!callId || !user) return null;
 
@@ -117,6 +245,28 @@ export function useSimplePeerWebRTC({
       },
     });
 
+    // IMPORTANT: Attach signal listener BEFORE subscribing
+    // This ensures we never miss any signals
+    channel.on("broadcast", { event: "signal" }, ({ payload }) => {
+      if (payload.from === user.id) return;
+      
+      const signalType = payload.signalData?.type || "candidate";
+      console.log(`[SimplePeer] Received signal: ${signalType}`);
+      
+      // If peer exists, apply signal directly; otherwise buffer it
+      if (peerRef.current && peerReadyRef.current) {
+        try {
+          peerRef.current.signal(payload.signalData);
+        } catch (error) {
+          console.error("[SimplePeer] Error processing signal:", error);
+        }
+      } else {
+        console.log("[SimplePeer] Peer not ready, buffering signal");
+        pendingSignalsRef.current.push(payload.signalData);
+      }
+    });
+
+    // Subscribe and wait for SUBSCRIBED status
     const subscribed = await new Promise<boolean>((resolve) => {
       channel.subscribe((status) => {
         console.log("[SimplePeer] Channel status:", status);
@@ -135,99 +285,87 @@ export function useSimplePeerWebRTC({
     return channel;
   }, [callId, user, isInitiator]);
 
-  // Create peer connection
-  const createPeer = useCallback(
-    async (stream: MediaStream, channel: ReturnType<typeof supabase.channel> | null) => {
-      const iceServers = await getIceServers();
-      
-      console.log("[SimplePeer] Creating peer, initiator:", isInitiator, "ICE servers:", iceServers.length);
-      
-      const peer = new Peer({
-        initiator: isInitiator,
-        trickle: true,
-        stream: stream,
-        config: {
-          iceServers: iceServers,
-        },
+  // Send ready event
+  const sendReady = useCallback(async (channel: ReturnType<typeof supabase.channel>) => {
+    if (!user) return;
+    
+    console.log("[SimplePeer] Sending ready event");
+    try {
+      const result = await channel.send({
+        type: "broadcast",
+        event: "ready",
+        payload: { from: user.id },
       });
+      console.log("[SimplePeer] Ready event sent, result:", result);
+    } catch (error) {
+      console.error("[SimplePeer] Error sending ready:", error);
+    }
+  }, [user]);
 
-      // Handle signals (SDP offers/answers and ICE candidates)
-      peer.on("signal", async (signalData) => {
-        console.log("[SimplePeer] Signal generated, type:", signalData.type || "candidate");
-        
-        if (channel && user) {
-          await channel.send({
-            type: "broadcast",
-            event: "signal",
-            payload: {
-              signalData,
-              from: user.id,
-            },
-          });
-          console.log("[SimplePeer] Signal sent to peer");
-        }
-      });
-
-      // Receive signals from the other peer
-      if (channel && user) {
-        channel.on("broadcast", { event: "signal" }, ({ payload }) => {
-          if (payload.from === user.id) return;
-          console.log("[SimplePeer] Received signal from peer");
-          try {
-            peer.signal(payload.signalData);
-          } catch (error) {
-            console.error("[SimplePeer] Error processing signal:", error);
-          }
-        });
+  // Wait for remote ready event
+  const waitForRemoteReady = useCallback((channel: ReturnType<typeof supabase.channel>): Promise<boolean> => {
+    return new Promise((resolve) => {
+      // If already received, resolve immediately
+      if (remoteReadyRef.current) {
+        console.log("[SimplePeer] Remote already ready");
+        resolve(true);
+        return;
       }
 
-      // Handle incoming stream
-      peer.on("stream", (remoteMediaStream) => {
-        console.log("[SimplePeer] Received remote stream with", remoteMediaStream.getTracks().length, "tracks");
-        setRemoteStream(remoteMediaStream);
-        onRemoteStream?.(remoteMediaStream);
-      });
-
-      // Handle connection
-      peer.on("connect", () => {
-        console.log("[SimplePeer] Connected!");
-        setIsConnected(true);
-        onConnectionStateChange?.("connected");
-        
-        // Clear connection timeout on success
-        if (connectionTimeoutRef.current) {
-          clearTimeout(connectionTimeoutRef.current);
-          connectionTimeoutRef.current = null;
+      const handleReady = ({ payload }: { payload: { from: string } }) => {
+        if (payload.from !== user?.id) {
+          console.log("[SimplePeer] ✓ Received ready from remote");
+          remoteReadyRef.current = true;
+          clearTimeout(readyTimeoutRef.current!);
+          resolve(true);
         }
-      });
+      };
 
-      // Handle errors
-      peer.on("error", (error) => {
-        console.error("[SimplePeer] Error:", error.message);
-        onConnectionStateChange?.("failed");
-      });
+      channel.on("broadcast", { event: "ready" }, handleReady);
 
-      // Handle close
-      peer.on("close", () => {
-        console.log("[SimplePeer] Connection closed");
-        setIsConnected(false);
-        onConnectionStateChange?.("closed" as RTCPeerConnectionState);
-      });
+      // Set timeout for waiting
+      readyTimeoutRef.current = setTimeout(() => {
+        console.warn("[SimplePeer] Timeout waiting for remote ready");
+        resolve(false);
+      }, READY_TIMEOUT_MS);
+    });
+  }, [user]);
 
-      // Handle ICE connection state for debugging
-      peer.on("iceStateChange", (iceConnectionState: string) => {
-        console.log("[SimplePeer] ICE state:", iceConnectionState);
-      });
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    console.log("[SimplePeer] Cleaning up...");
+    
+    // Clear timeouts
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+    if (readyTimeoutRef.current) {
+      clearTimeout(readyTimeoutRef.current);
+      readyTimeoutRef.current = null;
+    }
+    
+    // Destroy peer
+    if (peerRef.current) {
+      peerRef.current.destroy();
+      peerRef.current = null;
+    }
+    
+    // Unsubscribe channel
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    
+    // Reset refs
+    peerReadyRef.current = false;
+    remoteReadyRef.current = false;
+    pendingSignalsRef.current = [];
+  }, []);
 
-      peerRef.current = peer;
-      return peer;
-    },
-    [isInitiator, user, onRemoteStream, onConnectionStateChange]
-  );
-
-  // Start the call
+  // Start the call with handshake
   const startCall = useCallback(async () => {
-    console.log("[SimplePeer] startCall() invoked", { callId, isInitiator, userId: user?.id });
+    console.log("[SimplePeer] startCall() invoked", { callId, isInitiator, userId: user?.id, retry: retryCountRef.current });
 
     if (!callId) {
       console.error("[SimplePeer] Cannot start call: no callId");
@@ -239,28 +377,77 @@ export function useSimplePeerWebRTC({
       return;
     }
 
-    // 1) Subscribe to signaling first to avoid dropping the first offer/candidates
+    setConnectionStatus("waiting_ready");
+
+    // 1) Subscribe to signaling first (with signal listener already attached)
     const channel = await setupSignaling();
     if (!channel) {
       console.error("[SimplePeer] Cannot start call: signaling channel not ready");
-      return;
-    }
-    
-    const stream = await getLocalStream();
-    if (!stream) {
-      console.error("[SimplePeer] Failed to get local stream");
+      setConnectionStatus("failed");
+      onConnectionFailed?.();
       return;
     }
 
-    await createPeer(stream, channel);
-    
-    // Set connection timeout (45 seconds)
-    connectionTimeoutRef.current = setTimeout(() => {
-      if (!isConnectedRef.current) {
-        console.error("[SimplePeer] Connection timeout - could not establish connection within 45 seconds");
+    // 2) Set up ready event listener before sending our ready
+    const remoteReadyPromise = waitForRemoteReady(channel);
+
+    // 3) Get local stream
+    const stream = localStreamRef.current || await getLocalStream();
+    if (!stream) {
+      console.error("[SimplePeer] Failed to get local stream");
+      setConnectionStatus("failed");
+      onConnectionFailed?.();
+      return;
+    }
+
+    // 4) Send our ready event
+    await sendReady(channel);
+
+    // 5) Behavior differs based on role
+    if (isInitiator) {
+      // Initiator waits for remote ready before creating peer
+      console.log("[SimplePeer] Initiator waiting for remote ready...");
+      const remoteReady = await remoteReadyPromise;
+      
+      if (!remoteReady) {
+        console.warn("[SimplePeer] Remote not ready, but proceeding anyway (might work if they join late)");
       }
-    }, 45000);
-  }, [callId, isInitiator, user, getLocalStream, createPeer, setupSignaling]);
+      
+      setConnectionStatus("connecting");
+      await createPeer(stream, channel);
+    } else {
+      // Callee creates peer immediately (to be ready to receive offer)
+      setConnectionStatus("connecting");
+      await createPeer(stream, channel);
+      
+      // Also wait for remote ready (mostly for logging)
+      remoteReadyPromise.then((ready) => {
+        if (ready) console.log("[SimplePeer] Initiator is ready");
+      });
+    }
+    
+    // 6) Set connection timeout with auto-retry
+    connectionTimeoutRef.current = setTimeout(async () => {
+      if (!isConnectedRef.current) {
+        console.warn(`[SimplePeer] Connection timeout after ${CONNECTION_TIMEOUT_MS}ms`);
+        
+        // Try one retry
+        if (retryCountRef.current < 1) {
+          console.log("[SimplePeer] Attempting retry...");
+          retryCountRef.current++;
+          cleanup();
+          
+          // Small delay before retry
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+          startCall();
+        } else {
+          console.error("[SimplePeer] Connection failed after retry");
+          setConnectionStatus("failed");
+          onConnectionFailed?.();
+        }
+      }
+    }, CONNECTION_TIMEOUT_MS);
+  }, [callId, isInitiator, user, getLocalStream, createPeer, setupSignaling, sendReady, waitForRemoteReady, cleanup, onConnectionFailed]);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
@@ -320,36 +507,24 @@ export function useSimplePeerWebRTC({
 
   // End call and cleanup
   const endCall = useCallback(() => {
-    console.log("[SimplePeer] Ending call and cleaning up...");
-    
-    // Clear connection timeout
-    if (connectionTimeoutRef.current) {
-      clearTimeout(connectionTimeoutRef.current);
-      connectionTimeoutRef.current = null;
-    }
+    console.log("[SimplePeer] Ending call...");
     
     // Stop all local tracks
     localStream?.getTracks().forEach((track) => {
       track.stop();
       console.log("[SimplePeer] Stopped track:", track.kind);
     });
+    localStreamRef.current?.getTracks().forEach((track) => track.stop());
+    localStreamRef.current = null;
 
-    // Destroy peer connection
-    if (peerRef.current) {
-      peerRef.current.destroy();
-      peerRef.current = null;
-    }
-
-    // Unsubscribe from signaling channel
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
+    cleanup();
+    retryCountRef.current = 0;
 
     setLocalStream(null);
     setRemoteStream(null);
     setIsConnected(false);
-  }, [localStream]);
+    setConnectionStatus("idle");
+  }, [localStream, cleanup]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -357,13 +532,16 @@ export function useSimplePeerWebRTC({
       if (connectionTimeoutRef.current) {
         clearTimeout(connectionTimeoutRef.current);
       }
+      if (readyTimeoutRef.current) {
+        clearTimeout(readyTimeoutRef.current);
+      }
       if (peerRef.current) {
         peerRef.current.destroy();
       }
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
-      localStream?.getTracks().forEach((track) => track.stop());
+      localStreamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
 
@@ -373,6 +551,7 @@ export function useSimplePeerWebRTC({
     isConnected,
     isMuted,
     isVideoOff,
+    connectionStatus,
     startCall,
     endCall,
     toggleMute,
