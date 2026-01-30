@@ -62,7 +62,9 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
       
       console.log(`[CallScreen] Starting WebRTC in ${delay}ms, isInitiator: ${isInitiator}`);
       const timer = setTimeout(() => {
+        console.log('[CallScreen] Timer fired, calling startCall()...');
         startCall();
+        console.log('[CallScreen] startCall() returned');
       }, delay);
       return () => clearTimeout(timer);
     }
