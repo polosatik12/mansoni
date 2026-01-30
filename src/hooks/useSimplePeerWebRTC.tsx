@@ -227,7 +227,17 @@ export function useSimplePeerWebRTC({
 
   // Start the call
   const startCall = useCallback(async () => {
-    console.log("[SimplePeer] Starting call...", { callId, isInitiator });
+    console.log("[SimplePeer] startCall() invoked", { callId, isInitiator, userId: user?.id });
+
+    if (!callId) {
+      console.error("[SimplePeer] Cannot start call: no callId");
+      return;
+    }
+    
+    if (!user) {
+      console.error("[SimplePeer] Cannot start call: no user");
+      return;
+    }
 
     // 1) Subscribe to signaling first to avoid dropping the first offer/candidates
     const channel = await setupSignaling();
