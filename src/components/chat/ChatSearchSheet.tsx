@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, X, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -8,7 +9,7 @@ import glassBackground from "@/assets/glass-background.png";
 interface ChatSearchSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUserSelect: (user: SearchUser) => void;
+  onStartChat: (user: SearchUser) => void;
   existingUserIds: Set<string>;
   currentUserId?: string;
 }
@@ -16,10 +17,11 @@ interface ChatSearchSheetProps {
 export function ChatSearchSheet({ 
   open, 
   onOpenChange, 
-  onUserSelect, 
+  onStartChat,
   existingUserIds,
   currentUserId 
 }: ChatSearchSheetProps) {
+  const navigate = useNavigate();
   const { users: searchedUsers, loading, searchUsers } = useSearch();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -45,8 +47,14 @@ export function ChatSearchSheet({
     u => !existingUserIds.has(u.user_id) && u.user_id !== currentUserId
   );
 
-  const handleSelect = (user: SearchUser) => {
-    onUserSelect(user);
+  const handleOpenProfile = (user: SearchUser) => {
+    // In Telegram Mini App, navigation must be triggered directly from the tap handler.
+    navigate(`/user/${user.user_id}`);
+    onOpenChange(false);
+  };
+
+  const handleStartChat = (user: SearchUser) => {
+    onStartChat(user);
     onOpenChange(false);
   };
 
@@ -108,7 +116,7 @@ export function ChatSearchSheet({
             {newUsers.map((u) => (
               <div
                 key={u.user_id}
-                onClick={() => handleSelect(u)}
+                onClick={() => handleOpenProfile(u)}
                 className="flex items-center gap-3 py-3 hover:bg-white/10 transition-colors cursor-pointer rounded-lg px-2 -mx-2"
               >
                 <img
@@ -129,7 +137,18 @@ export function ChatSearchSheet({
                     <p className="text-sm text-white/60 truncate">{u.bio}</p>
                   )}
                 </div>
-                <UserPlus className="w-5 h-5 text-primary flex-shrink-0" />
+                <button
+                  type="button"
+                  className="p-2 -m-2 rounded-full hover:bg-white/10 active:bg-white/15 text-primary flex-shrink-0"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleStartChat(u);
+                  }}
+                  aria-label="Начать чат"
+                >
+                  <UserPlus className="w-5 h-5" />
+                </button>
               </div>
             ))}
           </div>
