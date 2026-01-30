@@ -1,9 +1,9 @@
 /**
- * useWebRTC hook - теперь использует simple-peer для упрощения WebRTC соединений
- * Обёртка для обратной совместимости
+ * useWebRTC hook - uses simple-peer for simplified WebRTC connections
+ * Wrapper for backward compatibility
  */
 
-import { useSimplePeerWebRTC } from "./useSimplePeerWebRTC";
+import { useSimplePeerWebRTC, type WebRTCStatus } from "./useSimplePeerWebRTC";
 import type { CallType } from "./useCalls";
 
 interface UseWebRTCOptions {
@@ -15,7 +15,8 @@ interface UseWebRTCOptions {
   onConnectionFailed?: () => void;
 }
 
+export type { WebRTCStatus };
+
 export function useWebRTC(options: UseWebRTCOptions) {
-  // Просто проксируем на новый хук simple-peer
   return useSimplePeerWebRTC(options);
 }

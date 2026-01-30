@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import type { Call } from "@/hooks/useCalls";
+import type { WebRTCStatus } from "@/hooks/useSimplePeerWebRTC";
 
 interface CallScreenProps {
   call: Call;
@@ -23,7 +24,6 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [callDuration, setCallDuration] = useState(0);
-  const [connectionState, setConnectionState] = useState<string>("connecting");
   const [webrtcStarted, setWebrtcStarted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [connectionFailed, setConnectionFailed] = useState(false);
@@ -49,30 +49,30 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
     endCall,
     toggleMute,
     toggleVideo,
+    manualRetry,
   } = useWebRTC({
     callId: call.id,
     callType: call.call_type,
     isInitiator,
-    onConnectionStateChange: (state) => setConnectionState(state),
+    onConnectionStateChange: (state) => {
+      console.log("[CallScreen] Connection state:", state);
+    },
     onConnectionFailed: handleConnectionFailed,
   });
 
-  // Start WebRTC only when call becomes active
-  // Callee starts quickly to be ready to receive offer
-  // Initiator waits longer to ensure callee has subscribed to signaling channel
+  // Start WebRTC when call becomes active
+  // Minimal delay since handshake now handles synchronization
   useEffect(() => {
     if (isCallActive && !webrtcStarted) {
       setWebrtcStarted(true);
       
-      // Callee: start quickly (300ms) to subscribe before initiator sends offer
-      // Initiator: wait longer (1500ms) to ensure callee is subscribed
-      const delay = isInitiator ? 1500 : 300;
+      // Small delay to ensure both sides have updated call status
+      const delay = isInitiator ? 500 : 200;
       
-      console.log(`[CallScreen] Starting WebRTC in ${delay}ms, isInitiator: ${isInitiator}`);
+      console.log(`[CallScreen] Starting WebRTC in ${delay}ms, role: ${isInitiator ? "initiator" : "callee"}`);
       const timer = setTimeout(() => {
         console.log('[CallScreen] Timer fired, calling startCall()...');
         startCall();
-        console.log('[CallScreen] startCall() returned');
       }, delay);
       return () => clearTimeout(timer);
     }
@@ -116,29 +116,47 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
     return name.charAt(0).toUpperCase();
   };
 
-  const getStatusText = () => {
-    if (connectionFailed) {
+  // Map WebRTC status to user-friendly Russian text
+  const getStatusText = (): string => {
+    if (connectionFailed || connectionStatus === "failed") {
       return "Ошибка соединения";
     }
+    
     if (call.status === "calling") {
-      return "Запрос";
+      return "Вызов...";
     }
+    
     if (call.status === "ringing") {
-      return "Звонок";
+      return "Звонок...";
     }
-    if (connectionState === "connected" || isConnected) {
+    
+    if (isConnected || connectionStatus === "connected") {
       return formatDuration(callDuration);
     }
-    if (connectionStatus === "waiting_ready") {
-      return "Ожидание";
+    
+    // Detailed status based on WebRTC state
+    switch (connectionStatus as WebRTCStatus) {
+      case "getting_media":
+        return "Доступ к камере...";
+      case "subscribing":
+        return "Подключение...";
+      case "waiting_ready":
+        return "Ожидание ответа...";
+      case "exchanging_signals":
+        return "Обмен данными...";
+      case "ice_connecting":
+        return "Установка связи...";
+      default:
+        return "Соединение...";
     }
-    return "Соединение";
   };
 
   const handleRetry = useCallback(() => {
     setConnectionFailed(false);
     setWebrtcStarted(false);
-  }, []);
+    // Use the manualRetry from WebRTC hook
+    manualRetry();
+  }, [manualRetry]);
 
   const handleEndCall = () => {
     endCall();
