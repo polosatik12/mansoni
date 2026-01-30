@@ -513,7 +513,7 @@ export function ChatsPage() {
         <ChatSearchSheet
           open={searchOpen}
           onOpenChange={setSearchOpen}
-          onUserSelect={handleUserSelect}
+          onStartChat={handleUserSelect}
           existingUserIds={conversationUserIds}
           currentUserId={user?.id}
         />
