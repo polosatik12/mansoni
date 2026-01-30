@@ -144,7 +144,9 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
         return "Ожидание ответа...";
       case "exchanging_signals":
         return "Обмен данными...";
-      case "ice_connecting":
+      case "ice_checking":
+        return "Проверка связи...";
+      case "ice_connected":
         return "Установка связи...";
       default:
         return "Соединение...";
@@ -306,15 +308,20 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
           )}
         </div>
         
-        {/* Retry button when connection failed */}
-        {connectionFailed && (
-          <button
-            onClick={handleRetry}
-            className="mt-6 flex items-center gap-2 px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
-          >
-            <RefreshCw className="w-5 h-5" />
-            <span>Попробовать снова</span>
-          </button>
+        {/* Retry button and hint when connection failed */}
+        {(connectionFailed || connectionStatus === "failed") && (
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <p className="text-white/70 text-sm text-center max-w-[280px]">
+              Проверьте интернет или настройки firewall
+            </p>
+            <button
+              onClick={handleRetry}
+              className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+            >
+              <RefreshCw className="w-5 h-5" />
+              <span>Повторить</span>
+            </button>
+          </div>
         )}
       </div>
 
