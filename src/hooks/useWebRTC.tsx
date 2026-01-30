@@ -3,37 +3,50 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { CallType } from "./useCalls";
 
-// ICE servers with multiple TURN providers for better NAT traversal
-// Especially important for mobile LTE connections with symmetric NAT
-const ICE_SERVERS: RTCConfiguration = {
+// Default fallback ICE servers
+const DEFAULT_ICE_CONFIG: RTCConfiguration = {
   iceServers: [
-    // Google STUN servers
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-    // Metered.ca free TURN servers (multiple ports for firewall bypass)
-    {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    // Twilio free STUN
-    { urls: "stun:global.stun.twilio.com:3478" },
   ],
   iceCandidatePoolSize: 10,
-  // Important for mobile: try all candidate types
   iceTransportPolicy: "all",
 };
+
+// Fetch Cloudflare TURN credentials from edge function
+async function getCloudflareIceServers(): Promise<RTCConfiguration> {
+  try {
+    console.log("[WebRTC] Fetching Cloudflare TURN credentials...");
+    const { data, error } = await supabase.functions.invoke("turn-credentials");
+    
+    if (error) {
+      console.error("[WebRTC] Error fetching TURN credentials:", error);
+      return DEFAULT_ICE_CONFIG;
+    }
+
+    // Cloudflare returns { iceServers: { iceServers: [...] } }
+    const iceServers = data?.iceServers?.iceServers || data?.iceServers;
+    
+    if (iceServers && Array.isArray(iceServers) && iceServers.length > 0) {
+      console.log("[WebRTC] Got Cloudflare TURN servers:", iceServers.length);
+      return {
+        iceServers: [
+          // Add Google STUN as fallback
+          { urls: "stun:stun.l.google.com:19302" },
+          ...iceServers,
+        ],
+        iceCandidatePoolSize: 10,
+        iceTransportPolicy: "all",
+      };
+    }
+
+    console.warn("[WebRTC] No ICE servers in response, using defaults");
+    return DEFAULT_ICE_CONFIG;
+  } catch (error) {
+    console.error("[WebRTC] Failed to fetch TURN credentials:", error);
+    return DEFAULT_ICE_CONFIG;
+  }
+}
 
 interface UseWebRTCOptions {
   callId: string | null;
@@ -142,9 +155,9 @@ export function useWebRTC({
 
   // Initialize WebRTC connection
   const initializePeerConnection = useCallback(
-    (stream: MediaStream) => {
-      console.log("[WebRTC] Creating PeerConnection with ICE servers...");
-      const pc = new RTCPeerConnection(ICE_SERVERS);
+    (stream: MediaStream, iceConfig: RTCConfiguration) => {
+      console.log("[WebRTC] Creating PeerConnection with ICE servers...", iceConfig.iceServers?.length);
+      const pc = new RTCPeerConnection(iceConfig);
 
       // Add local tracks
       stream.getTracks().forEach((track) => {
@@ -378,13 +391,16 @@ export function useWebRTC({
     iceRestartAttemptRef.current = 0;
     pendingCandidatesRef.current = [];
     
+    // Fetch Cloudflare TURN credentials
+    const iceConfig = await getCloudflareIceServers();
+    
     const stream = await getLocalStream();
     if (!stream) {
       console.error("[WebRTC] Failed to get local stream");
       return;
     }
 
-    const pc = initializePeerConnection(stream);
+    const pc = initializePeerConnection(stream, iceConfig);
     await setupSignaling(pc);
     
     // Set connection timeout (45 seconds for mobile networks)
