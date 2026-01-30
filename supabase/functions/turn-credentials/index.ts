@@ -46,7 +46,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log("Generated ICE servers:", data.iceServers?.iceServers?.length || 0, "servers");
+    console.log("Generated ICE servers:", data.iceServers?.length || 0, "servers");
 
     return new Response(
       JSON.stringify(data),
