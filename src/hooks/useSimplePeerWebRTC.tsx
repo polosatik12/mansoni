@@ -126,6 +126,9 @@ export function useSimplePeerWebRTC({
   const localStreamRef = useRef<MediaStream | null>(null);
   const iceServersRef = useRef<RTCIceServer[] | null>(null);
   const signalListenerAttachedRef = useRef(false);
+  // IMPORTANT: Realtime channel handlers must be attached BEFORE subscribe(),
+  // otherwise iOS/Safari may never receive broadcast events.
+  const readyResolverRef = useRef<((ok: boolean) => void) | null>(null);
   const isStartingRef = useRef(false);
   const iceRestartAttemptedRef = useRef(false);
   const readySentCountRef = useRef(0);
@@ -441,7 +444,7 @@ export function useSimplePeerWebRTC({
       },
     });
 
-    // Attach signal listener BEFORE subscribing
+    // Attach handlers BEFORE subscribing
     if (!signalListenerAttachedRef.current) {
       channel.on("broadcast", { event: "signal" }, ({ payload }) => {
         if (payload.from === user.id) return;
@@ -465,6 +468,31 @@ export function useSimplePeerWebRTC({
       channel.on("broadcast", { event: "ping" }, () => {
         // Silently acknowledge
       });
+
+      // READY handshake listener (must be attached pre-subscribe)
+      channel.on(
+        "broadcast",
+        { event: "ready" },
+        ({ payload }: { payload: { from: string; timestamp?: number; role?: string; seq?: number } }) => {
+          if (payload.from === user.id) return;
+          if (remoteReadyRef.current) return;
+
+          log(`✅ Received READY from ${payload.role} (seq=${payload.seq})`);
+          remoteReadyRef.current = true;
+          stopReadyResend();
+
+          if (readyTimeoutRef.current) {
+            clearTimeout(readyTimeoutRef.current);
+            readyTimeoutRef.current = null;
+          }
+
+          if (readyResolverRef.current) {
+            const resolve = readyResolverRef.current;
+            readyResolverRef.current = null;
+            resolve(true);
+          }
+        }
+      );
       
       signalListenerAttachedRef.current = true;
     }
@@ -577,24 +605,16 @@ export function useSimplePeerWebRTC({
         return;
       }
 
-      const handleReady = ({ payload }: { payload: { from: string; timestamp?: number; role?: string; seq?: number } }) => {
-        if (payload.from !== user?.id) {
-          log(`✅ Received READY from ${payload.role} (seq=${payload.seq})`);
-          remoteReadyRef.current = true;
-          stopReadyResend();
-          if (readyTimeoutRef.current) {
-            clearTimeout(readyTimeoutRef.current);
-            readyTimeoutRef.current = null;
-          }
-          resolve(true);
-        }
-      };
-
-      channel.on("broadcast", { event: "ready" }, handleReady);
+      // Do NOT call channel.on() here (too late). We park the resolver and let
+      // the pre-attached handler (in setupSignaling) resolve it.
+      readyResolverRef.current = resolve;
 
       readyTimeoutRef.current = setTimeout(() => {
         warn(`⚠️ Timeout waiting for READY after ${READY_TIMEOUT_MS}ms (sent ${readySentCountRef.current} times)`);
         stopReadyResend();
+        if (readyResolverRef.current === resolve) {
+          readyResolverRef.current = null;
+        }
         resolve(false);
       }, READY_TIMEOUT_MS);
     });
@@ -641,6 +661,7 @@ export function useSimplePeerWebRTC({
     // Reset refs
     peerReadyRef.current = false;
     remoteReadyRef.current = false;
+    readyResolverRef.current = null;
     pendingSignalsRef.current = [];
     signalListenerAttachedRef.current = false;
     isStartingRef.current = false;
