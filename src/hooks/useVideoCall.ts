@@ -46,6 +46,10 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
   const iceRestartCountRef = useRef(0);
   const isCleaningUpRef = useRef(false);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  
+  // Track if we're in an active call process (used to prevent visibility-based cleanup)
+  const isCallActiveRef = useRef(false);
 
   const log = useCallback((msg: string, ...args: any[]) => {
     console.log(`[VideoCall] ${msg}`, ...args);
@@ -55,12 +59,21 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     console.warn(`[VideoCall] ${msg}`, ...args);
   }, []);
 
-  // Cleanup function
-  const cleanup = useCallback(async () => {
-    if (isCleaningUpRef.current) return;
+  // Keep localStreamRef in sync
+  useEffect(() => {
+    localStreamRef.current = localStream;
+  }, [localStream]);
+
+  // Cleanup function with reason parameter for diagnostics
+  const cleanup = useCallback(async (reason: string = "unknown") => {
+    if (isCleaningUpRef.current) {
+      log(`Cleanup already in progress, ignoring (reason: ${reason})`);
+      return;
+    }
     isCleaningUpRef.current = true;
+    isCallActiveRef.current = false;
     
-    log("Cleaning up...");
+    log(`Cleaning up... reason: ${reason}`);
 
     if (callTimeoutRef.current) {
       clearTimeout(callTimeoutRef.current);
@@ -82,8 +95,9 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       peerConnectionRef.current = null;
     }
 
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
+    // Use ref to get current stream value
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
       setLocalStream(null);
     }
 
@@ -96,7 +110,49 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     iceRestartCountRef.current = 0;
     pendingCandidatesRef.current = [];
     isCleaningUpRef.current = false;
-  }, [localStream, log]);
+  }, [log]);
+
+  // Visibility change handler - protect against Telegram Mini App visibility events
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      log(`Visibility changed: ${document.visibilityState}, isCallActive: ${isCallActiveRef.current}`);
+      
+      // Don't cleanup when page becomes hidden if we're in an active call
+      // This is critical for Telegram Mini App where permission prompts trigger visibility changes
+      if (document.visibilityState === "hidden" && isCallActiveRef.current) {
+        log("Page hidden during active call - NOT cleaning up (Telegram Mini App protection)");
+        return;
+      }
+      
+      if (document.visibilityState === "visible" && isCallActiveRef.current) {
+        log("Page visible again during active call - continuing");
+      }
+    };
+
+    const handlePageHide = (event: PageTransitionEvent) => {
+      log(`pagehide event, persisted: ${event.persisted}, isCallActive: ${isCallActiveRef.current}`);
+      
+      // Don't cleanup on pagehide if we're in an active call
+      if (isCallActiveRef.current) {
+        log("pagehide during active call - NOT cleaning up (Telegram Mini App protection)");
+        return;
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      log(`pageshow event, persisted: ${event.persisted}, isCallActive: ${isCallActiveRef.current}`);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [log]);
 
   // Send signal via both Broadcast and DB
   const sendSignal = useCallback(async (
@@ -200,7 +256,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
 
         case "hangup":
           log("Received hangup signal");
-          await cleanup();
+          await cleanup("hangup_signal_received");
           if (currentCall) {
             options.onCallEnded?.(currentCall);
           }
@@ -328,7 +384,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
           }, ICE_RESTART_DELAY_MS);
         } else {
           warn("Max ICE restarts reached, ending call");
-          cleanup();
+          cleanup("max_ice_restarts");
         }
       } else if (state === "disconnected") {
         // Grace period before cleanup
@@ -368,15 +424,19 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     }
 
     log("Starting call to:", calleeId.slice(0, 8));
+    isCallActiveRef.current = true; // Mark call as active BEFORE getUserMedia
     setStatus("calling");
 
     try {
       // Get media
+      log("Requesting getUserMedia...");
       const constraints = getMediaConstraints(callType);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      log("getUserMedia SUCCESS - got stream with tracks:", stream.getTracks().length);
       setLocalStream(stream);
 
       // Create call record
+      log("Creating call record in DB...");
       const { data: callData, error: callError } = await supabase
         .from("video_calls")
         .insert({
@@ -392,6 +452,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       if (callError || !callData) {
         throw new Error(callError?.message || "Failed to create call");
       }
+      log("Call record created:", callData.id.slice(0, 8));
 
       const call: VideoCall = {
         ...callData,
@@ -400,11 +461,14 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       setCurrentCall(call);
 
       // Setup signaling
+      log("Setting up broadcast channel...");
       setupBroadcastChannel(call.id);
       startSignalPolling(call.id);
 
       // Create peer connection and offer
+      log("Creating peer connection...");
       await createPeerConnection(stream, call.id, true);
+      log("Peer connection created and offer sent");
 
       // Start timeout
       callTimeoutRef.current = setTimeout(async () => {
@@ -413,13 +477,14 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
           .from("video_calls")
           .update({ status: "missed", ended_at: new Date().toISOString() })
           .eq("id", call.id);
-        await cleanup();
+        await cleanup("call_timeout");
       }, CALL_TIMEOUT_MS);
 
       return call;
     } catch (err) {
       warn("Start call error:", err);
-      await cleanup();
+      isCallActiveRef.current = false;
+      await cleanup("start_call_error");
       return null;
     }
   }, [user, status, setupBroadcastChannel, startSignalPolling, createPeerConnection, cleanup, log, warn]);
@@ -429,13 +494,16 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     if (!user) return;
 
     log("Answering call:", call.id.slice(0, 8));
+    isCallActiveRef.current = true; // Mark call as active BEFORE getUserMedia
     setStatus("ringing");
     setCurrentCall(call);
 
     try {
       // Get media
+      log("Requesting getUserMedia for answer...");
       const constraints = getMediaConstraints(call.call_type);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      log("getUserMedia SUCCESS for answer - got stream with tracks:", stream.getTracks().length);
       setLocalStream(stream);
 
       // Update call status
@@ -448,17 +516,21 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
         .eq("id", call.id);
 
       // Setup signaling
+      log("Setting up broadcast channel for answer...");
       setupBroadcastChannel(call.id);
       startSignalPolling(call.id);
 
       // Create peer connection (not initiator - will wait for offer)
+      log("Creating peer connection for answer...");
       await createPeerConnection(stream, call.id, false);
+      log("Peer connection created for answer");
 
       // Send ready signal
       await sendSignal(call.id, "ready", { userId: user.id });
     } catch (err) {
       warn("Answer call error:", err);
-      await cleanup();
+      isCallActiveRef.current = false;
+      await cleanup("answer_call_error");
     }
   }, [user, setupBroadcastChannel, startSignalPolling, createPeerConnection, sendSignal, cleanup, log, warn]);
 
@@ -480,7 +552,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       })
       .eq("id", currentCall.id);
 
-    await cleanup();
+    await cleanup(`end_call_${reason}`);
     options.onCallEnded?.(currentCall);
   }, [currentCall, sendSignal, cleanup, log, options]);
 
@@ -556,7 +628,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
             updated.status === "ended" ||
             updated.status === "missed"
           ) {
-            cleanup();
+            cleanup("call_status_changed_to_" + updated.status);
             options.onCallEnded?.(updated);
           }
         }
@@ -571,7 +643,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      cleanup();
+      cleanup("component_unmount");
     };
   }, [cleanup]);
 
