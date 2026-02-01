@@ -3,41 +3,13 @@ import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { ScrollContainerProvider } from "@/contexts/ScrollContainerContext";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
-import { useCallsContext } from "@/contexts/CallsContext";
-import { useAuth } from "@/hooks/useAuth";
-import { IncomingCallSheet } from "@/components/chat/IncomingCallSheet";
-import { CallScreen } from "@/components/chat/CallScreen";
 import { cn } from "@/lib/utils";
 
 export function AppLayout() {
   const mainRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const { shouldHideBottomNav } = useChatOpen();
-  const { user } = useAuth();
   const isReelsPage = location.pathname === "/reels";
-  
-  const { activeCall, incomingCall, acceptCall, declineCall, endCall } = useCallsContext();
-
-  const handleAcceptCall = async () => {
-    if (incomingCall) {
-      await acceptCall(incomingCall.id);
-    }
-  };
-
-  const handleDeclineCall = async () => {
-    if (incomingCall) {
-      await declineCall(incomingCall.id);
-    }
-  };
-
-  const handleEndCall = async () => {
-    if (activeCall) {
-      await endCall(activeCall.id);
-    }
-  };
-
-  // Determine if current user is the call initiator
-  const isCallInitiator = activeCall ? activeCall.caller_id === user?.id : false;
 
   return (
     <div 
@@ -68,24 +40,7 @@ export function AppLayout() {
         </main>
       </ScrollContainerProvider>
       <BottomNav hidden={shouldHideBottomNav} />
-
-      {/* Global Incoming Call Handler - shows on any page */}
-      {incomingCall && !activeCall && (
-        <IncomingCallSheet
-          call={incomingCall}
-          onAccept={handleAcceptCall}
-          onDecline={handleDeclineCall}
-        />
-      )}
-
-      {/* Global Active Call Handler - shows on any page when call is active */}
-      {activeCall && ["calling", "ringing", "active"].includes(activeCall.status) && (
-        <CallScreen
-          call={activeCall}
-          isInitiator={isCallInitiator}
-          onEnd={handleEndCall}
-        />
-      )}
+      {/* Call UI is now handled globally by GlobalCallOverlay in App.tsx */}
     </div>
   );
 }

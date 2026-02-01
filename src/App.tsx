@@ -6,9 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ChatOpenProvider } from "@/contexts/ChatOpenContext";
-import { CallsProvider } from "@/contexts/CallsContext";
+import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { GlobalCallOverlay } from "@/components/chat/GlobalCallOverlay";
 import { createQueryClient } from "@/lib/queryClient";
 import { initErrorTracking } from "@/lib/sentry";
 import { Loader2 } from "lucide-react";
@@ -49,11 +50,12 @@ function PageLoader() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <CallsProvider>
+      <VideoCallProvider>
         <ChatOpenProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <GlobalCallOverlay />
             <BrowserRouter>
               <Suspense fallback={null}>
                 <CommandPalette />
@@ -147,7 +149,7 @@ const App = () => (
             </BrowserRouter>
           </TooltipProvider>
         </ChatOpenProvider>
-      </CallsProvider>
+      </VideoCallProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
