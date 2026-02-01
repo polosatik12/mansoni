@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarkConversationRead } from "@/hooks/useMarkConversationRead";
-import { useCallsContext } from "@/contexts/CallsContext";
+import { useVideoCallContext } from "@/contexts/VideoCallContext";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -34,7 +34,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
   const { markConversationRead } = useMarkConversationRead();
-  const { activeCall, startCall, endCall } = useCallsContext();
+  const { startCall } = useVideoCallContext();
   const { setIsChatOpen } = useChatOpen();
   
   const [inputText, setInputText] = useState("");
@@ -210,17 +210,11 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   const handleStartAudioCall = async () => {
-    await startCall(conversationId, otherUserId, "audio");
+    await startCall(otherUserId, conversationId, "audio");
   };
 
   const handleStartVideoCall = async () => {
-    await startCall(conversationId, otherUserId, "video");
-  };
-
-  const handleEndCall = async () => {
-    if (activeCall) {
-      await endCall(activeCall.id);
-    }
+    await startCall(otherUserId, conversationId, "video");
   };
 
   return (

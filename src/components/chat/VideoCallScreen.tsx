@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronLeft,
   Volume2,
@@ -9,82 +9,57 @@ import {
   X,
   RefreshCw,
 } from "lucide-react";
-import { useWebRTC } from "@/hooks/useWebRTC";
-import type { Call } from "@/hooks/useCalls";
-import type { WebRTCStatus } from "@/hooks/useSimplePeerWebRTC";
+import type { VideoCall, VideoCallStatus } from "@/contexts/VideoCallContext";
+import { useAuth } from "@/hooks/useAuth";
 
-interface CallScreenProps {
-  call: Call;
-  isInitiator: boolean;
+interface VideoCallScreenProps {
+  call: VideoCall;
+  status: VideoCallStatus;
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+  isMuted: boolean;
+  isVideoOff: boolean;
+  connectionState: string;
   onEnd: () => void;
-  onMinimize?: () => void;
+  onToggleMute: () => void;
+  onToggleVideo: () => void;
+  onRetry: () => void;
 }
 
-export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
+export function VideoCallScreen({
+  call,
+  status,
+  localStream,
+  remoteStream,
+  isMuted,
+  isVideoOff,
+  connectionState,
+  onEnd,
+  onToggleMute,
+  onToggleVideo,
+  onRetry,
+}: VideoCallScreenProps) {
+  const { user } = useAuth();
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [callDuration, setCallDuration] = useState(0);
-  const [webrtcStarted, setWebrtcStarted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
-  const [connectionFailed, setConnectionFailed] = useState(false);
 
-  const otherUser = isInitiator ? call.callee_profile : call.caller_profile;
-  const otherName = otherUser?.display_name || "Собеседник";
-  const otherAvatar = otherUser?.avatar_url;
+  const isInitiator = call.caller_id === user?.id;
+  const otherProfile = isInitiator ? call.callee_profile : call.caller_profile;
+  const otherName = otherProfile?.display_name || "Собеседник";
+  const otherAvatar = otherProfile?.avatar_url;
   const isVideoCall = call.call_type === "video";
-  const isCallActive = call.status === "active";
+  const isConnected = status === "connected" && connectionState === "connected";
 
-  const handleConnectionFailed = useCallback(() => {
-    setConnectionFailed(true);
-  }, []);
-
-  const {
-    localStream,
-    remoteStream,
-    isConnected,
-    isMuted,
-    isVideoOff,
-    connectionStatus,
-    startCall,
-    endCall,
-    toggleMute,
-    toggleVideo,
-    manualRetry,
-  } = useWebRTC({
-    callId: call.id,
-    callType: call.call_type,
-    isInitiator,
-    onConnectionStateChange: (state) => {
-      console.log("[CallScreen] Connection state:", state);
-    },
-    onConnectionFailed: handleConnectionFailed,
-  });
-
-  // Start WebRTC when call becomes active
-  // Minimal delay since handshake now handles synchronization
-  useEffect(() => {
-    if (isCallActive && !webrtcStarted) {
-      setWebrtcStarted(true);
-      
-      // Small delay to ensure both sides have updated call status
-      const delay = isInitiator ? 500 : 200;
-      
-      console.log(`[CallScreen] Starting WebRTC in ${delay}ms, role: ${isInitiator ? "initiator" : "callee"}`);
-      const timer = setTimeout(() => {
-        console.log('[CallScreen] Timer fired, calling startCall()...');
-        startCall();
-      }, delay);
-      return () => clearTimeout(timer);
-    }
-  }, [isCallActive, webrtcStarted, startCall, isInitiator]);
-
-  // Attach streams to video elements
+  // Attach local stream
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
   }, [localStream]);
 
+  // Attach remote stream
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
@@ -116,63 +91,39 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
     return name.charAt(0).toUpperCase();
   };
 
-  // Map WebRTC status to user-friendly Russian text
   const getStatusText = (): string => {
-    if (connectionFailed || connectionStatus === "failed") {
+    if (connectionState === "failed") {
       return "Ошибка соединения";
     }
-    
-    if (call.status === "calling") {
-      return "Вызов...";
-    }
-    
-    if (call.status === "ringing") {
-      return "Звонок...";
-    }
-    
-    if (isConnected || connectionStatus === "connected") {
+
+    if (isConnected) {
       return formatDuration(callDuration);
     }
-    
-    // Detailed status based on WebRTC state
-    switch (connectionStatus as WebRTCStatus) {
-      case "getting_media":
-        return "Доступ к камере...";
-      case "subscribing":
-        return "Подключение...";
-      case "waiting_ready":
-        return "Ожидание ответа...";
-      case "exchanging_signals":
-        return "Обмен данными...";
-      case "ice_checking":
-        return "Проверка связи...";
-      case "ice_connected":
-        return "Установка связи...";
+
+    switch (status) {
+      case "calling":
+        return "Вызов";
+      case "ringing":
+        return "Звонок";
       default:
-        return "Соединение...";
+        break;
+    }
+
+    switch (connectionState) {
+      case "connecting":
+        return "Подключение";
+      case "new":
+        return "Инициализация";
+      default:
+        return "Соединение";
     }
   };
 
-  const handleRetry = useCallback(() => {
-    setConnectionFailed(false);
-    setWebrtcStarted(false);
-    // Use the manualRetry from WebRTC hook
-    manualRetry();
-  }, [manualRetry]);
+  const showWaitingUI = status !== "connected" || connectionState !== "connected";
+  const showRetryButton = connectionState === "failed";
 
-  const handleEndCall = () => {
-    endCall();
-    onEnd();
-  };
-
-  const toggleSpeaker = () => {
-    setIsSpeakerOn(!isSpeakerOn);
-  };
-
-  const showWaitingUI = !isConnected || call.status !== "active" || connectionFailed;
-
-  // Video call with active connection - show video streams
-  if (isVideoCall && isConnected && !isVideoOff) {
+  // Video call with active connection
+  if (isVideoCall && isConnected && !isVideoOff && remoteStream) {
     return (
       <div className="fixed inset-0 bg-black z-[100] flex flex-col">
         {/* Remote video (full screen) */}
@@ -184,17 +135,19 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
         />
 
         {/* Local video (small overlay) */}
-        <video
-          ref={localVideoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute top-20 right-4 w-32 h-44 object-cover rounded-2xl border-2 border-white/30 z-10 scale-x-[-1]"
-        />
+        {localStream && (
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute top-20 right-4 w-32 h-44 object-cover rounded-2xl border-2 border-white/30 z-10 scale-x-[-1]"
+          />
+        )}
 
         {/* Top bar */}
         <div className="absolute top-0 left-0 right-0 p-4 pt-12 safe-area-top z-20 bg-gradient-to-b from-black/50 to-transparent">
-          <button onClick={handleEndCall} className="flex items-center text-white">
+          <button onClick={onEnd} className="flex items-center text-white">
             <ChevronLeft className="w-6 h-6" />
             <span className="text-lg">Назад</span>
           </button>
@@ -207,25 +160,25 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
               icon={<Volume2 className="w-6 h-6" />}
               label="динамик"
               isActive={isSpeakerOn}
-              onClick={toggleSpeaker}
+              onClick={() => setIsSpeakerOn(!isSpeakerOn)}
             />
             <ControlButton
               icon={isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
               label="видео"
               isActive={!isVideoOff}
-              onClick={toggleVideo}
+              onClick={onToggleVideo}
             />
             <ControlButton
               icon={isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
               label="убрать звук"
               isActive={!isMuted}
-              onClick={toggleMute}
+              onClick={onToggleMute}
             />
             <ControlButton
               icon={<X className="w-6 h-6" />}
               label="завершить"
               isEndButton
-              onClick={handleEndCall}
+              onClick={onEnd}
             />
           </div>
         </div>
@@ -233,12 +186,12 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
     );
   }
 
-  // Audio call or waiting state - show gradient UI (Telegram style)
+  // Audio call or waiting state
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-purple-600 via-purple-500 to-blue-400 z-[100] flex flex-col">
-      {/* Top bar with back button */}
+      {/* Top bar */}
       <div className="p-4 pt-12 safe-area-top">
-        <button onClick={handleEndCall} className="flex items-center text-white">
+        <button onClick={onEnd} className="flex items-center text-white">
           <ChevronLeft className="w-6 h-6" />
           <span className="text-lg">Назад</span>
         </button>
@@ -246,12 +199,9 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center -mt-16">
-        {/* Avatar with glow effect */}
+        {/* Avatar */}
         <div className="relative">
-          {/* Outer glow */}
           <div className="absolute -inset-4 rounded-full bg-white/10 blur-xl" />
-
-          {/* Pulsing ring animation when not connected */}
           {showWaitingUI && (
             <>
               <div
@@ -261,19 +211,11 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
               <div className="absolute inset-0 w-40 h-40 rounded-full border-2 border-white/30" />
             </>
           )}
-
-          {/* Avatar container */}
           <div className="relative w-40 h-40 rounded-full border-4 border-white/30 overflow-hidden bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center">
             {otherAvatar ? (
-              <img
-                src={otherAvatar}
-                alt={otherName}
-                className="w-full h-full object-cover"
-              />
+              <img src={otherAvatar} alt={otherName} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-5xl text-white font-bold">
-                {getInitials(otherName)}
-              </span>
+              <span className="text-5xl text-white font-bold">{getInitials(otherName)}</span>
             )}
           </div>
         </div>
@@ -281,41 +223,26 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
         {/* Name */}
         <h2 className="text-3xl font-semibold text-white mt-8 mb-3">{otherName}</h2>
 
-        {/* Status with animated dots */}
+        {/* Status */}
         <div className="flex items-center h-7">
           <span className="text-white/80 text-lg">{getStatusText()}</span>
-          {showWaitingUI && (
+          {showWaitingUI && !showRetryButton && (
             <span className="flex ml-0.5">
-              <span
-                className="animate-bounce text-white/80 text-lg"
-                style={{ animationDelay: "0ms", animationDuration: "1s" }}
-              >
-                .
-              </span>
-              <span
-                className="animate-bounce text-white/80 text-lg"
-                style={{ animationDelay: "200ms", animationDuration: "1s" }}
-              >
-                .
-              </span>
-              <span
-                className="animate-bounce text-white/80 text-lg"
-                style={{ animationDelay: "400ms", animationDuration: "1s" }}
-              >
-                .
-              </span>
+              <span className="animate-bounce text-white/80 text-lg" style={{ animationDelay: "0ms", animationDuration: "1s" }}>.</span>
+              <span className="animate-bounce text-white/80 text-lg" style={{ animationDelay: "200ms", animationDuration: "1s" }}>.</span>
+              <span className="animate-bounce text-white/80 text-lg" style={{ animationDelay: "400ms", animationDuration: "1s" }}>.</span>
             </span>
           )}
         </div>
-        
-        {/* Retry button and hint when connection failed */}
-        {(connectionFailed || connectionStatus === "failed") && (
+
+        {/* Retry button */}
+        {showRetryButton && (
           <div className="mt-6 flex flex-col items-center gap-3">
             <p className="text-white/70 text-sm text-center max-w-[280px]">
               Проверьте интернет или настройки firewall
             </p>
             <button
-              onClick={handleRetry}
+              onClick={onRetry}
               className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
             >
               <RefreshCw className="w-5 h-5" />
@@ -325,8 +252,10 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
         )}
       </div>
 
-      {/* Hidden audio element for remote stream in audio calls */}
-      {!isVideoCall && <audio ref={remoteVideoRef as any} autoPlay playsInline />}
+      {/* Audio element for audio calls */}
+      {!isVideoCall && remoteStream && (
+        <audio ref={remoteVideoRef as any} autoPlay playsInline />
+      )}
 
       {/* Bottom controls */}
       <div className="p-6 pb-10 safe-area-bottom">
@@ -335,25 +264,25 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
             icon={<Volume2 className="w-6 h-6" />}
             label="динамик"
             isActive={isSpeakerOn}
-            onClick={toggleSpeaker}
+            onClick={() => setIsSpeakerOn(!isSpeakerOn)}
           />
           <ControlButton
             icon={isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
             label="видео"
             isActive={!isVideoOff}
-            onClick={toggleVideo}
+            onClick={onToggleVideo}
           />
           <ControlButton
             icon={isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
             label="убрать звук"
             isActive={!isMuted}
-            onClick={toggleMute}
+            onClick={onToggleMute}
           />
           <ControlButton
             icon={<X className="w-6 h-6" />}
             label="завершить"
             isEndButton
-            onClick={handleEndCall}
+            onClick={onEnd}
           />
         </div>
       </div>
@@ -361,7 +290,6 @@ export function CallScreen({ call, isInitiator, onEnd }: CallScreenProps) {
   );
 }
 
-// Control button component
 interface ControlButtonProps {
   icon: React.ReactNode;
   label: string;
