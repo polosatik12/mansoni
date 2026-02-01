@@ -27,7 +27,7 @@ interface UseVideoCallOptions {
 const CALL_TIMEOUT_MS = 60000; // 60 seconds
 const ICE_RESTART_DELAY_MS = 3000;
 const MAX_ICE_RESTARTS = 3;
-const SIGNAL_POLL_INTERVAL_MS = 1000;
+const SIGNAL_POLL_INTERVAL_MS = 500; // Faster polling for reliability
 
 export function useVideoCall(options: UseVideoCallOptions = {}) {
   const { user } = useAuth();
@@ -333,9 +333,14 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     isInitiator: boolean,
     forceRelay: boolean = false
   ) => {
-    log("Creating peer connection, initiator:", isInitiator, "forceRelay:", forceRelay);
+    // ALWAYS force relay on iOS/Safari in Telegram to avoid ICE failures
+    const isTelegramIOS = /iPhone|iPad/i.test(navigator.userAgent) && 
+                          ((window as any).Telegram?.WebApp || /Telegram/i.test(navigator.userAgent));
+    const shouldForceRelay = forceRelay || isTelegramIOS;
+    
+    log("Creating peer connection, initiator:", isInitiator, "forceRelay:", shouldForceRelay, "isTelegramIOS:", isTelegramIOS);
 
-    const config = await getIceServers(forceRelay);
+    const config = await getIceServers(shouldForceRelay);
     const pc = new RTCPeerConnection(config);
 
     // Add local tracks
