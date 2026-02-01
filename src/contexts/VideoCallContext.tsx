@@ -58,12 +58,22 @@ export function VideoCallProvider({ children }: { children: ReactNode }) {
         console.log("[VideoCallContext] Already in call, ignoring incoming");
         return;
       }
+      console.log("[VideoCallContext] Setting pending incoming call:", call.id.slice(0, 8));
       setPendingIncomingCall(call);
     },
   });
 
-  // Sync incoming call state
-  const incomingCall = status === "idle" ? (pendingIncomingCall || detectedIncomingCall) : null;
+  // Sync incoming call state - prioritize pendingIncomingCall to avoid flicker
+  // Only show incoming call when we're truly idle
+  const incomingCall = status === "idle" ? pendingIncomingCall : null;
+  
+  // Debug logging
+  console.log("[VideoCallContext] State:", { 
+    status, 
+    hasCurrentCall: !!currentCall, 
+    hasPendingIncoming: !!pendingIncomingCall,
+    hasDetectedIncoming: !!detectedIncomingCall 
+  });
 
   const answerCall = useCallback(async (call: VideoCall) => {
     setPendingIncomingCall(null);

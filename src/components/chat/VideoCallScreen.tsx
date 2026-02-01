@@ -13,7 +13,7 @@ import type { VideoCall, VideoCallStatus } from "@/contexts/VideoCallContext";
 import { useAuth } from "@/hooks/useAuth";
 
 interface VideoCallScreenProps {
-  call: VideoCall;
+  call: VideoCall | null;
   status: VideoCallStatus;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
@@ -45,11 +45,12 @@ export function VideoCallScreen({
   const [callDuration, setCallDuration] = useState(0);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
 
-  const isInitiator = call.caller_id === user?.id;
-  const otherProfile = isInitiator ? call.callee_profile : call.caller_profile;
+  // Handle null call during state transitions
+  const isInitiator = call ? call.caller_id === user?.id : true;
+  const otherProfile = call ? (isInitiator ? call.callee_profile : call.caller_profile) : null;
   const otherName = otherProfile?.display_name || "Собеседник";
   const otherAvatar = otherProfile?.avatar_url;
-  const isVideoCall = call.call_type === "video";
+  const isVideoCall = call ? call.call_type === "video" : true;
   const isConnected = status === "connected" && connectionState === "connected";
 
   // Attach local stream
