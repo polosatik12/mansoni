@@ -528,47 +528,8 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     );
   }, [currentCall, localStream, user, createPeerConnection, log]);
 
-  // Subscribe to incoming calls
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel("incoming-calls")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "video_calls",
-          filter: `callee_id=eq.${user.id}`,
-        },
-        async (payload) => {
-          const call = payload.new as VideoCall;
-          if (call.status === "ringing") {
-            // Fetch caller profile
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("display_name, avatar_url")
-              .eq("user_id", call.caller_id)
-              .single();
-
-            const callWithProfile: VideoCall = {
-              ...call,
-              call_type: call.call_type as "video" | "audio",
-              caller_profile: profile || undefined,
-            };
-
-            log("Incoming call from:", call.caller_id.slice(0, 8));
-            options.onIncomingCall?.(callWithProfile);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, log, options]);
+  // NOTE: Incoming calls are handled by useIncomingCalls hook separately
+  // This avoids duplicate subscriptions and race conditions
 
   // Subscribe to call status changes
   useEffect(() => {
