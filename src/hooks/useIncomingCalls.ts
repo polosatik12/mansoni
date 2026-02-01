@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { VideoCall } from "./useVideoCall";
@@ -10,8 +10,13 @@ interface UseIncomingCallsOptions {
 export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
   const { user } = useAuth();
   const [incomingCall, setIncomingCall] = useState<VideoCall | null>(null);
+  
+  // Use ref to avoid recreating subscription when callback changes
+  const onIncomingCallRef = useRef(options.onIncomingCall);
+  onIncomingCallRef.current = options.onIncomingCall;
 
   const clearIncomingCall = useCallback(() => {
+    console.log("[IncomingCalls] Clearing incoming call");
     setIncomingCall(null);
   }, []);
 
@@ -21,7 +26,7 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
     console.log("[IncomingCalls] Subscribing for user:", user.id.slice(0, 8));
 
     const channel = supabase
-      .channel("incoming-video-calls")
+      .channel(`incoming-video-calls-${user.id}`)
       .on(
         "postgres_changes",
         {
@@ -51,7 +56,7 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
           };
 
           setIncomingCall(callWithProfile);
-          options.onIncomingCall?.(callWithProfile);
+          onIncomingCallRef.current?.(callWithProfile);
         }
       )
       .on(
@@ -66,12 +71,14 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
           const updated = payload.new as VideoCall;
           
           // Clear incoming call if it was answered, declined, ended, or missed
-          if (
-            incomingCall?.id === updated.id &&
-            ["answered", "declined", "ended", "missed"].includes(updated.status)
-          ) {
+          if (["answered", "declined", "ended", "missed"].includes(updated.status)) {
             console.log("[IncomingCalls] Call status changed to:", updated.status);
-            setIncomingCall(null);
+            setIncomingCall((current) => {
+              if (current?.id === updated.id) {
+                return null;
+              }
+              return current;
+            });
           }
         }
       )
@@ -83,7 +90,7 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
       console.log("[IncomingCalls] Unsubscribing");
       supabase.removeChannel(channel);
     };
-  }, [user, incomingCall, options]);
+  }, [user]); // Only depend on user, not on callback
 
   return {
     incomingCall,
