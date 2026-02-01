@@ -330,11 +330,12 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
   const createPeerConnection = useCallback(async (
     stream: MediaStream,
     callId: string,
-    isInitiator: boolean
+    isInitiator: boolean,
+    forceRelay: boolean = false
   ) => {
-    log("Creating peer connection, initiator:", isInitiator);
+    log("Creating peer connection, initiator:", isInitiator, "forceRelay:", forceRelay);
 
-    const config = await getIceServers();
+    const config = await getIceServers(forceRelay);
     const pc = new RTCPeerConnection(config);
 
     // Add local tracks
@@ -358,7 +359,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     };
 
     // Connection state monitoring
-    pc.onconnectionstatechange = () => {
+     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
       log("Connection state:", state);
       setConnectionState(state);
@@ -370,6 +371,28 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
           callTimeoutRef.current = null;
         }
       } else if (state === "failed") {
+         // If we're not already forcing relay, try a hard restart with TURN-only first.
+         // This helps on Telegram iOS / restrictive NATs where STUN candidates fail.
+         if (!forceRelay && iceRestartCountRef.current === 0) {
+           warn("Connection failed - retrying with TURN-only (relay)");
+           setTimeout(async () => {
+             try {
+               clearIceServerCache();
+               // Recreate the whole PeerConnection with relay policy
+               if (peerConnectionRef.current) {
+                 peerConnectionRef.current.close();
+               }
+               peerConnectionRef.current = null;
+               pendingCandidatesRef.current = [];
+               await createPeerConnection(stream, callId, isInitiator, true);
+               log("Recreated peer connection with forceRelay=true");
+             } catch (err) {
+               warn("Relay retry failed:", err);
+             }
+           }, ICE_RESTART_DELAY_MS);
+           return;
+         }
+
         if (iceRestartCountRef.current < MAX_ICE_RESTARTS) {
           iceRestartCountRef.current++;
           log(`ICE restart attempt ${iceRestartCountRef.current}`);
@@ -633,10 +656,12 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     iceRestartCountRef.current = 0;
 
     // Create new peer connection
+    // Force relay on manual retry to bypass NAT/firewall issues
     await createPeerConnection(
       localStream,
       currentCall.id,
-      currentCall.caller_id === user?.id
+      currentCall.caller_id === user?.id,
+      true
     );
   }, [currentCall, localStream, user, createPeerConnection, log]);
 
