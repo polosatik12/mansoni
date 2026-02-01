@@ -515,17 +515,57 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
         })
         .eq("id", call.id);
 
-      // Setup signaling
+      // Setup signaling FIRST (so we can receive offer via Broadcast)
       log("Setting up broadcast channel for answer...");
       setupBroadcastChannel(call.id);
       startSignalPolling(call.id);
 
-      // Create peer connection (not initiator - will wait for offer)
+      // Check if there's already an offer in the DB (likely the case since caller sends offer first)
+      log("Checking for existing offer in DB...");
+      const { data: existingSignals } = await supabase
+        .from("video_call_signals")
+        .select("*")
+        .eq("call_id", call.id)
+        .eq("signal_type", "offer")
+        .eq("processed", false)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      // Create peer connection (not initiator - will process offer)
       log("Creating peer connection for answer...");
       await createPeerConnection(stream, call.id, false);
       log("Peer connection created for answer");
 
-      // Send ready signal
+      // If offer exists in DB, process it now
+      if (existingSignals && existingSignals.length > 0) {
+        const offerSignal = existingSignals[0];
+        log("Found existing offer in DB, processing immediately...");
+        
+        if (peerConnectionRef.current && offerSignal.sender_id !== user.id) {
+          try {
+            await peerConnectionRef.current.setRemoteDescription(
+              new RTCSessionDescription(offerSignal.signal_data as unknown as RTCSessionDescriptionInit)
+            );
+            
+            const answer = await peerConnectionRef.current.createAnswer();
+            await peerConnectionRef.current.setLocalDescription(answer);
+            await sendSignal(call.id, "answer", answer);
+            log("Processed existing offer and sent answer");
+            
+            // Mark offer as processed
+            await supabase
+              .from("video_call_signals")
+              .update({ processed: true })
+              .eq("id", offerSignal.id);
+          } catch (err) {
+            warn("Error processing existing offer:", err);
+          }
+        }
+      } else {
+        log("No existing offer found, will wait for offer via Broadcast/polling");
+      }
+
+      // Send ready signal (indicates we're ready to receive/process offer)
       await sendSignal(call.id, "ready", { userId: user.id });
     } catch (err) {
       warn("Answer call error:", err);
