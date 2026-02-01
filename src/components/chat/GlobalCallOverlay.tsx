@@ -23,8 +23,11 @@ export function GlobalCallOverlay() {
     retryConnection,
   } = useVideoCallContext();
 
-  // Show incoming call sheet
+  console.log("[GlobalCallOverlay] Render:", { status, hasCurrentCall: !!currentCall, hasIncomingCall: !!incomingCall });
+
+  // Show incoming call sheet for unanswered incoming calls
   if (incomingCall && status === "idle") {
+    console.log("[GlobalCallOverlay] Showing incoming call sheet");
     return (
       <IncomingVideoCallSheet
         call={incomingCall}
@@ -34,8 +37,10 @@ export function GlobalCallOverlay() {
     );
   }
 
-  // Show active call screen
-  if (status !== "idle" && currentCall) {
+  // Show active call screen for ANY non-idle status (calling, ringing, connected)
+  // Even if currentCall is temporarily null during state transitions
+  if (status !== "idle") {
+    console.log("[GlobalCallOverlay] Showing call screen, status:", status);
     return (
       <VideoCallScreen
         call={currentCall}
