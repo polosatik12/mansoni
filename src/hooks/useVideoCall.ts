@@ -200,11 +200,6 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     signalData: any,
     fromUserId: string
   ) => {
-    if (!peerConnectionRef.current) {
-      log("No peer connection, ignoring signal:", signalType);
-      return;
-    }
-
     if (fromUserId === user?.id) return;
 
     log(`Processing ${signalType} from ${fromUserId.slice(0, 8)}`);
@@ -212,6 +207,69 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     try {
       switch (signalType) {
         case "offer":
+          // If we receive a new offer while already having a PC, the other side may have restarted
+          // (e.g., relay retry). We need to handle this gracefully:
+          // 1. If PC is in "failed" or "closed" state, recreate it
+          // 2. Otherwise, just set the new remote description (rollback happens automatically)
+          
+          const pc = peerConnectionRef.current;
+          const needsRecreation = !pc || pc.connectionState === "failed" || pc.connectionState === "closed";
+          
+          if (needsRecreation && localStreamRef.current && currentCall) {
+            log("Recreating PC to handle new offer (previous was failed/closed/missing)");
+            if (pc) {
+              pc.close();
+            }
+            peerConnectionRef.current = null;
+            pendingCandidatesRef.current = [];
+            
+            // Get fresh ICE servers with relay forced (since other side likely restarted with relay)
+            clearIceServerCache();
+            const config = await getIceServers(true); // Force relay to match sender
+            const newPc = new RTCPeerConnection(config);
+            
+            // Add local tracks
+            localStreamRef.current.getTracks().forEach(track => {
+              newPc.addTrack(track, localStreamRef.current!);
+            });
+            
+            // Handle remote tracks
+            newPc.ontrack = (event) => {
+              log("Received remote track:", event.track.kind);
+              if (event.streams[0]) {
+                setRemoteStream(event.streams[0]);
+              }
+            };
+            
+            // ICE candidates
+            newPc.onicecandidate = (event) => {
+              if (event.candidate && currentCall) {
+                sendSignal(currentCall.id, "ice-candidate", event.candidate.toJSON());
+              }
+            };
+            
+            // Connection state monitoring (simplified for re-created PC)
+            newPc.onconnectionstatechange = () => {
+              const state = newPc.connectionState;
+              log("Recreated PC connection state:", state);
+              setConnectionState(state);
+              if (state === "connected") {
+                setStatus("connected");
+                if (callTimeoutRef.current) {
+                  clearTimeout(callTimeoutRef.current);
+                  callTimeoutRef.current = null;
+                }
+              }
+            };
+            
+            peerConnectionRef.current = newPc;
+          }
+          
+          if (!peerConnectionRef.current) {
+            log("No peer connection available for offer, ignoring");
+            return;
+          }
+          
           await peerConnectionRef.current.setRemoteDescription(
             new RTCSessionDescription(signalData)
           );
@@ -231,6 +289,10 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
           break;
 
         case "answer":
+          if (!peerConnectionRef.current) {
+            log("No peer connection for answer, ignoring");
+            return;
+          }
           await peerConnectionRef.current.setRemoteDescription(
             new RTCSessionDescription(signalData)
           );
@@ -244,6 +306,11 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
           break;
 
         case "ice-candidate":
+          if (!peerConnectionRef.current) {
+            // Buffer candidate for later
+            pendingCandidatesRef.current.push(signalData);
+            return;
+          }
           if (peerConnectionRef.current.remoteDescription) {
             await peerConnectionRef.current.addIceCandidate(
               new RTCIceCandidate(signalData)
@@ -380,6 +447,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
          // This helps on Telegram iOS / restrictive NATs where STUN candidates fail.
          if (!forceRelay && iceRestartCountRef.current === 0) {
            warn("Connection failed - retrying with TURN-only (relay)");
+           iceRestartCountRef.current++; // Count this as a restart attempt
            setTimeout(async () => {
              try {
                clearIceServerCache();
@@ -389,8 +457,10 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
                }
                peerConnectionRef.current = null;
                pendingCandidatesRef.current = [];
-               await createPeerConnection(stream, callId, isInitiator, true);
-               log("Recreated peer connection with forceRelay=true");
+               // CRITICAL: Always set isInitiator=true on relay retry so a NEW OFFER is sent
+               // Otherwise the other party never knows we restarted and connection hangs
+               await createPeerConnection(stream, callId, true, true);
+               log("Recreated peer connection with forceRelay=true, new offer sent");
              } catch (err) {
                warn("Relay retry failed:", err);
              }
