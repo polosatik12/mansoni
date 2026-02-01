@@ -76,38 +76,55 @@ serve(async (req) => {
 
     // Cloudflare response format:
     // { iceServers: { urls: [...], username: "...", credential: "..." } }
-    // We need to convert to array format for WebRTC
+    // 
+    // IMPORTANT: Safari/iOS WebRTC requires SEPARATE ICE server objects per URL
+    // We must split the urls array into individual server entries
     
-    let iceServers: any[] = [];
+    const iceServers: Array<{ urls: string; username?: string; credential?: string }> = [];
+    
+    const processServer = (server: any) => {
+      const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
+      const username = server.username;
+      const credential = server.credential;
+      
+      for (const singleUrl of urls) {
+        if (typeof singleUrl === 'string') {
+          // STUN servers don't need auth, TURN servers do
+          if (singleUrl.startsWith('stun:')) {
+            iceServers.push({ urls: singleUrl });
+          } else {
+            // TURN/TURNS - include credentials
+            iceServers.push({
+              urls: singleUrl,
+              username,
+              credential,
+            });
+          }
+        }
+      }
+    };
     
     if (data.iceServers) {
       if (Array.isArray(data.iceServers)) {
-        // Already an array
-        iceServers = data.iceServers;
-        console.log("[TURN] iceServers is array with", iceServers.length, "entries");
+        for (const server of data.iceServers) {
+          processServer(server);
+        }
       } else if (typeof data.iceServers === 'object') {
-        // Single object - wrap in array
-        iceServers = [data.iceServers];
-        console.log("[TURN] iceServers is object, wrapped in array");
+        processServer(data.iceServers);
       }
     }
 
-    // Check if Cloudflare includes STUN, if not add Google STUN as backup
-    const hasStun = iceServers.some(server => {
-      const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
-      return urls.some((u: string) => u.startsWith('stun:'));
-    });
-
+    // Ensure we have a STUN server (add Google STUN as backup if needed)
+    const hasStun = iceServers.some(s => s.urls.startsWith('stun:'));
     if (!hasStun) {
       console.log("[TURN] No STUN in response, adding Google STUN");
       iceServers.unshift({ urls: "stun:stun.l.google.com:19302" });
     }
 
     // Log what we're returning
-    console.log("[TURN] Returning", iceServers.length, "ICE servers");
+    console.log("[TURN] Returning", iceServers.length, "ICE servers (split by URL):");
     iceServers.forEach((s, i) => {
-      const urls = Array.isArray(s.urls) ? s.urls : [s.urls];
-      console.log(`[TURN] Server ${i}:`, urls.join(', '), s.username ? '(with auth)' : '');
+      console.log(`[TURN] Server ${i}: ${s.urls}${s.username ? ' (with auth)' : ''}`);
     });
 
     return new Response(
