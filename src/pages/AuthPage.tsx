@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Phone, User, Sparkles } from "lucide-react";
+import { Phone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -134,11 +134,6 @@ export function AuthPage() {
               <div className="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-2xl">
                 <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
                 <span className="text-5xl font-light text-white/90 drop-shadow-lg">S</span>
-              </div>
-              
-              {/* Sparkle decoration */}
-              <div className="absolute -top-1 -right-1">
-                <Sparkles className="w-6 h-6 text-white/80" />
               </div>
             </div>
           </div>
