@@ -7,6 +7,8 @@ interface UseIncomingCallsOptions {
   onIncomingCall?: (call: VideoCall) => void;
 }
 
+const POLL_INTERVAL_MS = 2000; // Poll every 2 seconds as fallback
+
 export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
   const { user } = useAuth();
   const [incomingCall, setIncomingCall] = useState<VideoCall | null>(null);
@@ -14,17 +16,48 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
   // Use ref to avoid recreating subscription when callback changes
   const onIncomingCallRef = useRef(options.onIncomingCall);
   onIncomingCallRef.current = options.onIncomingCall;
+  
+  // Track which calls we've already notified about
+  const notifiedCallsRef = useRef<Set<string>>(new Set());
 
   const clearIncomingCall = useCallback(() => {
     console.log("[IncomingCalls] Clearing incoming call");
     setIncomingCall(null);
   }, []);
 
+  // Helper to process a new incoming call
+  const processIncomingCall = useCallback(async (call: VideoCall) => {
+    // Skip if we already notified about this call
+    if (notifiedCallsRef.current.has(call.id)) {
+      return;
+    }
+    
+    console.log("[IncomingCalls] Processing incoming call:", call.id.slice(0, 8), "type:", call.call_type);
+    notifiedCallsRef.current.add(call.id);
+
+    // Fetch caller profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("user_id", call.caller_id)
+      .single();
+
+    const callWithProfile: VideoCall = {
+      ...call,
+      call_type: call.call_type as "video" | "audio",
+      caller_profile: profile || undefined,
+    };
+
+    setIncomingCall(callWithProfile);
+    onIncomingCallRef.current?.(callWithProfile);
+  }, []);
+
   useEffect(() => {
     if (!user) return;
 
-    console.log("[IncomingCalls] Subscribing for user:", user.id.slice(0, 8));
+    console.log("[IncomingCalls] Setting up for user:", user.id.slice(0, 8));
 
+    // === REALTIME SUBSCRIPTION (primary) ===
     const channel = supabase
       .channel(`incoming-video-calls-${user.id}`)
       .on(
@@ -37,26 +70,9 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
         },
         async (payload) => {
           const call = payload.new as VideoCall;
-          
           if (call.status !== "ringing") return;
-          
-          console.log("[IncomingCalls] Incoming call:", call.id.slice(0, 8));
-
-          // Fetch caller profile
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("display_name, avatar_url")
-            .eq("user_id", call.caller_id)
-            .single();
-
-          const callWithProfile: VideoCall = {
-            ...call,
-            call_type: call.call_type as "video" | "audio",
-            caller_profile: profile || undefined,
-          };
-
-          setIncomingCall(callWithProfile);
-          onIncomingCallRef.current?.(callWithProfile);
+          console.log("[IncomingCalls] Realtime INSERT detected:", call.id.slice(0, 8));
+          await processIncomingCall(call);
         }
       )
       .on(
@@ -73,6 +89,7 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
           // Clear incoming call if it was answered, declined, ended, or missed
           if (["answered", "declined", "ended", "missed"].includes(updated.status)) {
             console.log("[IncomingCalls] Call status changed to:", updated.status);
+            notifiedCallsRef.current.delete(updated.id);
             setIncomingCall((current) => {
               if (current?.id === updated.id) {
                 return null;
@@ -83,14 +100,41 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
         }
       )
       .subscribe((status) => {
-        console.log("[IncomingCalls] Subscription status:", status);
+        console.log("[IncomingCalls] Realtime subscription status:", status);
       });
 
+    // === POLLING FALLBACK ===
+    // This catches incoming calls if Realtime subscription is delayed or missed
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data: ringingCalls } = await supabase
+          .from("video_calls")
+          .select("*")
+          .eq("callee_id", user.id)
+          .eq("status", "ringing")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (ringingCalls && ringingCalls.length > 0) {
+          const call = ringingCalls[0] as VideoCall;
+          // Only process if not already notified
+          if (!notifiedCallsRef.current.has(call.id)) {
+            console.log("[IncomingCalls] Poll fallback found ringing call:", call.id.slice(0, 8));
+            await processIncomingCall(call);
+          }
+        }
+      } catch (err) {
+        // Silent fail for polling
+      }
+    }, POLL_INTERVAL_MS);
+
     return () => {
-      console.log("[IncomingCalls] Unsubscribing");
+      console.log("[IncomingCalls] Cleaning up");
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+      notifiedCallsRef.current.clear();
     };
-  }, [user]); // Only depend on user, not on callback
+  }, [user, processIncomingCall]);
 
   return {
     incomingCall,
