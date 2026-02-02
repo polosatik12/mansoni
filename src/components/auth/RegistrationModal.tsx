@@ -134,7 +134,7 @@ export function RegistrationModal({ isOpen, onClose, phone, onSuccess }: Registr
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {/* Glass effect glow */}
         <div className="absolute -inset-2 bg-white/10 rounded-[2rem] blur-2xl" />
         
