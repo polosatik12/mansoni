@@ -52,6 +52,29 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
     onIncomingCallRef.current?.(callWithProfile);
   }, []);
 
+  // Cleanup stale ringing calls on mount
+  useEffect(() => {
+    if (!user) return;
+
+    const cleanupStaleRingingCalls = async () => {
+      const cutoff = new Date(Date.now() - 60000).toISOString();
+      const { error } = await supabase
+        .from("video_calls")
+        .update({ status: "missed", ended_at: new Date().toISOString() })
+        .eq("callee_id", user.id)
+        .eq("status", "ringing")
+        .lt("created_at", cutoff);
+      
+      if (error) {
+        console.log("[IncomingCalls] Cleanup error:", error.message);
+      } else {
+        console.log("[IncomingCalls] Cleaned up stale ringing calls");
+      }
+    };
+
+    cleanupStaleRingingCalls();
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
 
@@ -70,7 +93,12 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
         },
         async (payload) => {
           const call = payload.new as VideoCall;
-          if (call.status !== "ringing") return;
+          // Check call age - ignore calls older than 60 seconds
+          const callAge = Date.now() - new Date(call.created_at).getTime();
+          if (callAge > 60000 || call.status !== "ringing") {
+            console.log("[IncomingCalls] Ignoring stale/non-ringing call:", call.id.slice(0, 8), "age:", Math.round(callAge / 1000), "s");
+            return;
+          }
           console.log("[IncomingCalls] Realtime INSERT detected:", call.id.slice(0, 8));
           await processIncomingCall(call);
         }
@@ -107,11 +135,13 @@ export function useIncomingCalls(options: UseIncomingCallsOptions = {}) {
     // This catches incoming calls if Realtime subscription is delayed or missed
     const pollInterval = setInterval(async () => {
       try {
+        const cutoff = new Date(Date.now() - 60000).toISOString();
         const { data: ringingCalls } = await supabase
           .from("video_calls")
           .select("*")
           .eq("callee_id", user.id)
           .eq("status", "ringing")
+          .gt("created_at", cutoff) // Only calls from last 60 seconds
           .order("created_at", { ascending: false })
           .limit(1);
 
