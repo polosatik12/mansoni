@@ -10,27 +10,21 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
 type AuthMode = "select" | "login" | "register";
+type AuthStep = "phone" | "otp";
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<AuthMode>("select");
+  const [step, setStep] = useState<AuthStep>("phone");
   
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
 
-  const phoneToEmail = (phone: string) => {
-    const digits = phone.replace(/\D/g, '');
-    return `user.${digits}@phoneauth.app`;
-  };
-
-  const phoneToPassword = (phone: string) => {
-    const digits = phone.replace(/\D/g, '');
-    return `ph_${digits}_secure`;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const digits = phone.replace(/\D/g, '');
@@ -40,59 +34,127 @@ export function AuthPage() {
     }
     
     setLoading(true);
-    const fakeEmail = phoneToEmail(phone);
-    const password = phoneToPassword(phone);
 
     try {
-      if (mode === "login") {
-        const signInRes = await signIn(fakeEmail, password);
-        if (signInRes.error) {
-          toast.error("Аккаунт не найден или неверный номер");
-          return;
-        }
-        toast.success("Добро пожаловать!");
-        navigate("/");
-      } else {
-        // Register mode
-        const name = (displayName || phone).trim();
-        const signUpRes = await signUp(fakeEmail, password, name);
-        if (signUpRes.error) {
-          if (signUpRes.error.message?.includes("already registered")) {
-            toast.error("Этот номер уже зарегистрирован. Попробуйте войти.");
-          } else {
-            toast.error(signUpRes.error.message || "Ошибка регистрации");
-          }
-          return;
-        }
+      const response = await supabase.functions.invoke('send-sms-otp', {
+        body: { phone: digits }
+      });
 
-        const { data: { user: newUser } } = await supabase.auth.getUser();
-        if (newUser) {
-          await supabase
-            .from("profiles")
-            .upsert({ 
-              user_id: newUser.id, 
-              phone: digits, 
-              display_name: name 
-            }, { 
-              onConflict: 'user_id' 
-            });
-        }
-
-        toast.success("Аккаунт создан! Добро пожаловать!");
-        navigate("/");
+      if (response.error) {
+        console.error("Send OTP error:", response.error);
+        toast.error("Ошибка отправки SMS. Попробуйте позже.");
+        return;
       }
+
+      if (response.data?.error) {
+        toast.error(response.data.error);
+        return;
+      }
+
+      toast.success("Код отправлен на ваш номер");
+      setOtpSent(true);
+      setStep("otp");
+    } catch (error) {
+      console.error("Send OTP error:", error);
+      toast.error("Ошибка отправки SMS");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (otpCode.length !== 4) {
+      toast.error("Введите 4-значный код");
+      return;
+    }
+    
+    setLoading(true);
+
+    try {
+      const digits = phone.replace(/\D/g, '');
+      const response = await supabase.functions.invoke('verify-sms-otp', {
+        body: { 
+          phone: digits, 
+          code: otpCode,
+          displayName: mode === "register" ? displayName : undefined
+        }
+      });
+
+      if (response.error) {
+        console.error("Verify OTP error:", response.error);
+        toast.error("Ошибка проверки кода");
+        return;
+      }
+
+      if (response.data?.error) {
+        toast.error(response.data.error);
+        return;
+      }
+
+      // Sign in with the returned credentials
+      if (response.data?.email && response.data?.password) {
+        // New user - sign in with password
+        const signInResult = await signIn(response.data.email, response.data.password);
+        if (signInResult.error) {
+          toast.error("Ошибка входа. Попробуйте ещё раз.");
+          return;
+        }
+      } else if (response.data?.email) {
+        // Existing user - try to sign in
+        const fakePassword = `ph_${digits}_secure`;
+        const signInResult = await signIn(response.data.email, fakePassword);
+        if (signInResult.error) {
+          // Try alternative password formats
+          const altPasswords = [
+            `ph_${digits}_secure_1`,
+            `ph_${digits}_secure_2`,
+          ];
+          let success = false;
+          for (const pwd of altPasswords) {
+            const result = await signIn(response.data.email, pwd);
+            if (!result.error) {
+              success = true;
+              break;
+            }
+          }
+          if (!success) {
+            toast.error("Ошибка входа. Обратитесь в поддержку.");
+            return;
+          }
+        }
+      }
+
+      toast.success(response.data?.isNewUser ? "Аккаунт создан! Добро пожаловать!" : "Добро пожаловать!");
+      navigate("/");
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      toast.error("Ошибка проверки кода");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    setOtpCode("");
+    await handleSendOTP({ preventDefault: () => {} } as React.FormEvent);
+  };
+
   const handleBack = () => {
-    if (mode === "select") {
+    if (step === "otp") {
+      setStep("phone");
+      setOtpCode("");
+      setOtpSent(false);
+    } else if (mode === "select") {
       navigate(-1);
     } else {
       setMode("select");
       setPhone("");
       setDisplayName("");
+      setOtpCode("");
+      setOtpSent(false);
+      setStep("phone");
     }
   };
 
@@ -117,7 +179,7 @@ export function AuthPage() {
       }} />
 
       {/* Back button */}
-      {mode !== "select" && (
+      {(mode !== "select" || step === "otp") && (
         <div className="relative z-20 p-4 safe-area-top">
           <Button 
             variant="ghost" 
@@ -137,10 +199,7 @@ export function AuthPage() {
           {/* Glass avatar circle */}
           <div className="flex justify-center">
             <div className="relative">
-              {/* Outer glow */}
               <div className="absolute -inset-4 bg-white/20 rounded-full blur-xl" />
-              
-              {/* Glass circle */}
               <div className="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-2xl overflow-hidden">
                 <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
                 <img src={logo} alt="Logo" className="w-20 h-20 object-contain relative z-10" />
@@ -152,20 +211,22 @@ export function AuthPage() {
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-semibold text-white drop-shadow-lg">
               {mode === "select" && "Добро пожаловать"}
-              {mode === "login" && "Вход"}
-              {mode === "register" && "Регистрация"}
+              {mode === "login" && step === "phone" && "Вход"}
+              {mode === "login" && step === "otp" && "Код подтверждения"}
+              {mode === "register" && step === "phone" && "Регистрация"}
+              {mode === "register" && step === "otp" && "Код подтверждения"}
             </h1>
             <p className="text-white/70 text-base">
               {mode === "select" && "Выберите действие для продолжения"}
-              {mode === "login" && "Введите номер телефона"}
-              {mode === "register" && "Создайте новый аккаунт"}
+              {step === "phone" && mode === "login" && "Введите номер телефона"}
+              {step === "phone" && mode === "register" && "Создайте новый аккаунт"}
+              {step === "otp" && `Код отправлен на ${phone}`}
             </p>
           </div>
 
           {/* Mode selection */}
           {mode === "select" && (
             <div className="space-y-4">
-              {/* Glass card for buttons */}
               <div className="relative">
                 <div className="absolute -inset-1 bg-white/10 rounded-3xl blur-xl" />
                 <div className="relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 space-y-4 border border-white/20 shadow-2xl">
@@ -190,22 +251,18 @@ export function AuthPage() {
             </div>
           )}
 
-          {/* Login/Register form */}
-          {(mode === "login" || mode === "register") && (
+          {/* Phone input step */}
+          {(mode === "login" || mode === "register") && step === "phone" && (
             <>
-              {/* Glass form card */}
               <div className="relative">
-                {/* Card glow */}
                 <div className="absolute -inset-1 bg-white/10 rounded-3xl blur-xl" />
                 
                 <form 
-                  onSubmit={handleSubmit} 
+                  onSubmit={handleSendOTP} 
                   className="relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 space-y-4 border border-white/20 shadow-2xl"
                 >
-                  {/* Inner highlight */}
                   <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
                   
-                  {/* Name input - only for register */}
                   {mode === "register" && (
                     <div className="relative group">
                       <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
@@ -223,7 +280,6 @@ export function AuthPage() {
                     </div>
                   )}
 
-                  {/* Phone input with country selector */}
                   <div className="relative group">
                     <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
                     <PhoneInput
@@ -233,7 +289,6 @@ export function AuthPage() {
                     />
                   </div>
 
-                  {/* Submit button */}
                   <Button 
                     type="submit" 
                     className="w-full h-14 rounded-2xl text-base font-semibold bg-white/90 hover:bg-white text-slate-800 shadow-xl shadow-black/20 transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
@@ -242,16 +297,15 @@ export function AuthPage() {
                     {loading ? (
                       <div className="flex items-center gap-2">
                         <div className="w-5 h-5 border-2 border-slate-800/30 border-t-slate-800 rounded-full animate-spin" />
-                        <span>Загрузка...</span>
+                        <span>Отправка...</span>
                       </div>
                     ) : (
-                      mode === "login" ? "Войти" : "Создать аккаунт"
+                      "Получить код"
                     )}
                   </Button>
                 </form>
               </div>
 
-              {/* Switch mode text */}
               <p className="text-center text-white/50 text-sm px-4">
                 {mode === "login" ? (
                   <>
@@ -274,6 +328,89 @@ export function AuthPage() {
                     </button>
                   </>
                 )}
+              </p>
+            </>
+          )}
+
+          {/* OTP verification step */}
+          {step === "otp" && (
+            <>
+              <div className="relative">
+                <div className="absolute -inset-1 bg-white/10 rounded-3xl blur-xl" />
+                
+                <form 
+                  onSubmit={handleVerifyOTP} 
+                  className="relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 space-y-4 border border-white/20 shadow-2xl"
+                >
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                  
+                  {/* OTP Input */}
+                  <div className="flex justify-center gap-3">
+                    {[0, 1, 2, 3].map((index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={otpCode[index] || ""}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          if (value) {
+                            const newCode = otpCode.split('');
+                            newCode[index] = value;
+                            setOtpCode(newCode.join('').slice(0, 4));
+                            // Auto-focus next input
+                            const nextInput = e.target.nextElementSibling as HTMLInputElement;
+                            if (nextInput && value) {
+                              nextInput.focus();
+                            }
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace' && !otpCode[index]) {
+                            const prevInput = (e.target as HTMLInputElement).previousElementSibling as HTMLInputElement;
+                            if (prevInput) {
+                              prevInput.focus();
+                            }
+                          }
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+                          setOtpCode(paste);
+                        }}
+                        className="w-14 h-16 text-center text-2xl font-bold bg-white/10 border border-white/30 rounded-xl text-white focus:border-white/60 focus:outline-none focus:ring-0"
+                        autoFocus={index === 0}
+                      />
+                    ))}
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 rounded-2xl text-base font-semibold bg-white/90 hover:bg-white text-slate-800 shadow-xl shadow-black/20 transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
+                    disabled={loading || otpCode.length !== 4}
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-slate-800/30 border-t-slate-800 rounded-full animate-spin" />
+                        <span>Проверка...</span>
+                      </div>
+                    ) : (
+                      "Подтвердить"
+                    )}
+                  </Button>
+                </form>
+              </div>
+
+              <p className="text-center text-white/50 text-sm px-4">
+                Не получили код?{" "}
+                <button 
+                  onClick={handleResendOTP}
+                  disabled={loading}
+                  className="text-white/80 underline hover:text-white disabled:opacity-50"
+                >
+                  Отправить повторно
+                </button>
               </p>
             </>
           )}

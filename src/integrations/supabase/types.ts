@@ -1130,6 +1130,33 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_otps: {
+        Row: {
+          attempts: number
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          phone: string
+        }
+        Insert: {
+          attempts?: number
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          phone: string
+        }
+        Update: {
+          attempts?: number
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       policy_renewals: {
         Row: {
           agent_id: string | null
@@ -1940,6 +1967,7 @@ export type Database = {
     }
     Functions: {
       check_missed_calls: { Args: never; Returns: undefined }
+      cleanup_expired_otps: { Args: never; Returns: number }
       cleanup_expired_stories: { Args: never; Returns: number }
       create_channel: {
         Args: {
