@@ -17,9 +17,12 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Trash2
+  Trash2,
+  ListTodo
 } from "lucide-react";
 import { toast } from "sonner";
+import BugsTab from "@/components/dev/BugsTab";
+import RoadmapTab from "@/components/dev/RoadmapTab";
 
 interface DebugSignal {
   id: string;
@@ -310,10 +313,18 @@ export default function DevPanelPage() {
 
       {/* Tabs */}
       <div className="p-4">
-        <Tabs defaultValue="debug" className="w-full">
-          <TabsList className="w-full grid grid-cols-4">
-            <TabsTrigger value="debug">
+        <Tabs defaultValue="bugs" className="w-full">
+          <TabsList className="w-full grid grid-cols-6">
+            <TabsTrigger value="bugs">
               <Bug className="w-4 h-4 mr-1" />
+              Баги
+            </TabsTrigger>
+            <TabsTrigger value="roadmap">
+              <ListTodo className="w-4 h-4 mr-1" />
+              Задачи
+            </TabsTrigger>
+            <TabsTrigger value="debug">
+              <Database className="w-4 h-4 mr-1" />
               Debug
             </TabsTrigger>
             <TabsTrigger value="calls">
@@ -329,6 +340,16 @@ export default function DevPanelPage() {
               Юзеры
             </TabsTrigger>
           </TabsList>
+
+          {/* Bugs Tab */}
+          <TabsContent value="bugs" className="mt-4">
+            <BugsTab />
+          </TabsContent>
+
+          {/* Roadmap Tab */}
+          <TabsContent value="roadmap" className="mt-4">
+            <RoadmapTab />
+          </TabsContent>
 
           {/* Debug Tab */}
           <TabsContent value="debug" className="mt-4">

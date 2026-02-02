@@ -654,6 +654,28 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
   const answerCall = useCallback(async (call: VideoCall) => {
     if (!user) return;
 
+    // FIRST: Send early debug event IMMEDIATELY (non-blocking) - before anything else
+    // This helps debug when the function is called but crashes before getUserMedia
+    (async () => {
+      try {
+        await supabase.from("video_call_signals").insert({
+          call_id: call.id,
+          sender_id: user.id,
+          signal_type: "debug",
+          signal_data: {
+            stage: "answer_fn_entered",
+            ts: new Date().toISOString(),
+            callType: call.call_type,
+            platform: navigator.platform,
+            ua: navigator.userAgent.slice(0, 100),
+            isTelegram: !!(window as any).Telegram?.WebApp,
+          },
+        });
+      } catch {
+        // never throw from early debug
+      }
+    })();
+
     log("Answering call:", call.id.slice(0, 8), "type:", call.call_type);
     void debugEvent(call.id, "answer_start", { call_type: call.call_type });
     isCallActiveRef.current = true; // Mark call as active BEFORE getUserMedia
@@ -661,15 +683,23 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     setCurrentCall(call);
 
     try {
-      // Get media
+      // Get media with timeout
       log("Requesting getUserMedia for answer...");
       const constraints = getMediaConstraints(call.call_type);
       log("Media constraints:", JSON.stringify(constraints));
       void debugEvent(call.id, "answer_getusermedia_request", { constraints });
       
       let stream: MediaStream;
+      const GETUSERMEDIA_TIMEOUT_MS = 10000; // 10 seconds timeout
+      
       try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        // Add timeout to getUserMedia to prevent hanging on iOS
+        const mediaPromise = navigator.mediaDevices.getUserMedia(constraints);
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error("getUserMedia timeout after 10s")), GETUSERMEDIA_TIMEOUT_MS)
+        );
+        
+        stream = await Promise.race([mediaPromise, timeoutPromise]);
         log("getUserMedia SUCCESS for answer - got stream with tracks:", stream.getTracks().map(t => t.kind).join(", "));
         void debugEvent(call.id, "answer_getusermedia_success", {
           tracks: stream.getTracks().map((t) => ({ kind: t.kind, enabled: t.enabled, readyState: t.readyState })),
@@ -680,14 +710,30 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
           name: mediaErr?.name,
           message: mediaErr?.message,
         });
+        
         // If video fails, try audio-only as fallback
         if (call.call_type === "video") {
           log("Retrying with audio-only fallback...");
           const audioOnlyConstraints = getMediaConstraints("audio");
           void debugEvent(call.id, "answer_getusermedia_retry_audio_only", { audioOnlyConstraints });
-          stream = await navigator.mediaDevices.getUserMedia(audioOnlyConstraints);
-          log("Audio-only fallback succeeded");
-          void debugEvent(call.id, "answer_getusermedia_audio_only_success");
+          
+          try {
+            // Also apply timeout to fallback
+            const fallbackPromise = navigator.mediaDevices.getUserMedia(audioOnlyConstraints);
+            const fallbackTimeout = new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error("Audio fallback timeout")), GETUSERMEDIA_TIMEOUT_MS)
+            );
+            stream = await Promise.race([fallbackPromise, fallbackTimeout]);
+            log("Audio-only fallback succeeded");
+            void debugEvent(call.id, "answer_getusermedia_audio_only_success");
+          } catch (fallbackErr: any) {
+            warn("Audio fallback also failed:", fallbackErr);
+            void debugEvent(call.id, "answer_getusermedia_audio_fallback_failed", {
+              name: fallbackErr?.name,
+              message: fallbackErr?.message,
+            });
+            throw fallbackErr;
+          }
         } else {
           throw mediaErr;
         }
