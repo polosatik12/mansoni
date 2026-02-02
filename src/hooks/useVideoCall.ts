@@ -13,6 +13,7 @@ export interface VideoCall {
   conversation_id: string | null;
   call_type: "video" | "audio";
   status: string;
+  created_at: string;
   started_at: string | null;
   ended_at: string | null;
   caller_profile?: { display_name: string | null; avatar_url: string | null };
