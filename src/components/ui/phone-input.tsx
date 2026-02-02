@@ -173,10 +173,10 @@ export function PhoneInput({ value, onChange, placeholder, required, className }
     <div className={cn("relative", className)}>
       <div className="relative flex items-center">
         {/* Flag indicator */}
-        <div className="absolute left-4 flex items-center pointer-events-none">
+        <div className="absolute left-4 flex items-center justify-center pointer-events-none h-full">
           {detectedCountry ? (
             <span 
-              className="text-2xl leading-none text-white" 
+              className="text-lg leading-none text-white flex items-center" 
               style={{ fontFamily: "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif" }}
             >
               {detectedCountry.flag}
