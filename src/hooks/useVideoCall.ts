@@ -629,7 +629,9 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
 
       // Create peer connection and offer
       log("Creating peer connection...");
-      await createPeerConnection(stream, call.id, true);
+      // For video calls we force relay by default to maximize reliability across restrictive networks.
+      // Audio tends to work more often P2P, but video can fail more frequently due to NAT/firewall.
+      await createPeerConnection(stream, call.id, true, callType === "video");
       log("Peer connection created and offer sent");
 
       // Start timeout
@@ -782,7 +784,8 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
 
       // Create peer connection (not initiator - will process offer)
       log("Creating peer connection for answer...");
-      await createPeerConnection(stream, call.id, false);
+      // Match caller behavior: for video calls force relay to reduce connection failures.
+      await createPeerConnection(stream, call.id, false, call.call_type === "video");
       log("Peer connection created for answer");
       void debugEvent(call.id, "answer_pc_created");
 
