@@ -176,7 +176,7 @@ export function PhoneInput({ value, onChange, placeholder, required, className }
         <div className="absolute left-4 flex items-center pointer-events-none">
           {detectedCountry ? (
             <span 
-              className="text-2xl leading-none" 
+              className="text-2xl leading-none text-white" 
               style={{ fontFamily: "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif" }}
             >
               {detectedCountry.flag}
