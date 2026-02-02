@@ -1355,11 +1355,18 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
           created_at: string
           display_name: string | null
+          email: string | null
+          entity_type: string | null
+          first_name: string | null
+          gender: string | null
           id: string
+          last_name: string | null
           last_seen_at: string | null
           phone: string | null
           updated_at: string
@@ -1368,11 +1375,18 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
+          entity_type?: string | null
+          first_name?: string | null
+          gender?: string | null
           id?: string
+          last_name?: string | null
           last_seen_at?: string | null
           phone?: string | null
           updated_at?: string
@@ -1381,11 +1395,18 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
+          entity_type?: string | null
+          first_name?: string | null
+          gender?: string | null
           id?: string
+          last_name?: string | null
           last_seen_at?: string | null
           phone?: string | null
           updated_at?: string
