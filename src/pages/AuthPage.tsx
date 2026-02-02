@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Phone, User } from "lucide-react";
+import { Phone, User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,10 +8,13 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
+type AuthMode = "select" | "login" | "register";
+
 export function AuthPage() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<AuthMode>("select");
   
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -61,43 +64,55 @@ export function AuthPage() {
     const password = phoneToPassword(phone);
 
     try {
-      const signInRes = await signIn(fakeEmail, password);
-      if (!signInRes.error) {
+      if (mode === "login") {
+        const signInRes = await signIn(fakeEmail, password);
+        if (signInRes.error) {
+          toast.error("Аккаунт не найден или неверный номер");
+          return;
+        }
         toast.success("Добро пожаловать!");
         navigate("/");
-        return;
-      }
+      } else {
+        // Register mode
+        const name = (displayName || phone).trim();
+        const signUpRes = await signUp(fakeEmail, password, name);
+        if (signUpRes.error) {
+          if (signUpRes.error.message?.includes("already registered")) {
+            toast.error("Этот номер уже зарегистрирован. Попробуйте войти.");
+          } else {
+            toast.error(signUpRes.error.message || "Ошибка регистрации");
+          }
+          return;
+        }
 
-      const msg = signInRes.error?.message ?? "";
-      if (!msg.toLowerCase().includes("invalid login")) {
-        toast.error(signInRes.error?.message ?? "Ошибка входа");
-        return;
-      }
+        const { data: { user: newUser } } = await supabase.auth.getUser();
+        if (newUser) {
+          await supabase
+            .from("profiles")
+            .upsert({ 
+              user_id: newUser.id, 
+              phone: digits, 
+              display_name: name 
+            }, { 
+              onConflict: 'user_id' 
+            });
+        }
 
-      const name = (displayName || phone).trim();
-      const signUpRes = await signUp(fakeEmail, password, name);
-      if (signUpRes.error) {
-        toast.error(signUpRes.error.message || "Ошибка регистрации");
-        return;
+        toast.success("Аккаунт создан! Добро пожаловать!");
+        navigate("/");
       }
-
-      const { data: { user: newUser } } = await supabase.auth.getUser();
-      if (newUser) {
-        await supabase
-          .from("profiles")
-          .upsert({ 
-            user_id: newUser.id, 
-            phone: digits, 
-            display_name: name 
-          }, { 
-            onConflict: 'user_id' 
-          });
-      }
-
-      toast.success("Аккаунт создан! Добро пожаловать!");
-      navigate("/");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBack = () => {
+    if (mode === "select") {
+      navigate(-1);
+    } else {
+      setMode("select");
+      setPhone("");
+      setDisplayName("");
     }
   };
 
@@ -121,6 +136,20 @@ export function AuthPage() {
                           radial-gradient(at 0% 100%, hsla(210,80%,40%,0.2) 0px, transparent 50%)`,
       }} />
 
+      {/* Back button */}
+      {mode !== "select" && (
+        <div className="relative z-20 p-4 safe-area-top">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleBack}
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+        </div>
+      )}
+
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col justify-center p-6 safe-area-top safe-area-bottom">
         <div className="max-w-sm mx-auto w-full space-y-8">
@@ -142,78 +171,138 @@ export function AuthPage() {
           {/* Title */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-semibold text-white drop-shadow-lg">
-              С возвращением
+              {mode === "select" && "Добро пожаловать"}
+              {mode === "login" && "Вход"}
+              {mode === "register" && "Регистрация"}
             </h1>
             <p className="text-white/70 text-base">
-              Войдите по номеру телефона
+              {mode === "select" && "Выберите действие для продолжения"}
+              {mode === "login" && "Введите номер телефона"}
+              {mode === "register" && "Создайте новый аккаунт"}
             </p>
           </div>
 
-          {/* Glass form card */}
-          <div className="relative">
-            {/* Card glow */}
-            <div className="absolute -inset-1 bg-white/10 rounded-3xl blur-xl" />
-            
-            <form 
-              onSubmit={handleSubmit} 
-              className="relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 space-y-4 border border-white/20 shadow-2xl"
-            >
-              {/* Inner highlight */}
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-              
-              {/* Name input */}
-              <div className="relative group">
-                <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
-                <div className="relative flex items-center">
-                  <User className="absolute left-4 w-5 h-5 text-white/50" />
-                  <Input
-                    type="text"
-                    placeholder="Имя (необязательно)"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="pl-12 h-14 bg-transparent border-white/20 rounded-2xl text-white placeholder:text-white/40 focus:border-white/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
+          {/* Mode selection */}
+          {mode === "select" && (
+            <div className="space-y-4">
+              {/* Glass card for buttons */}
+              <div className="relative">
+                <div className="absolute -inset-1 bg-white/10 rounded-3xl blur-xl" />
+                <div className="relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 space-y-4 border border-white/20 shadow-2xl">
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                  
+                  <Button 
+                    onClick={() => setMode("login")}
+                    className="w-full h-14 rounded-2xl text-base font-semibold bg-white/90 hover:bg-white text-slate-800 shadow-xl shadow-black/20 transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Вход
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setMode("register")}
+                    variant="outline"
+                    className="w-full h-14 rounded-2xl text-base font-semibold bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Регистрация
+                  </Button>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Phone input */}
-              <div className="relative group">
-                <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
-                <div className="relative flex items-center">
-                  <Phone className="absolute left-4 w-5 h-5 text-white/50" />
-                  <Input
-                    type="tel"
-                    placeholder="+7 (999) 123-45-67"
-                    value={phone}
-                    onChange={handlePhoneChange}
-                    required
-                    className="pl-12 h-14 bg-transparent border-white/20 rounded-2xl text-white placeholder:text-white/40 focus:border-white/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
-                </div>
-              </div>
+          {/* Login/Register form */}
+          {(mode === "login" || mode === "register") && (
+            <>
+              {/* Glass form card */}
+              <div className="relative">
+                {/* Card glow */}
+                <div className="absolute -inset-1 bg-white/10 rounded-3xl blur-xl" />
+                
+                <form 
+                  onSubmit={handleSubmit} 
+                  className="relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 space-y-4 border border-white/20 shadow-2xl"
+                >
+                  {/* Inner highlight */}
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                  
+                  {/* Name input - only for register */}
+                  {mode === "register" && (
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
+                      <div className="relative flex items-center">
+                        <User className="absolute left-4 w-5 h-5 text-white/50" />
+                        <Input
+                          type="text"
+                          placeholder="Ваше имя"
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          required
+                          className="pl-12 h-14 bg-transparent border-white/20 rounded-2xl text-white placeholder:text-white/40 focus:border-white/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                      </div>
+                    </div>
+                  )}
 
-              {/* Submit button */}
-              <Button 
-                type="submit" 
-                className="w-full h-14 rounded-2xl text-base font-semibold bg-white/90 hover:bg-white text-violet-700 shadow-xl shadow-black/20 transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-violet-700/30 border-t-violet-700 rounded-full animate-spin" />
-                    <span>Загрузка...</span>
+                  {/* Phone input */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
+                    <div className="relative flex items-center">
+                      <Phone className="absolute left-4 w-5 h-5 text-white/50" />
+                      <Input
+                        type="tel"
+                        placeholder="+7 (999) 123-45-67"
+                        value={phone}
+                        onChange={handlePhoneChange}
+                        required
+                        className="pl-12 h-14 bg-transparent border-white/20 rounded-2xl text-white placeholder:text-white/40 focus:border-white/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      />
+                    </div>
                   </div>
-                ) : (
-                  "Войти"
-                )}
-              </Button>
-            </form>
-          </div>
 
-          {/* Hint text */}
-          <p className="text-center text-white/50 text-sm px-4">
-            Если номера нет в системе — мы создадим аккаунт автоматически
-          </p>
+                  {/* Submit button */}
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 rounded-2xl text-base font-semibold bg-white/90 hover:bg-white text-slate-800 shadow-xl shadow-black/20 transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-slate-800/30 border-t-slate-800 rounded-full animate-spin" />
+                        <span>Загрузка...</span>
+                      </div>
+                    ) : (
+                      mode === "login" ? "Войти" : "Создать аккаунт"
+                    )}
+                  </Button>
+                </form>
+              </div>
+
+              {/* Switch mode text */}
+              <p className="text-center text-white/50 text-sm px-4">
+                {mode === "login" ? (
+                  <>
+                    Нет аккаунта?{" "}
+                    <button 
+                      onClick={() => setMode("register")} 
+                      className="text-white/80 underline hover:text-white"
+                    >
+                      Зарегистрируйтесь
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Уже есть аккаунт?{" "}
+                    <button 
+                      onClick={() => setMode("login")} 
+                      className="text-white/80 underline hover:text-white"
+                    >
+                      Войти
+                    </button>
+                  </>
+                )}
+              </p>
+            </>
+          )}
         </div>
       </div>
 
