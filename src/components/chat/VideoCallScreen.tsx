@@ -53,19 +53,24 @@ export function VideoCallScreen({
   const isVideoCall = call ? call.call_type === "video" : true;
   const isConnected = status === "connected" && connectionState === "connected";
 
-  // Attach local stream
+  // Determine if we have remote video to show
+  const hasRemoteVideo = isConnected && remoteStream && remoteStream.getVideoTracks().length > 0;
+
+  // Attach local stream - re-run when layout changes (hasRemoteVideo)
   useEffect(() => {
     if (localVideoRef.current && localStream) {
+      console.log("[VideoCallScreen] Attaching local stream, hasRemoteVideo:", hasRemoteVideo);
       localVideoRef.current.srcObject = localStream;
     }
-  }, [localStream]);
+  }, [localStream, hasRemoteVideo]);
 
-  // Attach remote stream
+  // Attach remote stream - re-run when layout changes or stream updates
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
+      console.log("[VideoCallScreen] Attaching remote stream, tracks:", remoteStream.getTracks().map(t => `${t.kind}:${t.readyState}`).join(", "));
       remoteVideoRef.current.srcObject = remoteStream;
     }
-  }, [remoteStream]);
+  }, [remoteStream, hasRemoteVideo]);
 
   // Call duration timer
   useEffect(() => {
@@ -122,7 +127,6 @@ export function VideoCallScreen({
 
   const showWaitingUI = status !== "connected" || connectionState !== "connected";
   const showRetryButton = connectionState === "failed";
-  const hasRemoteVideo = isConnected && remoteStream && remoteStream.getVideoTracks().length > 0;
 
   // Video call - show local camera immediately, remote after connection
   if (isVideoCall && localStream && !isVideoOff) {
