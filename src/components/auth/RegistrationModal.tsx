@@ -228,7 +228,7 @@ export function RegistrationModal({ isOpen, onClose, phone, onSuccess }: Registr
                 <SelectTrigger className="h-12 bg-white/10 border-white/20 rounded-xl text-white focus:ring-0">
                   <SelectValue placeholder="Выберите пол" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-white/20 rounded-xl">
+                <SelectContent className="bg-slate-900 border-white/20 rounded-xl z-[200]">
                   <SelectItem value="male" className="text-white hover:bg-white/10">Мужской</SelectItem>
                   <SelectItem value="female" className="text-white hover:bg-white/10">Женский</SelectItem>
                 </SelectContent>
@@ -245,7 +245,7 @@ export function RegistrationModal({ isOpen, onClose, phone, onSuccess }: Registr
                     <SelectValue placeholder="Выберите тип" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-white/20 rounded-xl">
+                <SelectContent className="bg-slate-900 border-white/20 rounded-xl z-[200]">
                   <SelectItem value="individual" className="text-white hover:bg-white/10">Физическое лицо</SelectItem>
                   <SelectItem value="legal_entity" className="text-white hover:bg-white/10">Юридическое лицо</SelectItem>
                   <SelectItem value="entrepreneur" className="text-white hover:bg-white/10">ИП</SelectItem>
