@@ -110,8 +110,13 @@ serve(async (req) => {
     }
 
     const smsMessage = `Ваш код для входа: ${code}. Никому не сообщайте этот код.`;
-    const smsUrl = `https://sms.ru/sms/send?api_id=${smsruApiId}&to=${normalizedPhone}&msg=${encodeURIComponent(smsMessage)}&json=1`;
+    
+    // Use test mode (test=1) to avoid sender ID requirement during development
+    // Remove test=1 parameter when you have an approved sender ID
+    const smsUrl = `https://sms.ru/sms/send?api_id=${smsruApiId}&to=${normalizedPhone}&msg=${encodeURIComponent(smsMessage)}&json=1&test=1`;
 
+    console.log("Sending SMS in TEST MODE - code:", code);
+    
     const smsResponse = await fetch(smsUrl);
     const smsResult = await smsResponse.json();
 
