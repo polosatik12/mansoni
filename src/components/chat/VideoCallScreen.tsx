@@ -122,36 +122,103 @@ export function VideoCallScreen({
 
   const showWaitingUI = status !== "connected" || connectionState !== "connected";
   const showRetryButton = connectionState === "failed";
+  const hasRemoteVideo = isConnected && remoteStream && remoteStream.getVideoTracks().length > 0;
 
-  // Video call with active connection
-  if (isVideoCall && isConnected && !isVideoOff && remoteStream) {
+  // Video call - show local camera immediately, remote after connection
+  if (isVideoCall && localStream && !isVideoOff) {
     return (
       <div className="fixed inset-0 bg-black z-[100] flex flex-col">
-        {/* Remote video (full screen) */}
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-
-        {/* Local video (small overlay) */}
-        {localStream && (
+        {/* Main video area */}
+        {hasRemoteVideo ? (
+          // Connected: Remote video full screen
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          // Waiting: Local video full screen (mirror effect)
           <video
             ref={localVideoRef}
             autoPlay
             playsInline
             muted
-            className="absolute top-20 right-4 w-32 h-44 object-cover rounded-2xl border-2 border-white/30 z-10 scale-x-[-1]"
+            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
           />
+        )}
+
+        {/* Local video PiP (small overlay) - only show when connected */}
+        {hasRemoteVideo && localStream && (
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute top-20 right-4 w-28 h-40 object-cover rounded-2xl border-2 border-white/30 z-10 scale-x-[-1] shadow-lg"
+          />
+        )}
+
+        {/* Waiting overlay with avatar and status */}
+        {showWaitingUI && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
+            {/* Semi-transparent backdrop */}
+            <div className="absolute inset-0 bg-black/40" />
+            
+            <div className="relative z-10 flex flex-col items-center">
+              {/* Avatar with pulse animation */}
+              <div className="relative">
+                <div
+                  className="absolute inset-0 w-24 h-24 rounded-full border-4 border-white/30 animate-ping"
+                  style={{ animationDuration: "2s" }}
+                />
+                <div className="relative w-24 h-24 rounded-full border-4 border-white/50 overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                  {otherAvatar ? (
+                    <img src={otherAvatar} alt={otherName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl text-white font-bold">{getInitials(otherName)}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Name and status */}
+              <h3 className="text-xl font-semibold text-white mt-4 mb-1 drop-shadow-lg">{otherName}</h3>
+              <div className="flex items-center">
+                <span className="text-white/90 text-base drop-shadow-lg">{getStatusText()}</span>
+                {!showRetryButton && (
+                  <span className="flex ml-0.5">
+                    <span className="animate-bounce text-white/90" style={{ animationDelay: "0ms", animationDuration: "1s" }}>.</span>
+                    <span className="animate-bounce text-white/90" style={{ animationDelay: "200ms", animationDuration: "1s" }}>.</span>
+                    <span className="animate-bounce text-white/90" style={{ animationDelay: "400ms", animationDuration: "1s" }}>.</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Retry button */}
+              {showRetryButton && (
+                <button
+                  onClick={onRetry}
+                  className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/20 backdrop-blur-sm text-white pointer-events-auto"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Повторить</span>
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Top bar */}
         <div className="absolute top-0 left-0 right-0 p-4 pt-12 safe-area-top z-20 bg-gradient-to-b from-black/50 to-transparent">
-          <button onClick={onEnd} className="flex items-center text-white">
-            <ChevronLeft className="w-6 h-6" />
-            <span className="text-lg">Назад</span>
-          </button>
+          <div className="flex items-center justify-between">
+            <button onClick={onEnd} className="flex items-center text-white">
+              <ChevronLeft className="w-6 h-6" />
+              <span className="text-lg">Назад</span>
+            </button>
+            {isConnected && (
+              <span className="text-white/90 text-base font-medium">{formatDuration(callDuration)}</span>
+            )}
+          </div>
         </div>
 
         {/* Bottom controls */}
