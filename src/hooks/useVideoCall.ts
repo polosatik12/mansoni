@@ -914,10 +914,30 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
   // NOTE: Incoming calls are handled by useIncomingCalls hook separately
   // This avoids duplicate subscriptions and race conditions
 
-  // Subscribe to call status changes
+  // Subscribe to call status changes + fallback polling
   useEffect(() => {
     if (!currentCall) return;
 
+    let statusPollInterval: NodeJS.Timeout | null = null;
+
+    const handleCallStatusUpdate = (updatedStatus: string) => {
+      log("Call status updated:", updatedStatus);
+
+      if (updatedStatus === "answered" && status === "calling") {
+        setStatus("ringing");
+      } else if (
+        updatedStatus === "declined" ||
+        updatedStatus === "ended" ||
+        updatedStatus === "missed"
+      ) {
+        log("Remote party ended call, releasing UI...");
+        // CRITICAL: Call onCallEnded FIRST to release UI-lock before cleanup
+        options.onCallEnded?.(currentCall);
+        cleanup("call_status_changed_to_" + updatedStatus);
+      }
+    };
+
+    // Realtime subscription (primary)
     const channel = supabase
       .channel(`call-status:${currentCall.id}`)
       .on(
@@ -930,26 +950,35 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
         },
         (payload) => {
           const updated = payload.new as VideoCall;
-          log("Call status updated:", updated.status);
-
-          if (updated.status === "answered" && status === "calling") {
-            setStatus("ringing");
-          } else if (
-            updated.status === "declined" ||
-            updated.status === "ended" ||
-            updated.status === "missed"
-          ) {
-            log("Remote party ended call, releasing UI...");
-            // CRITICAL: Call onCallEnded FIRST to release UI-lock before cleanup
-            options.onCallEnded?.(updated);
-            cleanup("call_status_changed_to_" + updated.status);
-          }
+          handleCallStatusUpdate(updated.status);
         }
       )
-      .subscribe();
+      .subscribe((subStatus) => {
+        log("Call status subscription:", subStatus);
+      });
+
+    // Fallback polling every 2 seconds
+    // This ensures we catch status changes even if realtime fails
+    statusPollInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from("video_calls")
+          .select("status")
+          .eq("id", currentCall.id)
+          .single();
+
+        if (data && ["declined", "ended", "missed"].includes(data.status)) {
+          log("Poll detected call ended:", data.status);
+          handleCallStatusUpdate(data.status);
+        }
+      } catch {
+        // Silent fail
+      }
+    }, 2000);
 
     return () => {
       supabase.removeChannel(channel);
+      if (statusPollInterval) clearInterval(statusPollInterval);
     };
   }, [currentCall, status, cleanup, log, options]);
 
