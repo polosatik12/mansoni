@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import logo from "@/assets/logo.png";
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -131,9 +132,9 @@ export function AuthPage() {
               <div className="absolute -inset-4 bg-white/20 rounded-full blur-xl" />
               
               {/* Glass circle */}
-              <div className="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-2xl">
+              <div className="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-2xl overflow-hidden">
                 <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
-                <span className="text-5xl font-light text-white/90 drop-shadow-lg">S</span>
+                <img src={logo} alt="Logo" className="w-20 h-20 object-contain relative z-10" />
               </div>
             </div>
           </div>
