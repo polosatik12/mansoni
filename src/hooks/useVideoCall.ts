@@ -633,7 +633,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
   const answerCall = useCallback(async (call: VideoCall) => {
     if (!user) return;
 
-    log("Answering call:", call.id.slice(0, 8));
+    log("Answering call:", call.id.slice(0, 8), "type:", call.call_type);
     isCallActiveRef.current = true; // Mark call as active BEFORE getUserMedia
     setStatus("ringing");
     setCurrentCall(call);
@@ -642,11 +642,29 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       // Get media
       log("Requesting getUserMedia for answer...");
       const constraints = getMediaConstraints(call.call_type);
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      log("getUserMedia SUCCESS for answer - got stream with tracks:", stream.getTracks().length);
+      log("Media constraints:", JSON.stringify(constraints));
+      
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        log("getUserMedia SUCCESS for answer - got stream with tracks:", stream.getTracks().map(t => t.kind).join(", "));
+      } catch (mediaErr: any) {
+        warn("getUserMedia FAILED:", mediaErr.name, mediaErr.message);
+        // If video fails, try audio-only as fallback
+        if (call.call_type === "video") {
+          log("Retrying with audio-only fallback...");
+          const audioOnlyConstraints = getMediaConstraints("audio");
+          stream = await navigator.mediaDevices.getUserMedia(audioOnlyConstraints);
+          log("Audio-only fallback succeeded");
+        } else {
+          throw mediaErr;
+        }
+      }
+      
       setLocalStream(stream);
 
-      // Update call status
+      // Update call status FIRST (so caller knows we answered)
+      log("Updating call status to answered...");
       await supabase
         .from("video_calls")
         .update({
@@ -655,58 +673,72 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
         })
         .eq("id", call.id);
 
-      // Setup signaling FIRST (so we can receive offer via Broadcast)
-      log("Setting up broadcast channel for answer...");
-      setupBroadcastChannel(call.id);
-      startSignalPolling(call.id);
-
-      // Check if there's already an offer in the DB (likely the case since caller sends offer first)
+      // Check if there's already an offer in the DB BEFORE setting up polling
+      // This prevents race conditions where polling marks the offer as processed
       log("Checking for existing offer in DB...");
       const { data: existingSignals } = await supabase
         .from("video_call_signals")
         .select("*")
         .eq("call_id", call.id)
         .eq("signal_type", "offer")
-        .eq("processed", false)
         .order("created_at", { ascending: false })
         .limit(1);
+
+      const existingOffer = existingSignals && existingSignals.length > 0 
+        ? existingSignals[0] 
+        : null;
+      
+      if (existingOffer) {
+        log("Found existing offer in DB:", existingOffer.id.slice(0, 8));
+      } else {
+        log("No existing offer found yet");
+      }
+
+      // Setup signaling (Broadcast for live signals)
+      log("Setting up broadcast channel for answer...");
+      setupBroadcastChannel(call.id);
 
       // Create peer connection (not initiator - will process offer)
       log("Creating peer connection for answer...");
       await createPeerConnection(stream, call.id, false);
       log("Peer connection created for answer");
 
-      // If offer exists in DB, process it now
-      if (existingSignals && existingSignals.length > 0) {
-        const offerSignal = existingSignals[0];
-        log("Found existing offer in DB, processing immediately...");
-        
-        if (peerConnectionRef.current && offerSignal.sender_id !== user.id) {
-          try {
-            await peerConnectionRef.current.setRemoteDescription(
-              new RTCSessionDescription(offerSignal.signal_data as unknown as RTCSessionDescriptionInit)
-            );
-            
-            const answer = await peerConnectionRef.current.createAnswer();
-            await peerConnectionRef.current.setLocalDescription(answer);
-            await sendSignal(call.id, "answer", answer);
-            log("Processed existing offer and sent answer");
-            
-            // Mark offer as processed
-            await supabase
-              .from("video_call_signals")
-              .update({ processed: true })
-              .eq("id", offerSignal.id);
-          } catch (err) {
-            warn("Error processing existing offer:", err);
+      // If we found an offer earlier, process it NOW (after PC is ready)
+      if (existingOffer && peerConnectionRef.current && existingOffer.sender_id !== user.id) {
+        try {
+          log("Processing existing offer...");
+          await peerConnectionRef.current.setRemoteDescription(
+            new RTCSessionDescription(existingOffer.signal_data as unknown as RTCSessionDescriptionInit)
+          );
+          
+          // Apply any buffered ICE candidates
+          for (const candidate of pendingCandidatesRef.current) {
+            await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
           }
+          pendingCandidatesRef.current = [];
+          
+          const answer = await peerConnectionRef.current.createAnswer();
+          await peerConnectionRef.current.setLocalDescription(answer);
+          await sendSignal(call.id, "answer", answer);
+          log("Processed existing offer and sent answer");
+          
+          // Mark offer as processed
+          await supabase
+            .from("video_call_signals")
+            .update({ processed: true })
+            .eq("id", existingOffer.id);
+        } catch (err) {
+          warn("Error processing existing offer:", err);
         }
-      } else {
-        log("No existing offer found, will wait for offer via Broadcast/polling");
       }
+      
+      // Start polling AFTER we've processed any existing offer
+      // This prevents polling from interfering with our manual processing
+      startSignalPolling(call.id);
 
       // Send ready signal (indicates we're ready to receive/process offer)
       await sendSignal(call.id, "ready", { userId: user.id });
+      log("Answer call setup complete");
     } catch (err) {
       warn("Answer call error:", err);
       isCallActiveRef.current = false;
