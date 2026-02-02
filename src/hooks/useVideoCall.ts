@@ -211,6 +211,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       await supabase.from("video_call_signals").insert({
         call_id: callId,
         sender_id: user.id,
+        processed: false,
         signal_type: signalType,
         signal_data: signalData,
       });
@@ -393,7 +394,8 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
         .from("video_call_signals")
         .select("*")
         .eq("call_id", callId)
-        .eq("processed", false)
+        // processed is nullable in DB; treat NULL as not processed
+        .or("processed.is.null,processed.eq.false")
         .neq("sender_id", user.id)
         .order("created_at", { ascending: true });
 
