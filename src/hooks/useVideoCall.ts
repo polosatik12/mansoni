@@ -62,6 +62,27 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     console.warn(`[VideoCall] ${msg}`, ...args);
   }, []);
 
+  // Persist debug info to DB so we can debug Telegram iOS where console is unreliable
+  const debugEvent = useCallback(
+    async (callId: string, stage: string, payload: Record<string, any> = {}) => {
+      try {
+        await supabase.from("video_call_signals").insert({
+          call_id: callId,
+          sender_id: user?.id ?? "00000000-0000-0000-0000-000000000000",
+          signal_type: "debug",
+          signal_data: {
+            stage,
+            ts: new Date().toISOString(),
+            ...payload,
+          },
+        });
+      } catch {
+        // never throw from debug
+      }
+    },
+    [user]
+  );
+
   // Keep localStreamRef in sync
   useEffect(() => {
     localStreamRef.current = localStream;
@@ -634,6 +655,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
     if (!user) return;
 
     log("Answering call:", call.id.slice(0, 8), "type:", call.call_type);
+    void debugEvent(call.id, "answer_start", { call_type: call.call_type });
     isCallActiveRef.current = true; // Mark call as active BEFORE getUserMedia
     setStatus("ringing");
     setCurrentCall(call);
@@ -643,19 +665,29 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       log("Requesting getUserMedia for answer...");
       const constraints = getMediaConstraints(call.call_type);
       log("Media constraints:", JSON.stringify(constraints));
+      void debugEvent(call.id, "answer_getusermedia_request", { constraints });
       
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         log("getUserMedia SUCCESS for answer - got stream with tracks:", stream.getTracks().map(t => t.kind).join(", "));
+        void debugEvent(call.id, "answer_getusermedia_success", {
+          tracks: stream.getTracks().map((t) => ({ kind: t.kind, enabled: t.enabled, readyState: t.readyState })),
+        });
       } catch (mediaErr: any) {
         warn("getUserMedia FAILED:", mediaErr.name, mediaErr.message);
+        void debugEvent(call.id, "answer_getusermedia_failed", {
+          name: mediaErr?.name,
+          message: mediaErr?.message,
+        });
         // If video fails, try audio-only as fallback
         if (call.call_type === "video") {
           log("Retrying with audio-only fallback...");
           const audioOnlyConstraints = getMediaConstraints("audio");
+          void debugEvent(call.id, "answer_getusermedia_retry_audio_only", { audioOnlyConstraints });
           stream = await navigator.mediaDevices.getUserMedia(audioOnlyConstraints);
           log("Audio-only fallback succeeded");
+          void debugEvent(call.id, "answer_getusermedia_audio_only_success");
         } else {
           throw mediaErr;
         }
@@ -665,6 +697,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
 
       // Update call status FIRST (so caller knows we answered)
       log("Updating call status to answered...");
+      void debugEvent(call.id, "answer_update_call_status_request");
       await supabase
         .from("video_calls")
         .update({
@@ -672,6 +705,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
           started_at: new Date().toISOString(),
         })
         .eq("id", call.id);
+      void debugEvent(call.id, "answer_update_call_status_success");
 
       // Check if there's already an offer in the DB BEFORE setting up polling
       // This prevents race conditions where polling marks the offer as processed
@@ -697,11 +731,13 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       // Setup signaling (Broadcast for live signals)
       log("Setting up broadcast channel for answer...");
       setupBroadcastChannel(call.id);
+      void debugEvent(call.id, "answer_broadcast_setup_done");
 
       // Create peer connection (not initiator - will process offer)
       log("Creating peer connection for answer...");
       await createPeerConnection(stream, call.id, false);
       log("Peer connection created for answer");
+      void debugEvent(call.id, "answer_pc_created");
 
       // If we found an offer earlier, process it NOW (after PC is ready)
       if (existingOffer && peerConnectionRef.current && existingOffer.sender_id !== user.id) {
@@ -735,16 +771,22 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       // Start polling AFTER we've processed any existing offer
       // This prevents polling from interfering with our manual processing
       startSignalPolling(call.id);
+      void debugEvent(call.id, "answer_polling_started");
 
       // Send ready signal (indicates we're ready to receive/process offer)
       await sendSignal(call.id, "ready", { userId: user.id });
+      void debugEvent(call.id, "answer_ready_sent");
       log("Answer call setup complete");
-    } catch (err) {
+    } catch (err: any) {
       warn("Answer call error:", err);
+      void debugEvent(call.id, "answer_fatal_error", {
+        name: err?.name,
+        message: err?.message,
+      });
       isCallActiveRef.current = false;
       await cleanup("answer_call_error");
     }
-  }, [user, setupBroadcastChannel, startSignalPolling, createPeerConnection, sendSignal, cleanup, log, warn]);
+  }, [user, debugEvent, setupBroadcastChannel, startSignalPolling, createPeerConnection, sendSignal, cleanup, log, warn]);
 
   // Decline/End call
   const endCall = useCallback(async (reason: "declined" | "ended" = "ended") => {
