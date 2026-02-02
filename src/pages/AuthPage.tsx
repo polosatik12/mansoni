@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Phone, User, ArrowLeft } from "lucide-react";
+import { Phone, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,6 @@ export function AuthPage() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
-  
   
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -37,13 +36,11 @@ export function AuthPage() {
     setPhone(formatted);
   };
 
-  // Convert phone to fake email for Supabase auth (using valid email format)
   const phoneToEmail = (phone: string) => {
     const digits = phone.replace(/\D/g, '');
     return `user.${digits}@phoneauth.app`;
   };
 
-  // Generate deterministic password from phone
   const phoneToPassword = (phone: string) => {
     const digits = phone.replace(/\D/g, '');
     return `ph_${digits}_secure`;
@@ -63,7 +60,6 @@ export function AuthPage() {
     const password = phoneToPassword(phone);
 
     try {
-      // 1) Try sign in
       const signInRes = await signIn(fakeEmail, password);
       if (!signInRes.error) {
         toast.success("Добро пожаловать!");
@@ -71,7 +67,6 @@ export function AuthPage() {
         return;
       }
 
-      // 2) If user doesn't exist, create account and auto-login
       const msg = signInRes.error?.message ?? "";
       if (!msg.toLowerCase().includes("invalid login")) {
         toast.error(signInRes.error?.message ?? "Ошибка входа");
@@ -85,7 +80,6 @@ export function AuthPage() {
         return;
       }
 
-      // Create profile for new user (upsert in case trigger didn't fire)
       const { data: { user: newUser } } = await supabase.auth.getUser();
       if (newUser) {
         await supabase
@@ -106,75 +100,124 @@ export function AuthPage() {
     }
   };
 
-
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border safe-area-top">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-lg font-semibold">Вход</h1>
-      </div>
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-500" />
+      
+      {/* Floating orbs for depth */}
+      <div className="absolute top-20 -left-20 w-72 h-72 bg-pink-400/30 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-40 -right-20 w-96 h-96 bg-violet-400/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      
+      {/* Noise texture overlay */}
+      <div className="absolute inset-0 opacity-20" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+      }} />
 
-      <div className="flex-1 flex flex-col justify-center p-6">
-        <div className="max-w-sm mx-auto w-full space-y-6">
-          {/* Logo/Title */}
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto">
-              <span className="text-2xl font-bold text-primary-foreground">S</span>
+      {/* Content */}
+      <div className="relative z-10 flex-1 flex flex-col justify-center p-6 safe-area-top safe-area-bottom">
+        <div className="max-w-sm mx-auto w-full space-y-8">
+          
+          {/* Glass avatar circle */}
+          <div className="flex justify-center">
+            <div className="relative">
+              {/* Outer glow */}
+              <div className="absolute -inset-4 bg-white/20 rounded-full blur-xl" />
+              
+              {/* Glass circle */}
+              <div className="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-2xl">
+                <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
+                <span className="text-5xl font-light text-white/90 drop-shadow-lg">S</span>
+              </div>
+              
+              {/* Sparkle decoration */}
+              <div className="absolute -top-1 -right-1">
+                <Sparkles className="w-6 h-6 text-white/80" />
+              </div>
             </div>
-            <h2 className="text-2xl font-bold">
-              С возвращением!
-            </h2>
-            <p className="text-muted-foreground">
+          </div>
+
+          {/* Title */}
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-semibold text-white drop-shadow-lg">
+              С возвращением
+            </h1>
+            <p className="text-white/70 text-base">
               Войдите по номеру телефона
             </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Имя (необязательно)"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="pl-10 h-12 rounded-xl"
-              />
-            </div>
-
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="tel"
-                placeholder="+7 (999) 123-45-67"
-                value={phone}
-                onChange={handlePhoneChange}
-                required
-                className="pl-10 h-12 rounded-xl"
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full h-12 rounded-xl text-base font-semibold"
-              disabled={loading}
+          {/* Glass form card */}
+          <div className="relative">
+            {/* Card glow */}
+            <div className="absolute -inset-1 bg-white/10 rounded-3xl blur-xl" />
+            
+            <form 
+              onSubmit={handleSubmit} 
+              className="relative bg-white/10 backdrop-blur-2xl rounded-3xl p-6 space-y-4 border border-white/20 shadow-2xl"
             >
-              {loading ? "Загрузка..." : "Войти"}
-            </Button>
-          </form>
+              {/* Inner highlight */}
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+              
+              {/* Name input */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
+                <div className="relative flex items-center">
+                  <User className="absolute left-4 w-5 h-5 text-white/50" />
+                  <Input
+                    type="text"
+                    placeholder="Имя (необязательно)"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="pl-12 h-14 bg-transparent border-white/20 rounded-2xl text-white placeholder:text-white/40 focus:border-white/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
+              </div>
 
-          {/* Switch mode */}
-          <div className="text-center space-y-3">
-            <p className="text-muted-foreground text-sm">
-              Если номера нет в системе — мы создадим аккаунт автоматически.
-            </p>
+              {/* Phone input */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
+                <div className="relative flex items-center">
+                  <Phone className="absolute left-4 w-5 h-5 text-white/50" />
+                  <Input
+                    type="tel"
+                    placeholder="+7 (999) 123-45-67"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    required
+                    className="pl-12 h-14 bg-transparent border-white/20 rounded-2xl text-white placeholder:text-white/40 focus:border-white/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
+              </div>
 
+              {/* Submit button */}
+              <Button 
+                type="submit" 
+                className="w-full h-14 rounded-2xl text-base font-semibold bg-white/90 hover:bg-white text-violet-700 shadow-xl shadow-black/20 transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]"
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-violet-700/30 border-t-violet-700 rounded-full animate-spin" />
+                    <span>Загрузка...</span>
+                  </div>
+                ) : (
+                  "Войти"
+                )}
+              </Button>
+            </form>
           </div>
+
+          {/* Hint text */}
+          <p className="text-center text-white/50 text-sm px-4">
+            Если номера нет в системе — мы создадим аккаунт автоматически
+          </p>
         </div>
       </div>
+
+      {/* Bottom safe area gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/20 to-transparent" />
     </div>
   );
 }
