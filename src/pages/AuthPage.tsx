@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Phone, User, ArrowLeft } from "lucide-react";
+import { User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -18,27 +19,6 @@ export function AuthPage() {
   
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
-
-  const formatPhoneNumber = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    
-    if (digits.startsWith('7') || digits.startsWith('8')) {
-      const normalized = '7' + digits.slice(1);
-      let formatted = '+7';
-      if (normalized.length > 1) formatted += ' (' + normalized.slice(1, 4);
-      if (normalized.length > 4) formatted += ') ' + normalized.slice(4, 7);
-      if (normalized.length > 7) formatted += '-' + normalized.slice(7, 9);
-      if (normalized.length > 9) formatted += '-' + normalized.slice(9, 11);
-      return formatted;
-    }
-    
-    return '+' + digits;
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneNumber(e.target.value);
-    setPhone(formatted);
-  };
 
   const phoneToEmail = (phone: string) => {
     const digits = phone.replace(/\D/g, '');
@@ -243,20 +223,14 @@ export function AuthPage() {
                     </div>
                   )}
 
-                  {/* Phone input */}
+                  {/* Phone input with country selector */}
                   <div className="relative group">
                     <div className="absolute inset-0 bg-white/5 rounded-2xl group-focus-within:bg-white/10 transition-colors" />
-                    <div className="relative flex items-center">
-                      <Phone className="absolute left-4 w-5 h-5 text-white/50" />
-                      <Input
-                        type="tel"
-                        placeholder="+7 (999) 123-45-67"
-                        value={phone}
-                        onChange={handlePhoneChange}
-                        required
-                        className="pl-12 h-14 bg-transparent border-white/20 rounded-2xl text-white placeholder:text-white/40 focus:border-white/40 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                    </div>
+                    <PhoneInput
+                      value={phone}
+                      onChange={setPhone}
+                      required
+                    />
                   </div>
 
                   {/* Submit button */}
