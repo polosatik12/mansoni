@@ -117,11 +117,22 @@ serve(async (req) => {
 
     console.log("SMS.ru response:", JSON.stringify(smsResult));
 
-    // Check if SMS was sent successfully
+    // Check if SMS was sent successfully - need to check both global status and per-phone status
     if (smsResult.status !== "OK") {
-      console.error("SMS.ru error:", smsResult);
+      console.error("SMS.ru global error:", smsResult);
       return new Response(
         JSON.stringify({ error: "Failed to send SMS. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check individual SMS status
+    const phoneStatus = smsResult.sms?.[normalizedPhone];
+    if (phoneStatus?.status === "ERROR") {
+      console.error("SMS.ru per-phone error:", phoneStatus);
+      const errorText = phoneStatus.status_text || "SMS delivery failed";
+      return new Response(
+        JSON.stringify({ error: `SMS error: ${errorText}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
