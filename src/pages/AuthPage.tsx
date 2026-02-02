@@ -102,17 +102,22 @@ export function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-500" />
+      {/* Dark elegant gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900" />
       
-      {/* Floating orbs for depth */}
-      <div className="absolute top-20 -left-20 w-72 h-72 bg-pink-400/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-40 -right-20 w-96 h-96 bg-violet-400/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      {/* Aurora-like floating orbs */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-20 right-0 w-80 h-80 bg-blue-600/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/3 -right-20 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="absolute bottom-1/3 -left-10 w-64 h-64 bg-teal-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
       
-      {/* Noise texture overlay */}
-      <div className="absolute inset-0 opacity-20" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+      {/* Subtle mesh gradient overlay */}
+      <div className="absolute inset-0 opacity-30" style={{
+        backgroundImage: `radial-gradient(at 40% 20%, hsla(212,70%,60%,0.3) 0px, transparent 50%),
+                          radial-gradient(at 80% 0%, hsla(189,80%,50%,0.2) 0px, transparent 50%),
+                          radial-gradient(at 0% 50%, hsla(255,60%,50%,0.2) 0px, transparent 50%),
+                          radial-gradient(at 80% 50%, hsla(340,70%,50%,0.15) 0px, transparent 50%),
+                          radial-gradient(at 0% 100%, hsla(210,80%,40%,0.2) 0px, transparent 50%)`,
       }} />
 
       {/* Content */}
