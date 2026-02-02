@@ -36,6 +36,7 @@ const ExploreFeedPage = lazy(() => import("@/pages/ExploreFeedPage").then(m => (
 const PostDetailPage = lazy(() => import("@/pages/PostDetailPage").then(m => ({ default: m.PostDetailPage })));
 const AuthPage = lazy(() => import("@/pages/AuthPage").then(m => ({ default: m.AuthPage })));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const DevPanelPage = lazy(() => import("@/pages/DevPanelPage"));
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then(m => ({ default: m.CommandPalette })));
 
 // Loading fallback component
@@ -138,6 +139,13 @@ const App = () => (
                     } />
                   </Route>
                 </Route>
+                
+                {/* Dev Panel - public route with its own auth */}
+                <Route path="/dev" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <DevPanelPage />
+                  </Suspense>
+                } />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={
