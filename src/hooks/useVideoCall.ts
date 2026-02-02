@@ -38,6 +38,9 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [connectionState, setConnectionState] = useState<string>("new");
+  
+  // Remote stream ref for reliable track accumulation
+  const remoteStreamRef = useRef<MediaStream | null>(null);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const broadcastChannelRef = useRef<RealtimeChannel | null>(null);
@@ -101,6 +104,7 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       setLocalStream(null);
     }
 
+    remoteStreamRef.current = null;
     setRemoteStream(null);
     setStatus("idle");
     setCurrentCall(null);
@@ -233,12 +237,31 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
               newPc.addTrack(track, localStreamRef.current!);
             });
             
-            // Handle remote tracks
+            // Handle remote tracks - accumulate into a single MediaStream
             newPc.ontrack = (event) => {
-              log("Received remote track:", event.track.kind);
-              if (event.streams[0]) {
-                setRemoteStream(event.streams[0]);
+              log("Received remote track (recreated PC):", event.track.kind, "readyState:", event.track.readyState);
+              
+              // Create or reuse remote stream
+              if (!remoteStreamRef.current) {
+                remoteStreamRef.current = new MediaStream();
               }
+              
+              // Check if track already exists
+              const existingTrack = remoteStreamRef.current.getTracks().find(
+                t => t.kind === event.track.kind
+              );
+              
+              if (existingTrack) {
+                log("Replacing existing", event.track.kind, "track (recreated PC)");
+                remoteStreamRef.current.removeTrack(existingTrack);
+              }
+              
+              // Add the new track
+              remoteStreamRef.current.addTrack(event.track);
+              log("Remote stream now has tracks:", remoteStreamRef.current.getTracks().map(t => t.kind).join(", "));
+              
+              // IMPORTANT: Create new MediaStream reference to trigger React update
+              setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
             };
             
             // ICE candidates
@@ -415,12 +438,31 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       pc.addTrack(track, stream);
     });
 
-    // Handle remote tracks
+    // Handle remote tracks - accumulate into a single MediaStream
     pc.ontrack = (event) => {
-      log("Received remote track:", event.track.kind);
-      if (event.streams[0]) {
-        setRemoteStream(event.streams[0]);
+      log("Received remote track:", event.track.kind, "readyState:", event.track.readyState);
+      
+      // Create or reuse remote stream
+      if (!remoteStreamRef.current) {
+        remoteStreamRef.current = new MediaStream();
       }
+      
+      // Check if track already exists
+      const existingTrack = remoteStreamRef.current.getTracks().find(
+        t => t.kind === event.track.kind
+      );
+      
+      if (existingTrack) {
+        log("Replacing existing", event.track.kind, "track");
+        remoteStreamRef.current.removeTrack(existingTrack);
+      }
+      
+      // Add the new track
+      remoteStreamRef.current.addTrack(event.track);
+      log("Remote stream now has tracks:", remoteStreamRef.current.getTracks().map(t => t.kind).join(", "));
+      
+      // IMPORTANT: Create new MediaStream reference to trigger React update
+      setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
     };
 
     // ICE candidates
