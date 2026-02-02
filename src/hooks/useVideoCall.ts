@@ -366,11 +366,12 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
           break;
 
         case "hangup":
-          log("Received hangup signal");
-          await cleanup("hangup_signal_received");
+          log("Received hangup signal from remote peer, reason:", signalData?.reason);
+          // Immediately notify about call end to release UI-lock
           if (currentCall) {
             options.onCallEnded?.(currentCall);
           }
+          await cleanup("hangup_signal_received");
           break;
       }
     } catch (err) {
@@ -840,10 +841,8 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
 
     log("Ending call with reason:", reason);
 
-    // Send hangup signal
-    await sendSignal(currentCall.id, "hangup", { reason });
-
-    // Update DB
+    // Update DB FIRST - this triggers realtime update for the other party
+    // This is critical for synchronizing UI state across both users
     await supabase
       .from("video_calls")
       .update({
@@ -852,8 +851,12 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
       })
       .eq("id", currentCall.id);
 
-    await cleanup(`end_call_${reason}`);
+    // Send hangup signal via broadcast/polling as backup
+    await sendSignal(currentCall.id, "hangup", { reason });
+
+    // Cleanup local state
     options.onCallEnded?.(currentCall);
+    await cleanup(`end_call_${reason}`);
   }, [currentCall, sendSignal, cleanup, log, options]);
 
   // Toggle mute
@@ -930,8 +933,10 @@ export function useVideoCall(options: UseVideoCallOptions = {}) {
             updated.status === "ended" ||
             updated.status === "missed"
           ) {
-            cleanup("call_status_changed_to_" + updated.status);
+            log("Remote party ended call, releasing UI...");
+            // CRITICAL: Call onCallEnded FIRST to release UI-lock before cleanup
             options.onCallEnded?.(updated);
+            cleanup("call_status_changed_to_" + updated.status);
           }
         }
       )
