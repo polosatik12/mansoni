@@ -163,10 +163,10 @@ export function ChatsPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center relative">
         {/* Aurora Background */}
-        <div className="fixed inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-violet-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900/90 to-slate-800 -z-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/35 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-violet-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
         <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
           <MessageCircle className="w-10 h-10 text-white/60" />
@@ -272,11 +272,11 @@ export function ChatsPage() {
     <ScrollContainerProvider value={chatListRef}>
       <div className="h-full flex flex-col overflow-hidden relative">
         {/* Aurora Background */}
-        <div className="fixed inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-violet-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+        <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900/90 to-slate-800 -z-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/35 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-violet-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-pink-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
         </div>
 
         {/* Dynamic Header with stories stack/row */}
