@@ -60,6 +60,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     id: string;
     content: string;
     isOwn: boolean;
+    position: { top: number; left: number; width: number };
   } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -260,9 +261,26 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   // Long press handlers for context menu
-  const handleMessageLongPressStart = useCallback((messageId: string, content: string, isOwn: boolean) => {
+  const handleMessageLongPressStart = useCallback((
+    messageId: string, 
+    content: string, 
+    isOwn: boolean,
+    event: React.MouseEvent | React.TouchEvent
+  ) => {
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    
     longPressTimerRef.current = setTimeout(() => {
-      setContextMenuMessage({ id: messageId, content, isOwn });
+      setContextMenuMessage({ 
+        id: messageId, 
+        content, 
+        isOwn,
+        position: {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width
+        }
+      });
     }, 500);
   }, []);
 
@@ -523,10 +541,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                       ? "bg-[#2b5278] text-white rounded-br-sm"
                       : "bg-[#182533] text-white rounded-bl-sm"
                   }`}
-                  onMouseDown={() => handleMessageLongPressStart(message.id, message.content, isOwn)}
+                  onMouseDown={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
                   onMouseUp={handleMessageLongPressEnd}
                   onMouseLeave={handleMessageLongPressEnd}
-                  onTouchStart={() => handleMessageLongPressStart(message.id, message.content, isOwn)}
+                  onTouchStart={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
                   onTouchEnd={handleMessageLongPressEnd}
                 >
                   {/* Sender name for group chats */}
@@ -762,6 +780,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           messageId={contextMenuMessage.id}
           messageContent={contextMenuMessage.content}
           isOwn={contextMenuMessage.isOwn}
+          position={contextMenuMessage.position}
           onDelete={handleMessageDelete}
           onPin={handleMessagePin}
           onReaction={handleMessageReaction}

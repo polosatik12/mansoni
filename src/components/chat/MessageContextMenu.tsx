@@ -8,6 +8,7 @@ interface MessageContextMenuProps {
   messageId: string;
   messageContent: string;
   isOwn: boolean;
+  position?: { top: number; left: number; width: number };
   onDelete?: (messageId: string) => void;
   onPin?: (messageId: string) => void;
   onReaction?: (messageId: string, emoji: string) => void;
@@ -24,6 +25,7 @@ export function MessageContextMenu({
   messageId,
   messageContent,
   isOwn,
+  position,
   onDelete,
   onPin,
   onReaction,
@@ -77,6 +79,33 @@ export function MessageContextMenu({
     };
   }, [isOpen]);
 
+  // Calculate menu position
+  const getMenuStyle = () => {
+    if (!position) return {};
+    
+    const windowHeight = window.innerHeight;
+    const menuHeight = 350; // Approximate menu height
+    const messageTop = position.top;
+    
+    // Determine if menu should be above or below the message
+    const spaceBelow = windowHeight - messageTop;
+    const shouldShowAbove = spaceBelow < menuHeight && messageTop > menuHeight;
+    
+    if (shouldShowAbove) {
+      // Show menu above the message
+      return {
+        bottom: windowHeight - messageTop + 8,
+        ...(isOwn ? { right: 16 } : { left: 16 }),
+      };
+    } else {
+      // Show menu below the message  
+      return {
+        top: Math.min(messageTop, windowHeight - menuHeight - 16),
+        ...(isOwn ? { right: 16 } : { left: 16 }),
+      };
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -91,57 +120,56 @@ export function MessageContextMenu({
           {/* Dark backdrop with blur */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-          {/* Content container - positioned in center */}
-          <div className="absolute inset-0 flex items-center justify-center p-4">
+          {/* Content container - positioned near the message */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 400 }}
+            className="absolute flex flex-col gap-2 max-w-[320px] w-[calc(100%-32px)]"
+            style={getMenuStyle()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Quick reactions bar */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 400 }}
-              className="flex flex-col gap-2 max-w-[320px] w-full"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ y: -8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.03 }}
+              className={`flex items-center gap-0.5 bg-[#1e2c3a] rounded-full px-1.5 py-1 shadow-xl ${isOwn ? 'self-end' : 'self-start'}`}
             >
-              {/* Quick reactions bar */}
-              <motion.div
-                initial={{ y: -8, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.03 }}
-                className="flex items-center gap-0.5 bg-[#1e2c3a] rounded-full px-1.5 py-1 self-center shadow-xl"
-              >
-                {QUICK_REACTIONS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => handleReaction(emoji)}
-                    className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-125 transition-all text-xl"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </motion.div>
-
-              {/* Focused message preview */}
-              <div className={`${isOwn ? "self-end" : "self-start"}`}>
-                {children}
-              </div>
-
-              {/* Action menu */}
-              <motion.div
-                initial={{ y: 8, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.05 }}
-                className="bg-[#1e2c3a] rounded-xl overflow-hidden shadow-xl"
-              >
-                <MenuItem icon={Reply} label="Ответить" onClick={handleReply} />
-                <MenuItem icon={Copy} label="Скопировать" onClick={handleCopy} />
-                <MenuItem icon={Pin} label="Закрепить" onClick={handlePin} />
-                <MenuItem icon={Forward} label="Переслать" onClick={handleForward} />
-                {isOwn && (
-                  <MenuItem icon={Trash2} label="Удалить" onClick={handleDelete} isDestructive />
-                )}
-                <MenuItem icon={CheckSquare} label="Выбрать" onClick={onClose} isLast />
-              </motion.div>
+              {QUICK_REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleReaction(emoji)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-125 transition-all text-xl"
+                >
+                  {emoji}
+                </button>
+              ))}
             </motion.div>
-          </div>
+
+            {/* Focused message preview */}
+            <div className={`${isOwn ? "self-end" : "self-start"}`}>
+              {children}
+            </div>
+
+            {/* Action menu */}
+            <motion.div
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.05 }}
+              className="bg-[#1e2c3a] rounded-xl overflow-hidden shadow-xl"
+            >
+              <MenuItem icon={Reply} label="Ответить" onClick={handleReply} />
+              <MenuItem icon={Copy} label="Скопировать" onClick={handleCopy} />
+              <MenuItem icon={Pin} label="Закрепить" onClick={handlePin} />
+              <MenuItem icon={Forward} label="Переслать" onClick={handleForward} />
+              {isOwn && (
+                <MenuItem icon={Trash2} label="Удалить" onClick={handleDelete} isDestructive />
+              )}
+              <MenuItem icon={CheckSquare} label="Выбрать" onClick={onClose} isLast />
+            </motion.div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
