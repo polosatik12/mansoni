@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, ChevronDown, Camera, Smile, Music, AtSign, ArrowRight, Eye, ImagePlus, Wand2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -6,6 +6,7 @@ import { SimpleMediaEditor } from "@/components/editor";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useChatOpen } from "@/contexts/ChatOpenContext";
 
 interface StoryEditorFlowProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ type Step = "gallery" | "editor";
 
 export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
   const { user } = useAuth();
+  const { setIsCreatingContent } = useChatOpen();
   const [step, setStep] = useState<Step>("gallery");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -36,6 +38,12 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [showAdvancedEditor, setShowAdvancedEditor] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Hide bottom nav when creating content
+  useEffect(() => {
+    setIsCreatingContent(isOpen);
+    return () => setIsCreatingContent(false);
+  }, [isOpen, setIsCreatingContent]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
