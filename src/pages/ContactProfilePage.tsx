@@ -306,45 +306,57 @@ export function ContactProfilePage() {
             <span className="text-[#6ab3f3] font-medium">ДОБАВИТЬ КОНТАКТ</span>
           </button>
 
-          {/* Media Stats Card */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-            <button 
-              onClick={() => setGalleryType('photos')}
-              className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10"
-            >
-              <Image className="w-5 h-5 text-white/60" />
-              <span className="text-white flex-1 text-left">{mediaStats.photos} фотографий</span>
-            </button>
-            
-            <button 
-              onClick={() => setGalleryType('files')}
-              className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10"
-            >
-              <FileText className="w-5 h-5 text-white/60" />
-              <span className="text-white flex-1 text-left">{mediaStats.files} файлов</span>
-            </button>
-            
-            <button 
-              onClick={() => setGalleryType('links')}
-              className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10"
-            >
-              <Link2 className="w-5 h-5 text-white/60" />
-              <span className="text-white flex-1 text-left">{mediaStats.links} ссылок</span>
-            </button>
-            
-            <button 
-              onClick={() => setGalleryType('voice')}
-              className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10"
-            >
-              <Mic className="w-5 h-5 text-white/60" />
-              <span className="text-white flex-1 text-left">{mediaStats.voiceMessages} голосовых сообщений</span>
-            </button>
-            
-            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors">
-              <Users className="w-5 h-5 text-white/60" />
-              <span className="text-white flex-1 text-left">{mediaStats.commonGroups} общих групп</span>
-            </button>
-          </div>
+          {/* Media Stats Card - Only show sections with content */}
+          {(mediaStats.photos > 0 || mediaStats.files > 0 || mediaStats.links > 0 || mediaStats.voiceMessages > 0 || mediaStats.commonGroups > 0) && (
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
+              {mediaStats.photos > 0 && (
+                <button 
+                  onClick={() => setGalleryType('photos')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10 last:border-b-0"
+                >
+                  <Image className="w-5 h-5 text-white/60" />
+                  <span className="text-white flex-1 text-left">{mediaStats.photos} фотографий</span>
+                </button>
+              )}
+              
+              {mediaStats.files > 0 && (
+                <button 
+                  onClick={() => setGalleryType('files')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10 last:border-b-0"
+                >
+                  <FileText className="w-5 h-5 text-white/60" />
+                  <span className="text-white flex-1 text-left">{mediaStats.files} файлов</span>
+                </button>
+              )}
+              
+              {mediaStats.links > 0 && (
+                <button 
+                  onClick={() => setGalleryType('links')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10 last:border-b-0"
+                >
+                  <Link2 className="w-5 h-5 text-white/60" />
+                  <span className="text-white flex-1 text-left">{mediaStats.links} ссылок</span>
+                </button>
+              )}
+              
+              {mediaStats.voiceMessages > 0 && (
+                <button 
+                  onClick={() => setGalleryType('voice')}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10 last:border-b-0"
+                >
+                  <Mic className="w-5 h-5 text-white/60" />
+                  <span className="text-white flex-1 text-left">{mediaStats.voiceMessages} голосовых сообщений</span>
+                </button>
+              )}
+              
+              {mediaStats.commonGroups > 0 && (
+                <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors">
+                  <Users className="w-5 h-5 text-white/60" />
+                  <span className="text-white flex-1 text-left">{mediaStats.commonGroups} общих групп</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Block/Unblock User */}
           <button 
