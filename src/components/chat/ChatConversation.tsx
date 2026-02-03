@@ -517,15 +517,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       </div>
 
       {/* Input area - Telegram style */}
-      <div className="flex-shrink-0 bg-[#17212b] safe-area-bottom">
-        {/* Emoji Picker - Telegram style inline above input */}
-        <EmojiStickerPicker
-          open={showEmojiPicker}
-          onOpenChange={setShowEmojiPicker}
-          onEmojiSelect={(emoji) => {
-            setInputText((prev) => prev + emoji);
-          }}
-        />
+      <div className="flex-shrink-0 bg-[#17212b]">
         
         {/* Input controls */}
         <div className="px-2 py-2">
@@ -647,7 +639,19 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             </div>
           )}
         </div>
+        
+        {/* Emoji Picker - Telegram style inline below input */}
+        <EmojiStickerPicker
+          open={showEmojiPicker}
+          onOpenChange={setShowEmojiPicker}
+          onEmojiSelect={(emoji) => {
+            setInputText((prev) => prev + emoji);
+          }}
+        />
       </div>
+      
+      {/* Safe area for bottom */}
+      {!showEmojiPicker && <div className="bg-[#17212b] safe-area-bottom" />}
 
       {/* Video Circle Recorder */}
       {showVideoRecorder && (
