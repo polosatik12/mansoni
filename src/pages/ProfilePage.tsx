@@ -208,7 +208,7 @@ export function ProfilePage() {
       </div>
 
       {/* Posts Grid */}
-      <div>
+      <div className="bg-white/90 dark:bg-background min-h-[50vh]">
         {activeTab === "posts" && (
           <>
             {postsLoading ? (
