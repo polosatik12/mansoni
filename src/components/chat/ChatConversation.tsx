@@ -18,6 +18,8 @@ import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
 import { SharedPostCard } from "./SharedPostCard";
 import { SharedReelCard } from "./SharedReelCard";
 import { EmojiStickerPicker } from "./EmojiStickerPicker";
+import { supabase } from "@/integrations/supabase/client";
+import { formatLastSeen } from "@/hooks/usePresence";
 interface ChatConversationProps {
   conversationId: string;
   chatName: string;
@@ -49,6 +51,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [viewingVideo, setViewingVideo] = useState<string | null>(null);
   const [recordMode, setRecordMode] = useState<'voice' | 'video'>('voice');
+  const [lastSeenStatus, setLastSeenStatus] = useState<string>("был(а) недавно");
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
@@ -63,6 +66,28 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     setIsChatOpen(true);
     return () => setIsChatOpen(false);
   }, [setIsChatOpen]);
+
+  // Fetch other user's last_seen_at for presence status
+  useEffect(() => {
+    if (isGroup || !otherUserId) return;
+    
+    const fetchPresence = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("last_seen_at")
+        .eq("user_id", otherUserId)
+        .single();
+      
+      if (data?.last_seen_at) {
+        setLastSeenStatus(formatLastSeen(data.last_seen_at));
+      }
+    };
+
+    fetchPresence();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchPresence, 30000);
+    return () => clearInterval(interval);
+  }, [otherUserId, isGroup]);
 
   // Mark incoming messages as read when chat is opened / receives new messages.
   useEffect(() => {
@@ -238,10 +263,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           {/* Center - Chat info */}
           <div className="flex-1 flex flex-col items-center justify-center min-w-0">
             <h2 className="font-semibold text-white text-base truncate max-w-[200px]">{chatName}</h2>
-            <p className="text-xs text-[#6ab3f3]">
+            <p className={`text-xs ${lastSeenStatus === 'онлайн' ? 'text-emerald-400' : 'text-[#6ab3f3]'}`}>
               {isGroup 
                 ? `${participantCount || 0} участник${participantCount === 1 ? '' : participantCount && participantCount < 5 ? 'а' : 'ов'}`
-                : 'был(а) недавно'
+                : lastSeenStatus
               }
             </p>
           </div>
