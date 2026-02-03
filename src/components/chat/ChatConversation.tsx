@@ -9,7 +9,7 @@ import { useVideoCallContext } from "@/contexts/VideoCallContext";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import chatBackground from "@/assets/chat-background.jpg";
+import chatBackground from "@/assets/chat-background-light.jpg";
 import { VideoCircleRecorder } from "./VideoCircleRecorder";
 import { VideoCircleMessage } from "./VideoCircleMessage";
 import { AttachmentSheet } from "./AttachmentSheet";
