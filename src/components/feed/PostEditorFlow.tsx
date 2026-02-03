@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, ChevronLeft, ChevronRight, Music, Type, Layers, Sparkles, SlidersHorizontal, Users, MapPin, MessageSquare, HelpCircle, Eye, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useChatOpen } from "@/contexts/ChatOpenContext";
 
 interface PostEditorFlowProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ type Step = "gallery" | "editor" | "details";
 type ContentType = "post" | "story" | "video";
 
 export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
+  const { setIsCreatingContent } = useChatOpen();
   const [step, setStep] = useState<Step>("gallery");
   const [contentType, setContentType] = useState<ContentType>("post");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -48,6 +50,12 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
   const [aiLabel, setAiLabel] = useState(false);
   const [deviceImages, setDeviceImages] = useState<{ id: string; src: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Hide bottom nav when creating content
+  useEffect(() => {
+    setIsCreatingContent(isOpen);
+    return () => setIsCreatingContent(false);
+  }, [isOpen, setIsCreatingContent]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
