@@ -83,7 +83,7 @@ export function FeedHeader() {
 
   return (
     <div 
-      className="sticky top-0 z-30 bg-white/40 dark:bg-card backdrop-blur-xl overflow-hidden will-change-auto border-b border-white/50 dark:border-border"
+      className="sticky top-0 z-30 bg-transparent dark:bg-card overflow-hidden will-change-auto"
       style={{ height: `${containerHeight}px` }}
     >
       {/* Header row with menu */}

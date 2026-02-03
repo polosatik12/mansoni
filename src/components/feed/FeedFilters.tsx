@@ -16,21 +16,16 @@ const filters: { id: ContentFilter; label: string }[] = [
 
 export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
   return (
-    <div className="flex items-center gap-4 px-4 py-2 overflow-x-auto scrollbar-hide">
+    <div className="flex items-center gap-4 px-4 py-2 overflow-x-auto scrollbar-hide bg-transparent">
       {filters.map((f) => (
         <button
           key={f.id}
           onClick={() => onFilterChange(f.id)}
           className={cn(
             "relative py-1 text-sm font-medium whitespace-nowrap transition-all duration-200",
-            "text-foreground/55 hover:text-foreground/75",
-            "dark:text-muted-foreground dark:hover:text-foreground/80",
-            filter === f.id && [
-              // Keep it almost the same as the background (very subtle active state)
-              "text-foreground/60 dark:text-foreground/80",
-              "after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-px",
-              "after:bg-foreground/10 dark:after:bg-foreground/15 after:rounded-full",
-            ]
+            filter === f.id
+              ? "text-foreground/70"
+              : "text-foreground/40 hover:text-foreground/55"
           )}
         >
           {f.label}
@@ -40,7 +35,7 @@ export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
       {filter !== 'all' && (
         <button
           onClick={() => onFilterChange('all')}
-          className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors ml-auto"
+          className="p-1.5 rounded-full text-foreground/30 hover:text-foreground/50 transition-colors ml-auto"
           aria-label="Сбросить фильтр"
         >
           <X className="w-4 h-4" />
