@@ -50,7 +50,7 @@ export function ServicesMenu() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <button className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted transition-colors">
+        <button className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/50 dark:hover:bg-muted backdrop-blur-sm transition-colors">
           <img 
             src={logoImage} 
             alt="Menu" 
@@ -58,8 +58,8 @@ export function ServicesMenu() {
           />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] bg-card border-border p-0">
-        <SheetHeader className="p-4 border-b border-border">
+      <SheetContent side="left" className="w-[300px] bg-white/90 dark:bg-card backdrop-blur-xl border-white/20 dark:border-border p-0">
+        <SheetHeader className="p-4 border-b border-border/50 dark:border-border">
           <SheetTitle className="text-left">Сервисы</SheetTitle>
         </SheetHeader>
         
@@ -85,7 +85,7 @@ export function ServicesMenu() {
                   >
                     <div className={cn(
                       "w-10 h-10 rounded-full flex items-center justify-center",
-                      isActive ? "bg-primary text-primary-foreground" : "bg-muted"
+                      isActive ? "bg-primary text-primary-foreground shadow-md" : "bg-white/60 dark:bg-muted backdrop-blur-sm"
                     )}>
                       <Icon className="w-5 h-5" />
                     </div>
@@ -110,7 +110,7 @@ export function ServicesMenu() {
                     key={service.id}
                     className="flex flex-col items-center gap-1.5 p-3 rounded-xl opacity-40"
                   >
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-muted">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/40 dark:bg-muted">
                       <Icon className="w-5 h-5" />
                     </div>
                     <span className="text-[11px] font-medium text-center leading-tight text-muted-foreground">

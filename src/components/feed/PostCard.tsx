@@ -170,7 +170,7 @@ export function PostCard({
   };
 
   return (
-    <div className="bg-card border-b border-border">
+    <div className="bg-card/80 dark:bg-card backdrop-blur-sm border-b border-border/50 dark:border-border">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">

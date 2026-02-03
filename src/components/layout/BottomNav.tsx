@@ -197,7 +197,9 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
             className={cn(
               "flex-1 flex items-center justify-around",
               "rounded-full",
-              "bg-black/40 backdrop-blur-xl border border-white/10"
+              "bg-black/40 dark:bg-black/40 backdrop-blur-xl",
+              "border border-white/20 dark:border-white/10",
+              "shadow-lg shadow-black/5 dark:shadow-black/20"
             )}
             style={{
               height: '56px',
@@ -249,7 +251,7 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
                       "transition-colors duration-150",
                       "active:opacity-70",
                       "min-w-[44px] min-h-[44px]",
-                      isActive ? "text-white" : "text-white/60"
+                      isActive ? "text-white" : "text-white/70"
                     )
                   }
                   style={{ 
@@ -309,10 +311,12 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
                   cn(
                     "flex items-center justify-center",
                     "w-14 h-14 rounded-full",
-                    "bg-black/40 backdrop-blur-xl border border-white/10",
+                    "bg-black/40 dark:bg-black/40 backdrop-blur-xl",
+                    "border border-white/20 dark:border-white/10",
+                    "shadow-lg shadow-black/5 dark:shadow-black/20",
                     "transition-colors duration-150",
                     "active:opacity-70",
-                    isActive ? "text-white" : "text-white/60"
+                    isActive ? "text-white" : "text-white/70"
                   )
                 }
                 style={{ 
