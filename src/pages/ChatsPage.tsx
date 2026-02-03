@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Check, CheckCheck, LogIn, MessageCircle, Plus, Megaphone, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { ChatConversation } from "@/components/chat/ChatConversation";
 import { ChatStories } from "@/components/chat/ChatStories";
 import { ChatSearchSheet } from "@/components/chat/ChatSearchSheet";
@@ -392,10 +393,11 @@ export function ChatsPage() {
                   className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
                 >
                   <div className="relative flex-shrink-0">
-                    <img
-                      src={channel.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${channel.id}`}
-                      alt={channel.name}
-                      className="w-14 h-14 rounded-full object-cover bg-white/10 border border-white/20"
+                    <GradientAvatar
+                      name={channel.name}
+                      seed={channel.id}
+                      avatarUrl={channel.avatar_url}
+                      size="md"
                     />
                     {channel.is_member && (
                       <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-white/20">
@@ -437,10 +439,11 @@ export function ChatsPage() {
                   className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
                 >
                   <div className="relative flex-shrink-0">
-                    <img
-                      src={group.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${group.id}`}
-                      alt={group.name}
-                      className="w-14 h-14 rounded-full object-cover bg-white/10 border border-white/20"
+                    <GradientAvatar
+                      name={group.name}
+                      seed={group.id}
+                      avatarUrl={group.avatar_url}
+                      size="md"
                     />
                     <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-white/20">
                       <Users className="w-3 h-3 text-primary-foreground" />
@@ -477,10 +480,11 @@ export function ChatsPage() {
                 className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
               >
                 <div className="relative flex-shrink-0">
-                  <img
-                    src={other.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.id}`}
-                    alt={other.display_name || "User"}
-                    className="w-14 h-14 rounded-full object-cover bg-white/10 border border-white/20"
+                  <GradientAvatar
+                    name={other.display_name || "User"}
+                    seed={conv.id}
+                    avatarUrl={other.avatar_url}
+                    size="md"
                   />
                 </div>
 
