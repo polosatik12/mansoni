@@ -331,20 +331,24 @@ export function ContactProfilePage() {
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-md"
             onClick={() => setShowBlockModal(false)}
           />
           
-          {/* Modal */}
-          <div className="relative bg-[#1e2c3a]/95 backdrop-blur-xl rounded-2xl border border-white/20 p-6 max-w-sm w-full shadow-2xl">
-            <h2 className="text-lg font-semibold text-white mb-3">
+          {/* Liquid Glass Modal */}
+          <div className="relative bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/30 p-6 max-w-sm w-full shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden">
+            {/* Glass highlight */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-white/5 pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+            
+            <h2 className="relative text-lg font-semibold text-white mb-3">
               Заблокировать {profile?.display_name || 'пользователя'}
             </h2>
-            <p className="text-white/70 text-sm mb-6">
+            <p className="relative text-white/70 text-sm mb-6">
               Запретить {profile?.display_name || 'пользователю'} писать Вам сообщения и звонить через Mansoni?
             </p>
             
-            <div className="flex items-center justify-end gap-3">
+            <div className="relative flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowBlockModal(false)}
                 className="px-4 py-2 text-white/70 hover:text-white transition-colors"
