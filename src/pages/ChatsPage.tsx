@@ -31,6 +31,7 @@ interface LocationState {
 
 // Animation constants
 const HEADER_BASE_HEIGHT = 56;
+const FILTERS_HEIGHT = 44;
 const STORIES_ROW_HEIGHT = 92;
 
 export function ChatsPage() {
@@ -48,6 +49,7 @@ export function ChatsPage() {
   const [selectedGroup, setSelectedGroup] = useState<GroupChat | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"all" | "chats" | "groups" | "channels">("all");
   
   
   // Local scroll container for chat list
@@ -232,7 +234,7 @@ export function ChatsPage() {
   }
 
   // Calculate header height based on expand progress
-  const headerHeight = HEADER_BASE_HEIGHT + (STORIES_ROW_HEIGHT * expandProgress);
+  const headerHeight = HEADER_BASE_HEIGHT + FILTERS_HEIGHT + (STORIES_ROW_HEIGHT * expandProgress);
 
   type CombinedItem =
     | { kind: "channel"; id: string; activityAt: string; channel: Channel }
@@ -240,24 +242,30 @@ export function ChatsPage() {
     | { kind: "dm"; id: string; activityAt: string; conv: Conversation };
 
   const combinedItems: CombinedItem[] = [
-    ...channels.map((channel) => ({
-      kind: "channel" as const,
-      id: channel.id,
-      activityAt: channel.last_message?.created_at || channel.updated_at || channel.created_at,
-      channel,
-    })),
-    ...groups.map((group) => ({
-      kind: "group" as const,
-      id: group.id,
-      activityAt: group.last_message?.created_at || group.updated_at || group.created_at,
-      group,
-    })),
-    ...conversations.map((conv) => ({
-      kind: "dm" as const,
-      id: conv.id,
-      activityAt: conv.last_message?.created_at || conv.updated_at || conv.created_at,
-      conv,
-    })),
+    ...(activeFilter === "all" || activeFilter === "channels" 
+      ? channels.map((channel) => ({
+          kind: "channel" as const,
+          id: channel.id,
+          activityAt: channel.last_message?.created_at || channel.updated_at || channel.created_at,
+          channel,
+        }))
+      : []),
+    ...(activeFilter === "all" || activeFilter === "groups"
+      ? groups.map((group) => ({
+          kind: "group" as const,
+          id: group.id,
+          activityAt: group.last_message?.created_at || group.updated_at || group.created_at,
+          group,
+        }))
+      : []),
+    ...(activeFilter === "all" || activeFilter === "chats"
+      ? conversations.map((conv) => ({
+          kind: "dm" as const,
+          id: conv.id,
+          activityAt: conv.last_message?.created_at || conv.updated_at || conv.created_at,
+          conv,
+        }))
+      : []),
   ].sort((a, b) => new Date(b.activityAt).getTime() - new Date(a.activityAt).getTime());
 
   return (
@@ -323,6 +331,28 @@ export function ChatsPage() {
                 <Plus className="w-5 h-5 text-white" />
               </button>
             </div>
+          </div>
+          
+          {/* Filter tabs */}
+          <div className="flex items-center gap-2 px-4 h-11">
+            {[
+              { id: "all", label: "Все" },
+              { id: "chats", label: "Чаты" },
+              { id: "groups", label: "Группы" },
+              { id: "channels", label: "Каналы" },
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id as typeof activeFilter)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
+                  activeFilter === filter.id
+                    ? "bg-white/20 text-white"
+                    : "text-white/50 hover:text-white/80"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
           
           {/* Stories row (expanded) - appears below title */}
