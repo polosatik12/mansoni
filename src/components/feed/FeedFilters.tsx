@@ -26,9 +26,10 @@ export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
             "text-foreground/55 hover:text-foreground/75",
             "dark:text-muted-foreground dark:hover:text-foreground/80",
             filter === f.id && [
-              "text-foreground dark:text-foreground",
-              "after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px]",
-              "after:bg-foreground/25 dark:after:bg-foreground/30 after:rounded-full",
+              // Keep it almost the same as the background (very subtle active state)
+              "text-foreground/60 dark:text-foreground/80",
+              "after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-px",
+              "after:bg-foreground/10 dark:after:bg-foreground/15 after:rounded-full",
             ]
           )}
         >
