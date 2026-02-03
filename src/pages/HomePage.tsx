@@ -3,6 +3,7 @@ import { FeedHeader } from "@/components/feed/FeedHeader";
 import { FeedFilters, ContentFilter } from "@/components/feed/FeedFilters";
 import { PostCard } from "@/components/feed/PostCard";
 import { PullToRefresh } from "@/components/feed/PullToRefresh";
+import { SubtleGradientBackground } from "@/components/layout/SubtleGradientBackground";
 import { usePosts } from "@/hooks/usePosts";
 import { usePresence } from "@/hooks/usePresence";
 import { toast } from "sonner";
@@ -46,7 +47,8 @@ export function HomePage() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen">
+      <div className="min-h-screen relative">
+        <SubtleGradientBackground />
         <FeedHeader />
         
         <FeedFilters 
