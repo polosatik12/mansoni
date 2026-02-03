@@ -559,7 +559,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 onClick={() => setShowAttachmentSheet(true)}
                 className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
               >
-                <Paperclip className="w-5 h-5 text-white/60 rotate-45" />
+                <Paperclip className="w-5 h-5 text-white/60 -rotate-45" />
               </button>
               
               {/* Input field */}
