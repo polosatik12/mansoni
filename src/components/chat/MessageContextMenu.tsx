@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { X, Trash2, Pin, Copy, Forward } from "lucide-react";
+import { useEffect } from "react";
+import { Reply, Copy, Pin, Forward, Trash2, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MessageContextMenuProps {
@@ -11,10 +11,12 @@ interface MessageContextMenuProps {
   onDelete?: (messageId: string) => void;
   onPin?: (messageId: string) => void;
   onReaction?: (messageId: string, emoji: string) => void;
+  onReply?: (messageId: string) => void;
+  onForward?: (messageId: string) => void;
   children: React.ReactNode;
 }
 
-const QUICK_REACTIONS = ["❤️", "👍", "😂", "😮", "😢", "🔥"];
+const QUICK_REACTIONS = ["❤️", "🔥", "👍", "😂", "😮", "🎉"];
 
 export function MessageContextMenu({
   isOpen,
@@ -25,6 +27,8 @@ export function MessageContextMenu({
   onDelete,
   onPin,
   onReaction,
+  onReply,
+  onForward,
   children,
 }: MessageContextMenuProps) {
   const handleReaction = (emoji: string) => {
@@ -51,6 +55,16 @@ export function MessageContextMenu({
     onClose();
   };
 
+  const handleReply = () => {
+    onReply?.(messageId);
+    onClose();
+  };
+
+  const handleForward = () => {
+    onForward?.(messageId);
+    onClose();
+  };
+
   // Prevent scroll when menu is open
   useEffect(() => {
     if (isOpen) {
@@ -71,114 +85,89 @@ export function MessageContextMenu({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-[300] flex items-center justify-center"
+          className="fixed inset-0 z-[300]"
           onClick={onClose}
         >
-          {/* Dark backdrop */}
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          {/* Dark backdrop with blur */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-          {/* Content container */}
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="relative z-10 flex flex-col items-center gap-3 px-4 max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Quick reactions bar */}
+          {/* Content container - positioned in center */}
+          <div className="absolute inset-0 flex items-center justify-center p-4">
             <motion.div
-              initial={{ y: -10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.05 }}
-              className="flex items-center gap-1.5 bg-[#1e2c3a] rounded-full px-2 py-1.5 shadow-xl"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 400 }}
+              className="flex flex-col gap-2 max-w-[320px] w-full"
+              onClick={(e) => e.stopPropagation()}
             >
-              {QUICK_REACTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleReaction(emoji)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-110 transition-all text-2xl"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </motion.div>
-
-            {/* Focused message preview */}
-            <div className="pointer-events-none">
-              {children}
-            </div>
-
-            {/* Action buttons */}
-            <motion.div
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="w-full max-w-[280px] bg-[#1e2c3a] rounded-xl overflow-hidden shadow-xl"
-            >
-              <button
-                onClick={handleCopy}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-white hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/10"
+              {/* Quick reactions bar */}
+              <motion.div
+                initial={{ y: -8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.03 }}
+                className="flex items-center gap-0.5 bg-[#1e2c3a] rounded-full px-1.5 py-1 self-center shadow-xl"
               >
-                <Copy className="w-5 h-5 text-[#6ab3f3]" />
-                <span className="text-[15px]">Копировать</span>
-              </button>
+                {QUICK_REACTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReaction(emoji)}
+                    className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-125 transition-all text-xl"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </motion.div>
 
-              <button
-                onClick={handlePin}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-white hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/10"
+              {/* Focused message preview */}
+              <div className={`${isOwn ? "self-end" : "self-start"}`}>
+                {children}
+              </div>
+
+              {/* Action menu */}
+              <motion.div
+                initial={{ y: 8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.05 }}
+                className="bg-[#1e2c3a] rounded-xl overflow-hidden shadow-xl"
               >
-                <Pin className="w-5 h-5 text-[#6ab3f3]" />
-                <span className="text-[15px]">Закрепить</span>
-              </button>
-
-              {isOwn && onDelete && (
-                <button
-                  onClick={handleDelete}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-red-400 hover:bg-white/5 active:bg-white/10 transition-colors"
-                >
-                  <Trash2 className="w-5 h-5" />
-                  <span className="text-[15px]">Удалить</span>
-                </button>
-              )}
+                <MenuItem icon={Reply} label="Ответить" onClick={handleReply} />
+                <MenuItem icon={Copy} label="Скопировать" onClick={handleCopy} />
+                <MenuItem icon={Pin} label="Закрепить" onClick={handlePin} />
+                <MenuItem icon={Forward} label="Переслать" onClick={handleForward} />
+                {isOwn && (
+                  <MenuItem icon={Trash2} label="Удалить" onClick={handleDelete} isDestructive />
+                )}
+                <MenuItem icon={CheckSquare} label="Выбрать" onClick={onClose} isLast />
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
 
-// Hook for long press detection
-export function useLongPress(
-  onLongPress: () => void,
-  delay = 500
-) {
-  const [isPressed, setIsPressed] = useState(false);
-  const timerRef = { current: null as NodeJS.Timeout | null };
+interface MenuItemProps {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  isDestructive?: boolean;
+  isLast?: boolean;
+}
 
-  const start = useCallback(() => {
-    setIsPressed(true);
-    timerRef.current = setTimeout(() => {
-      onLongPress();
-      setIsPressed(false);
-    }, delay);
-  }, [onLongPress, delay]);
-
-  const stop = useCallback(() => {
-    setIsPressed(false);
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return {
-    onMouseDown: start,
-    onMouseUp: stop,
-    onMouseLeave: stop,
-    onTouchStart: start,
-    onTouchEnd: stop,
-    isPressed,
-  };
+function MenuItem({ icon: Icon, label, onClick, isDestructive, isLast }: MenuItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 active:bg-white/10 transition-colors ${
+        !isLast ? "border-b border-white/5" : ""
+      }`}
+    >
+      <Icon className={`w-5 h-5 ${isDestructive ? "text-red-400" : "text-white/70"}`} />
+      <span className={`text-[15px] ${isDestructive ? "text-red-400" : "text-white"}`}>
+        {label}
+      </span>
+    </button>
+  );
 }
