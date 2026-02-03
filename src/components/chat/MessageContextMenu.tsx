@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Reply, Copy, Pin, Forward, Trash2, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,7 +14,6 @@ interface MessageContextMenuProps {
   onReaction?: (messageId: string, emoji: string) => void;
   onReply?: (messageId: string) => void;
   onForward?: (messageId: string) => void;
-  children: React.ReactNode;
 }
 
 const QUICK_REACTIONS = ["❤️", "🔥", "👍", "😂", "😮", "🎉"];
@@ -31,8 +30,9 @@ export function MessageContextMenu({
   onReaction,
   onReply,
   onForward,
-  children,
 }: MessageContextMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const handleReaction = (emoji: string) => {
     onReaction?.(messageId, emoji);
     onClose();
@@ -79,31 +79,43 @@ export function MessageContextMenu({
     };
   }, [isOpen]);
 
-  // Calculate menu position
-  const getMenuStyle = () => {
-    if (!position) return {};
-    
-    const windowHeight = window.innerHeight;
-    const menuHeight = 350; // Approximate menu height
-    const messageTop = position.top;
-    
-    // Determine if menu should be above or below the message
-    const spaceBelow = windowHeight - messageTop;
-    const shouldShowAbove = spaceBelow < menuHeight && messageTop > menuHeight;
-    
-    if (shouldShowAbove) {
-      // Show menu above the message
+  // Calculate optimal position for the menu
+  const getMenuStyle = (): React.CSSProperties => {
+    if (!position) {
       return {
-        bottom: windowHeight - messageTop + 8,
-        ...(isOwn ? { right: 16 } : { left: 16 }),
-      };
-    } else {
-      // Show menu below the message  
-      return {
-        top: Math.min(messageTop, windowHeight - menuHeight - 16),
-        ...(isOwn ? { right: 16 } : { left: 16 }),
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)'
       };
     }
+
+    const windowHeight = window.innerHeight;
+    const windowWidth = window.innerWidth;
+    const menuHeight = 320; // Approximate menu height
+    const reactionsHeight = 48;
+    const messageHeight = 60; // Approximate message preview height
+    const totalHeight = reactionsHeight + messageHeight + menuHeight + 24; // gaps
+    
+    // Calculate where to position the menu container
+    let top = position.top;
+    
+    // If message is in lower half, position menu so message appears at bottom of visible area
+    if (position.top > windowHeight / 2) {
+      top = Math.max(16, position.top - totalHeight + messageHeight + 60);
+    } else {
+      // Message is in upper half, position below it
+      top = Math.max(16, position.top - reactionsHeight - 8);
+    }
+    
+    // Ensure menu doesn't go off screen
+    top = Math.min(top, windowHeight - totalHeight - 16);
+    top = Math.max(16, top);
+
+    return {
+      top,
+      left: isOwn ? 'auto' : 16,
+      right: isOwn ? 16 : 'auto',
+    };
   };
 
   return (
@@ -120,13 +132,14 @@ export function MessageContextMenu({
           {/* Dark backdrop with blur */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-          {/* Content container - positioned near the message */}
+          {/* Menu container */}
           <motion.div
+            ref={menuRef}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 400 }}
-            className="absolute flex flex-col gap-2 max-w-[320px] w-[calc(100%-32px)]"
+            className="absolute flex flex-col gap-2 w-[calc(100%-32px)] max-w-[320px]"
             style={getMenuStyle()}
             onClick={(e) => e.stopPropagation()}
           >
@@ -135,7 +148,7 @@ export function MessageContextMenu({
               initial={{ y: -8, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.03 }}
-              className={`flex items-center gap-0.5 bg-[#1e2c3a] rounded-full px-1.5 py-1 shadow-xl ${isOwn ? 'self-end' : 'self-start'}`}
+              className={`flex items-center gap-0.5 bg-[#1e2c3a] rounded-full px-1.5 py-1 shadow-xl w-fit ${isOwn ? 'self-end' : 'self-start'}`}
             >
               {QUICK_REACTIONS.map((emoji) => (
                 <button
@@ -148,10 +161,25 @@ export function MessageContextMenu({
               ))}
             </motion.div>
 
-            {/* Focused message preview */}
-            <div className={`${isOwn ? "self-end" : "self-start"}`}>
-              {children}
-            </div>
+            {/* Message preview - styled like actual message */}
+            <motion.div
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.02 }}
+              className={`${isOwn ? "self-end" : "self-start"}`}
+            >
+              <div
+                className={`max-w-[280px] rounded-2xl px-3 py-2 shadow-lg ${
+                  isOwn
+                    ? "bg-[#2b5278] text-white rounded-br-sm"
+                    : "bg-[#182533] text-white rounded-bl-sm"
+                }`}
+              >
+                <p className="text-[15px] leading-[1.4] whitespace-pre-wrap line-clamp-4">
+                  {messageContent}
+                </p>
+              </div>
+            </motion.div>
 
             {/* Action menu */}
             <motion.div
