@@ -7,6 +7,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSearch } from "@/hooks/useSearch";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { SubtleGradientBackground } from "@/components/layout/SubtleGradientBackground";
 
 const trends = [
   { tag: "новости", posts: "12.5K" },
@@ -50,7 +51,8 @@ export function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 relative">
+      <SubtleGradientBackground />
       {/* Search Bar */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 safe-area-top">
         <div className="relative">

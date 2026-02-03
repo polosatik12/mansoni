@@ -4,6 +4,8 @@ import { X, Moon, Sun, Bell, Lock, HelpCircle, Info, LogOut, ChevronRight, Chevr
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { SubtleGradientBackground } from "@/components/layout/SubtleGradientBackground";
 import { supabase } from "@/integrations/supabase/client";
 
 type Screen = "main" | "saved" | "archive" | "activity" | "notifications" | "privacy" | "security" | "help" | "about";
@@ -31,18 +33,18 @@ export function SettingsPage() {
       {showBack && (
         <button 
           onClick={handleBack}
-          className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+          className="w-10 h-10 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
         >
-          <ChevronLeft className="w-5 h-5 text-white" />
+          <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
       )}
-      <h2 className="text-xl font-semibold flex-1 text-white">{title}</h2>
+      <h2 className="text-xl font-semibold flex-1 text-foreground">{title}</h2>
       {currentScreen === "main" && (
         <button 
           onClick={() => navigate(-1)}
-          className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+          className="w-10 h-10 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
         >
-          <X className="w-5 h-5 text-white" />
+          <X className="w-5 h-5 text-foreground" />
         </button>
       )}
     </div>
@@ -51,12 +53,12 @@ export function SettingsPage() {
   const renderMenuItem = (icon: React.ReactNode, label: string, onClick?: () => void, value?: string) => (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-white/5 active:bg-white/10 transition-colors"
+      className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-muted/50 active:bg-muted transition-colors"
     >
       {icon}
-      <span className="flex-1 text-left text-white">{label}</span>
-      {value && <span className="text-sm text-white/60">{value}</span>}
-      <ChevronRight className="w-5 h-5 text-white/40" />
+      <span className="flex-1 text-left text-foreground">{label}</span>
+      {value && <span className="text-sm text-muted-foreground">{value}</span>}
+      <ChevronRight className="w-5 h-5 text-muted-foreground" />
     </button>
   );
 
@@ -64,8 +66,8 @@ export function SettingsPage() {
     <div className="flex items-start gap-4 px-5 py-3.5">
       <div className="mt-0.5">{icon}</div>
       <div className="flex-1">
-        <p className="font-medium text-white">{label}</p>
-        <p className="text-sm text-white/60">{description}</p>
+        <p className="font-medium text-foreground">{label}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>
@@ -78,11 +80,11 @@ export function SettingsPage() {
           <>
             {renderHeader("Сохранённое")}
             <div className="flex-1 overflow-y-auto native-scroll">
-              <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Bookmark className="w-5 h-5 text-white/60" />, "Все публикации")}
-                {renderMenuItem(<Heart className="w-5 h-5 text-white/60" />, "Понравившиеся")}
+              <div className="mx-4 bg-card rounded-2xl border border-border overflow-hidden">
+                {renderMenuItem(<Bookmark className="w-5 h-5 text-muted-foreground" />, "Все публикации")}
+                {renderMenuItem(<Heart className="w-5 h-5 text-muted-foreground" />, "Понравившиеся")}
               </div>
-              <p className="p-5 text-center text-white/60 text-sm">
+              <p className="p-5 text-center text-muted-foreground text-sm">
                 Создавайте коллекции для сохранённых публикаций
               </p>
             </div>
@@ -94,10 +96,10 @@ export function SettingsPage() {
           <>
             {renderHeader("Архив")}
             <div className="flex-1 overflow-y-auto native-scroll">
-              <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив историй")}
-                {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив публикаций")}
-                {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив прямых эфиров")}
+              <div className="mx-4 bg-card rounded-2xl border border-border overflow-hidden">
+                {renderMenuItem(<Archive className="w-5 h-5 text-muted-foreground" />, "Архив историй")}
+                {renderMenuItem(<Archive className="w-5 h-5 text-muted-foreground" />, "Архив публикаций")}
+                {renderMenuItem(<Archive className="w-5 h-5 text-muted-foreground" />, "Архив прямых эфиров")}
               </div>
             </div>
           </>
@@ -108,12 +110,12 @@ export function SettingsPage() {
           <>
             {renderHeader("Ваша активность")}
             <div className="flex-1 overflow-y-auto native-scroll">
-              <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Clock className="w-5 h-5 text-white/60" />, "Время в приложении", undefined, "1ч 23м")}
-                {renderMenuItem(<Heart className="w-5 h-5 text-white/60" />, "Лайки")}
-                {renderMenuItem(<MessageCircle className="w-5 h-5 text-white/60" />, "Комментарии")}
-                {renderMenuItem(<Share2 className="w-5 h-5 text-white/60" />, "Репосты")}
-                {renderMenuItem(<Download className="w-5 h-5 text-white/60" />, "Скачать данные")}
+              <div className="mx-4 bg-card rounded-2xl border border-border overflow-hidden">
+                {renderMenuItem(<Clock className="w-5 h-5 text-muted-foreground" />, "Время в приложении", undefined, "1ч 23м")}
+                {renderMenuItem(<Heart className="w-5 h-5 text-muted-foreground" />, "Лайки")}
+                {renderMenuItem(<MessageCircle className="w-5 h-5 text-muted-foreground" />, "Комментарии")}
+                {renderMenuItem(<Share2 className="w-5 h-5 text-muted-foreground" />, "Репосты")}
+                {renderMenuItem(<Download className="w-5 h-5 text-muted-foreground" />, "Скачать данные")}
               </div>
             </div>
           </>
@@ -124,30 +126,30 @@ export function SettingsPage() {
           <>
             {renderHeader("Уведомления")}
             <div className="flex-1 overflow-y-auto native-scroll">
-              <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
+              <div className="mx-4 bg-card rounded-2xl border border-border overflow-hidden">
                 {renderToggleItem(
-                  <Bell className="w-5 h-5 text-white/60" />,
+                  <Bell className="w-5 h-5 text-muted-foreground" />,
                   "Push-уведомления",
                   "Получать уведомления на устройство",
                   true,
                   () => {}
                 )}
                 {renderToggleItem(
-                  <Heart className="w-5 h-5 text-white/60" />,
+                  <Heart className="w-5 h-5 text-muted-foreground" />,
                   "Лайки",
                   "Уведомлять о новых лайках",
                   true,
                   () => {}
                 )}
                 {renderToggleItem(
-                  <MessageCircle className="w-5 h-5 text-white/60" />,
+                  <MessageCircle className="w-5 h-5 text-muted-foreground" />,
                   "Комментарии",
                   "Уведомлять о новых комментариях",
                   true,
                   () => {}
                 )}
                 {renderToggleItem(
-                  <Users className="w-5 h-5 text-white/60" />,
+                  <Users className="w-5 h-5 text-muted-foreground" />,
                   "Подписчики",
                   "Уведомлять о новых подписчиках",
                   true,
@@ -163,26 +165,26 @@ export function SettingsPage() {
           <>
             {renderHeader("Конфиденциальность")}
             <div className="flex-1 overflow-y-auto native-scroll">
-              <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
+              <div className="mx-4 bg-card rounded-2xl border border-border overflow-hidden">
                 {renderToggleItem(
-                  <Lock className="w-5 h-5 text-white/60" />,
+                  <Lock className="w-5 h-5 text-muted-foreground" />,
                   "Закрытый аккаунт",
                   "Только подписчики видят ваши публикации",
                   false,
                   () => {}
                 )}
                 {renderToggleItem(
-                  <Eye className="w-5 h-5 text-white/60" />,
+                  <Eye className="w-5 h-5 text-muted-foreground" />,
                   "Статус активности",
                   "Показывать когда вы были онлайн",
                   true,
                   () => {}
                 )}
               </div>
-              <div className="mx-4 mt-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Users className="w-5 h-5 text-white/60" />, "Близкие друзья")}
-                {renderMenuItem(<UserX className="w-5 h-5 text-white/60" />, "Заблокированные")}
-                {renderMenuItem(<MessageCircle className="w-5 h-5 text-white/60" />, "Управление сообщениями")}
+              <div className="mx-4 mt-3 bg-card rounded-2xl border border-border overflow-hidden">
+                {renderMenuItem(<Users className="w-5 h-5 text-muted-foreground" />, "Близкие друзья")}
+                {renderMenuItem(<UserX className="w-5 h-5 text-muted-foreground" />, "Заблокированные")}
+                {renderMenuItem(<MessageCircle className="w-5 h-5 text-muted-foreground" />, "Управление сообщениями")}
               </div>
             </div>
           </>
@@ -193,20 +195,20 @@ export function SettingsPage() {
           <>
             {renderHeader("Безопасность")}
             <div className="flex-1 overflow-y-auto native-scroll">
-              <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Key className="w-5 h-5 text-white/60" />, "Пароль", undefined, "Изменить")}
+              <div className="mx-4 bg-card rounded-2xl border border-border overflow-hidden">
+                {renderMenuItem(<Key className="w-5 h-5 text-muted-foreground" />, "Пароль", undefined, "Изменить")}
                 {renderToggleItem(
-                  <Shield className="w-5 h-5 text-white/60" />,
+                  <Shield className="w-5 h-5 text-muted-foreground" />,
                   "Двухфакторная аутентификация",
                   "Дополнительная защита аккаунта",
                   false,
                   () => {}
                 )}
               </div>
-              <div className="mx-4 mt-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Smartphone className="w-5 h-5 text-white/60" />, "Активные сеансы")}
-                {renderMenuItem(<Mail className="w-5 h-5 text-white/60" />, "Письма от нас")}
-                {renderMenuItem(<Database className="w-5 h-5 text-white/60" />, "Данные аккаунта")}
+              <div className="mx-4 mt-3 bg-card rounded-2xl border border-border overflow-hidden">
+                {renderMenuItem(<Smartphone className="w-5 h-5 text-muted-foreground" />, "Активные сеансы")}
+                {renderMenuItem(<Mail className="w-5 h-5 text-muted-foreground" />, "Письма от нас")}
+                {renderMenuItem(<Database className="w-5 h-5 text-muted-foreground" />, "Данные аккаунта")}
               </div>
             </div>
           </>
@@ -217,11 +219,11 @@ export function SettingsPage() {
           <>
             {renderHeader("Помощь")}
             <div className="flex-1 overflow-y-auto native-scroll">
-              <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<HelpCircle className="w-5 h-5 text-white/60" />, "Справочный центр")}
-                {renderMenuItem(<AlertCircle className="w-5 h-5 text-white/60" />, "Сообщить о проблеме")}
-                {renderMenuItem(<FileText className="w-5 h-5 text-white/60" />, "Условия использования")}
-                {renderMenuItem(<Lock className="w-5 h-5 text-white/60" />, "Политика конфиденциальности")}
+              <div className="mx-4 bg-card rounded-2xl border border-border overflow-hidden">
+                {renderMenuItem(<HelpCircle className="w-5 h-5 text-muted-foreground" />, "Справочный центр")}
+                {renderMenuItem(<AlertCircle className="w-5 h-5 text-muted-foreground" />, "Сообщить о проблеме")}
+                {renderMenuItem(<FileText className="w-5 h-5 text-muted-foreground" />, "Условия использования")}
+                {renderMenuItem(<Lock className="w-5 h-5 text-muted-foreground" />, "Политика конфиденциальности")}
               </div>
             </div>
           </>
@@ -233,15 +235,15 @@ export function SettingsPage() {
             {renderHeader("О приложении")}
             <div className="flex-1 overflow-y-auto native-scroll">
               <div className="p-8 flex flex-col items-center">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center mb-4 shadow-lg">
-                  <span className="text-3xl text-white font-bold">M</span>
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mb-4 shadow-lg">
+                  <span className="text-3xl text-primary-foreground font-bold">M</span>
                 </div>
-                <h3 className="text-xl font-semibold text-white">Mansoni</h3>
-                <p className="text-sm text-white/60">Версия 1.0.0</p>
+                <h3 className="text-xl font-semibold text-foreground">Mansoni</h3>
+                <p className="text-sm text-muted-foreground">Версия 1.0.0</p>
               </div>
-              <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<FileText className="w-5 h-5 text-white/60" />, "Лицензии открытого ПО")}
-                {renderMenuItem(<Info className="w-5 h-5 text-white/60" />, "Информация о разработчике")}
+              <div className="mx-4 bg-card rounded-2xl border border-border overflow-hidden">
+                {renderMenuItem(<FileText className="w-5 h-5 text-muted-foreground" />, "Лицензии открытого ПО")}
+                {renderMenuItem(<Info className="w-5 h-5 text-muted-foreground" />, "Информация о разработчике")}
               </div>
             </div>
           </>
@@ -255,15 +257,15 @@ export function SettingsPage() {
             <div className="flex-1 overflow-y-auto native-scroll pb-8">
               {/* Theme Toggle */}
               <div className="px-4 py-4">
-                <p className="text-sm text-white/60 mb-3 px-1">Тема оформления</p>
+                <p className="text-sm text-muted-foreground mb-3 px-1">Тема оформления</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setTheme("light")}
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all border",
                       theme === "light" 
-                        ? "bg-white/20 border-white/40 text-white" 
-                        : "bg-white/5 border-white/10 text-white/70"
+                        ? "bg-primary text-primary-foreground border-primary" 
+                        : "bg-muted border-border text-muted-foreground"
                     )}
                   >
                     <Sun className="w-5 h-5" />
@@ -274,8 +276,8 @@ export function SettingsPage() {
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all border",
                       theme === "dark" 
-                        ? "bg-white/20 border-white/40 text-white" 
-                        : "bg-white/5 border-white/10 text-white/70"
+                        ? "bg-primary text-primary-foreground border-primary" 
+                        : "bg-muted border-border text-muted-foreground"
                     )}
                   >
                     <Moon className="w-5 h-5" />
@@ -286,42 +288,43 @@ export function SettingsPage() {
 
               {/* Account */}
               <div className="px-4 mb-3">
-                <p className="text-sm text-white/60 mb-2 px-1">Аккаунт</p>
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                  {renderMenuItem(<Bookmark className="w-5 h-5 text-white/60" />, "Сохранённое", () => setCurrentScreen("saved"))}
-                  {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив", () => setCurrentScreen("archive"))}
-                  {renderMenuItem(<Clock className="w-5 h-5 text-white/60" />, "Ваша активность", () => setCurrentScreen("activity"))}
+                <p className="text-sm text-muted-foreground mb-2 px-1">Аккаунт</p>
+                <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                  {renderMenuItem(<Bookmark className="w-5 h-5 text-muted-foreground" />, "Сохранённое", () => setCurrentScreen("saved"))}
+                  {renderMenuItem(<Archive className="w-5 h-5 text-muted-foreground" />, "Архив", () => setCurrentScreen("archive"))}
+                  {renderMenuItem(<Clock className="w-5 h-5 text-muted-foreground" />, "Ваша активность", () => setCurrentScreen("activity"))}
                 </div>
               </div>
 
               {/* Settings */}
               <div className="px-4 mb-3">
-                <p className="text-sm text-white/60 mb-2 px-1">Настройки</p>
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                  {renderMenuItem(<Bell className="w-5 h-5 text-white/60" />, "Уведомления", () => setCurrentScreen("notifications"))}
-                  {renderMenuItem(<Lock className="w-5 h-5 text-white/60" />, "Конфиденциальность", () => setCurrentScreen("privacy"))}
-                  {renderMenuItem(<Shield className="w-5 h-5 text-white/60" />, "Безопасность", () => setCurrentScreen("security"))}
+                <p className="text-sm text-muted-foreground mb-2 px-1">Настройки</p>
+                <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                  {renderMenuItem(<Bell className="w-5 h-5 text-muted-foreground" />, "Уведомления", () => setCurrentScreen("notifications"))}
+                  {renderMenuItem(<Lock className="w-5 h-5 text-muted-foreground" />, "Конфиденциальность", () => setCurrentScreen("privacy"))}
+                  {renderMenuItem(<Shield className="w-5 h-5 text-muted-foreground" />, "Безопасность", () => setCurrentScreen("security"))}
                 </div>
               </div>
 
               {/* Support */}
               <div className="px-4 mb-3">
-                <p className="text-sm text-white/60 mb-2 px-1">Поддержка</p>
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                  {renderMenuItem(<HelpCircle className="w-5 h-5 text-white/60" />, "Помощь", () => setCurrentScreen("help"))}
-                  {renderMenuItem(<Info className="w-5 h-5 text-white/60" />, "О приложении", () => setCurrentScreen("about"))}
+                <p className="text-sm text-muted-foreground mb-2 px-1">Поддержка</p>
+                <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                  {renderMenuItem(<HelpCircle className="w-5 h-5 text-muted-foreground" />, "Помощь", () => setCurrentScreen("help"))}
+                  {renderMenuItem(<Info className="w-5 h-5 text-muted-foreground" />, "О приложении", () => setCurrentScreen("about"))}
                 </div>
               </div>
 
               {/* Logout */}
               <div className="px-4 mt-6">
-                <button 
+                <Button 
+                  variant="destructive"
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-colors"
+                  className="w-full gap-3"
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-medium">Выйти</span>
-                </button>
+                </Button>
               </div>
             </div>
           </>
@@ -331,12 +334,7 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Aurora Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/80 to-slate-900">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/25 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl animate-pulse delay-500" />
-      </div>
+      <SubtleGradientBackground />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col safe-area-top safe-area-bottom">
