@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
-import { SettingsDrawer } from "@/components/profile/SettingsDrawer";
 import { FollowersSheet } from "@/components/profile/FollowersSheet";
 import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
@@ -42,7 +41,7 @@ export function ProfilePage() {
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [showPostEditor, setShowPostEditor] = useState(false);
   const [showStoryEditor, setShowStoryEditor] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
 
@@ -132,7 +131,7 @@ export function ProfilePage() {
             {profile.verified && <VerifiedBadge size="md" />}
           </div>
           <button 
-            onClick={() => setShowSettings(true)}
+            onClick={() => navigate('/settings')}
             className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
           >
             <Settings className="w-5 h-5 text-white" />
@@ -375,11 +374,6 @@ export function ProfilePage() {
         onClose={() => setShowStoryEditor(false)} 
       />
 
-      {/* Settings Drawer */}
-      <SettingsDrawer 
-        isOpen={showSettings} 
-        onClose={() => setShowSettings(false)} 
-      />
 
       {/* Followers Sheet */}
       {user && (

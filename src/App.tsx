@@ -38,6 +38,7 @@ const PostDetailPage = lazy(() => import("@/pages/PostDetailPage").then(m => ({ 
 const AuthPage = lazy(() => import("@/pages/AuthPage").then(m => ({ default: m.AuthPage })));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const DevPanelPage = lazy(() => import("@/pages/DevPanelPage"));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then(m => ({ default: m.CommandPalette })));
 
 // Loading fallback component
@@ -106,6 +107,11 @@ const App = () => (
                     <Route path="/profile/edit" element={
                       <Suspense fallback={<PageLoader />}>
                         <EditProfilePage />
+                      </Suspense>
+                    } />
+                    <Route path="/settings" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <SettingsPage />
                       </Suspense>
                     } />
                     <Route path="/user/:username" element={
