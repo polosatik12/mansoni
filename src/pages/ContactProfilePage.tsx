@@ -42,6 +42,7 @@ export function ContactProfilePage() {
   const [galleryType, setGalleryType] = useState<'photos' | 'files' | 'links' | 'voice' | null>(null);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   // Hydrate from navigation state immediately
   useEffect(() => {
@@ -122,6 +123,27 @@ export function ContactProfilePage() {
 
     fetchMediaStats();
   }, [state?.conversationId]);
+
+  // Check if user is blocked
+  useEffect(() => {
+    if (!userId) return;
+    
+    const checkBlocked = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
+      
+      const { data } = await supabase
+        .from('blocked_users')
+        .select('id')
+        .eq('blocker_id', user.user.id)
+        .eq('blocked_id', userId)
+        .maybeSingle();
+      
+      setIsBlocked(!!data);
+    };
+    
+    checkBlocked();
+  }, [userId]);
 
   const getOnlineStatus = () => {
     if (!profile?.last_seen_at) return 'был(а) недавно';
@@ -297,13 +319,38 @@ export function ContactProfilePage() {
             </button>
           </div>
 
-          {/* Block User */}
+          {/* Block/Unblock User */}
           <button 
-            onClick={() => setShowBlockModal(true)}
-            className="w-full flex items-center gap-4 p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 hover:bg-white/15 transition-colors"
+            onClick={async () => {
+              if (isBlocked) {
+                // Unblock
+                setIsBlocking(true);
+                try {
+                  const { data: user } = await supabase.auth.getUser();
+                  if (user.user) {
+                    await supabase
+                      .from('blocked_users')
+                      .delete()
+                      .eq('blocker_id', user.user.id)
+                      .eq('blocked_id', userId);
+                    setIsBlocked(false);
+                  }
+                } catch (err) {
+                  console.error('Error unblocking user:', err);
+                } finally {
+                  setIsBlocking(false);
+                }
+              } else {
+                setShowBlockModal(true);
+              }
+            }}
+            disabled={isBlocking}
+            className="w-full flex items-center gap-4 p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 hover:bg-white/15 transition-colors disabled:opacity-50"
           >
-            <Ban className="w-5 h-5 text-red-400" />
-            <span className="text-red-400">Заблокировать</span>
+            <Ban className={`w-5 h-5 ${isBlocked ? 'text-green-400' : 'text-red-400'}`} />
+            <span className={isBlocked ? 'text-green-400' : 'text-red-400'}>
+              {isBlocking ? 'Подождите...' : isBlocked ? 'Разблокировать' : 'Заблокировать'}
+            </span>
           </button>
         </div>
 
@@ -360,13 +407,16 @@ export function ContactProfilePage() {
                   if (!userId) return;
                   setIsBlocking(true);
                   try {
-                    const { error } = await supabase
-                      .from('blocked_users')
-                      .insert({ blocker_id: (await supabase.auth.getUser()).data.user?.id, blocked_id: userId });
-                    
-                    if (!error) {
-                      setShowBlockModal(false);
-                      navigate(-1);
+                    const { data: user } = await supabase.auth.getUser();
+                    if (user.user) {
+                      const { error } = await supabase
+                        .from('blocked_users')
+                        .insert({ blocker_id: user.user.id, blocked_id: userId });
+                      
+                      if (!error) {
+                        setIsBlocked(true);
+                        setShowBlockModal(false);
+                      }
                     }
                   } catch (err) {
                     console.error('Error blocking user:', err);
