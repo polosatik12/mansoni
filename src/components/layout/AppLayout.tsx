@@ -22,31 +22,6 @@ export function AppLayout() {
         overflow: 'hidden',
       }}
     >
-      {/* Apple-style aurora gradient background for light mode */}
-      {!isReelsPage && (
-        <div className="absolute inset-0 dark:hidden overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
-          {/* Base gradient - more vibrant */}
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-200/90 via-fuchsia-100/70 to-orange-100/50" />
-          
-          {/* Aurora orbs - larger and more vibrant */}
-          <div 
-            className="absolute -top-20 -left-20 w-[500px] h-[500px] rounded-full blur-[100px]"
-            style={{ background: 'radial-gradient(circle, rgba(167, 139, 250, 0.6) 0%, transparent 60%)' }}
-          />
-          <div 
-            className="absolute top-40 -right-20 w-[400px] h-[400px] rounded-full blur-[80px]"
-            style={{ background: 'radial-gradient(circle, rgba(236, 72, 153, 0.5) 0%, transparent 60%)' }}
-          />
-          <div 
-            className="absolute top-[60%] left-10 w-[350px] h-[350px] rounded-full blur-[90px]"
-            style={{ background: 'radial-gradient(circle, rgba(139, 92, 246, 0.55) 0%, transparent 60%)' }}
-          />
-          <div 
-            className="absolute bottom-0 right-0 w-[450px] h-[450px] rounded-full blur-[100px]"
-            style={{ background: 'radial-gradient(circle, rgba(251, 146, 60, 0.4) 0%, transparent 60%)' }}
-          />
-        </div>
-      )}
 
       <ScrollContainerProvider value={mainRef}>
         <main 
