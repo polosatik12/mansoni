@@ -16,16 +16,20 @@ const filters: { id: ContentFilter; label: string }[] = [
 
 export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
   return (
-    <div className="flex items-center gap-1 px-4 py-2 overflow-x-auto scrollbar-hide">
+    <div className="flex items-center gap-4 px-4 py-2 overflow-x-auto scrollbar-hide">
       {filters.map((f) => (
         <button
           key={f.id}
           onClick={() => onFilterChange(f.id)}
           className={cn(
-            "px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200",
-            filter === f.id
-              ? "text-foreground dark:text-primary-foreground bg-black/10 dark:bg-primary"
-              : "text-foreground/50 dark:text-muted-foreground hover:text-foreground/70"
+            "relative py-1 text-sm font-medium whitespace-nowrap transition-all duration-200",
+            "text-foreground/55 hover:text-foreground/75",
+            "dark:text-muted-foreground dark:hover:text-foreground/80",
+            filter === f.id && [
+              "text-foreground dark:text-foreground",
+              "after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px]",
+              "after:bg-foreground/25 dark:after:bg-foreground/30 after:rounded-full",
+            ]
           )}
         >
           {f.label}
