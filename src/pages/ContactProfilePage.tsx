@@ -193,7 +193,21 @@ export function ContactProfilePage() {
         {/* Header with close button */}
         <div className="flex items-center justify-end px-4 py-3 pt-safe">
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              // Navigate back to conversation if we have conversationId, otherwise go back
+              if (state?.conversationId) {
+                navigate('/chats', { 
+                  state: { 
+                    conversationId: state.conversationId,
+                    otherUserId: userId,
+                    otherDisplayName: profile?.display_name,
+                    otherAvatarUrl: profile?.avatar_url
+                  } 
+                });
+              } else {
+                navigate(-1);
+              }
+            }}
             className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center"
           >
             <X className="w-5 h-5 text-white" />
@@ -220,7 +234,20 @@ export function ContactProfilePage() {
           {/* Action Buttons */}
           <div className="flex items-center gap-3 mb-8">
             <button 
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                if (state?.conversationId) {
+                  navigate('/chats', { 
+                    state: { 
+                      conversationId: state.conversationId,
+                      otherUserId: userId,
+                      otherDisplayName: profile?.display_name,
+                      otherAvatarUrl: profile?.avatar_url
+                    } 
+                  });
+                } else {
+                  navigate(-1);
+                }
+              }}
               className="flex flex-col items-center gap-1.5"
             >
               <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
