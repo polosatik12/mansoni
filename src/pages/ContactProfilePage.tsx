@@ -301,10 +301,6 @@ export function ContactProfilePage() {
             </div>
           </div>
 
-          {/* Add Contact Button */}
-          <button className="w-full bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-4 text-left hover:bg-white/15 transition-colors">
-            <span className="text-[#6ab3f3] font-medium">ДОБАВИТЬ КОНТАКТ</span>
-          </button>
 
           {/* Media Stats Card - Only show sections with content */}
           {(mediaStats.photos > 0 || mediaStats.files > 0 || mediaStats.links > 0 || mediaStats.voiceMessages > 0 || mediaStats.commonGroups > 0) && (
