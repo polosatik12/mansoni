@@ -325,7 +325,7 @@ export function ContactProfilePage() {
               Заблокировать {profile?.display_name || 'пользователя'}
             </h2>
             <p className="text-white/70 text-sm mb-6">
-              Запретить {profile?.display_name || 'пользователю'} писать Вам сообщения и звонить через Telegram?
+              Запретить {profile?.display_name || 'пользователю'} писать Вам сообщения и звонить через Mansoni?
             </p>
             
             <div className="flex items-center justify-end gap-3">
