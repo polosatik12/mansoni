@@ -8,8 +8,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Liquid Glass Light Theme - soft gradient background */
-    --background: 220 30% 96%;
+    /* Clean white light theme */
+    --background: 0 0% 100%;
     --foreground: 222 47% 11%;
 
     /* Frosted glass cards */
