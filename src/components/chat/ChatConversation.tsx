@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, X, Play, Pause, Check, CheckCheck, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useChat";
@@ -31,6 +32,7 @@ interface ChatConversationProps {
 }
 
 export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup, totalUnreadCount, onRefetch }: ChatConversationProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
   const { markConversationRead } = useMarkConversationRead();
@@ -268,12 +270,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               </button>
             )}
             
-            {/* Avatar */}
-            <img
-              src={chatAvatar}
-              alt={chatName}
-              className="w-10 h-10 rounded-full object-cover bg-[#6ab3f3] ml-1"
-            />
+            {/* Avatar - clickable to open contact profile */}
+            <button
+              onClick={() => navigate(`/contact/${otherUserId}`, { state: { name: chatName, avatar: chatAvatar } })}
+              className="ml-1"
+            >
+              <img
+                src={chatAvatar}
+                alt={chatName}
+                className="w-10 h-10 rounded-full object-cover bg-[#6ab3f3]"
+              />
+            </button>
           </div>
         </div>
         

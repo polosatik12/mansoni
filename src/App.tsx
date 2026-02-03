@@ -27,6 +27,7 @@ const ChatsPage = lazy(() => import("@/pages/ChatsPage").then(m => ({ default: m
 const ProfilePage = lazy(() => import("@/pages/ProfilePage").then(m => ({ default: m.ProfilePage })));
 const EditProfilePage = lazy(() => import("@/pages/EditProfilePage").then(m => ({ default: m.EditProfilePage })));
 const UserProfilePage = lazy(() => import("@/pages/UserProfilePage").then(m => ({ default: m.UserProfilePage })));
+const ContactProfilePage = lazy(() => import("@/pages/ContactProfilePage").then(m => ({ default: m.ContactProfilePage })));
 const ReelsPage = lazy(() => import("@/pages/ReelsPage").then(m => ({ default: m.ReelsPage })));
 const RealEstatePage = lazy(() => import("@/pages/RealEstatePage").then(m => ({ default: m.RealEstatePage })));
 const PropertyDetailPage = lazy(() => import("@/pages/PropertyDetailPage").then(m => ({ default: m.PropertyDetailPage })));
@@ -110,6 +111,11 @@ const App = () => (
                     <Route path="/user/:username" element={
                       <Suspense fallback={<PageLoader />}>
                         <UserProfilePage />
+                      </Suspense>
+                    } />
+                    <Route path="/contact/:userId" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <ContactProfilePage />
                       </Suspense>
                     } />
                     <Route path="/realestate" element={
