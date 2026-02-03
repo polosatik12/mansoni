@@ -434,10 +434,13 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const showAvatar = !isOwn && (!prevMessage || prevMessage.sender_id !== message.sender_id);
           const showSenderName = isGroup && !isOwn && showAvatar;
 
+          // Hide message if it's currently shown in context menu
+          const isInContextMenu = contextMenuMessage?.id === message.id;
+
           return (
             <div
               key={message.id}
-              className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"}`}
+              className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""}`}
             >
               {/* Avatar for incoming messages */}
               {!isOwn && (
