@@ -290,6 +290,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     toast.success(`Реакция ${emoji} добавлена`);
   };
 
+  const handleMessageReply = (messageId: string) => {
+    // TODO: Implement reply functionality
+    toast.info("Функция ответа в разработке");
+  };
+
+  const handleMessageForward = (messageId: string) => {
+    // TODO: Implement forward functionality
+    toast.info("Функция пересылки в разработке");
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
       {/* Header - Telegram dark style */}
@@ -755,6 +765,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           onDelete={handleMessageDelete}
           onPin={handleMessagePin}
           onReaction={handleMessageReaction}
+          onReply={handleMessageReply}
+          onForward={handleMessageForward}
         >
           {/* Render the focused message preview */}
           <div
