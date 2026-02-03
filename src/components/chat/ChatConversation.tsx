@@ -246,13 +246,13 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
-      {/* Header - Telegram style centered */}
+      {/* Header - Telegram style with avatar on left */}
       <div className="flex-shrink-0 bg-[#17212b] safe-area-top">
         <div className="flex items-center px-2 py-2">
-          {/* Back button with unread count */}
+          {/* Back button */}
           <button 
             onClick={onBack} 
-            className="flex items-center gap-1 px-2 py-1 text-[#6ab3f3] hover:bg-white/5 rounded-lg transition-colors"
+            className="flex items-center gap-1 p-2 text-[#6ab3f3] hover:bg-white/5 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             {totalUnreadCount && totalUnreadCount > 0 ? (
@@ -260,19 +260,29 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             ) : null}
           </button>
           
-          {/* Center - Chat info */}
-          <div className="flex-1 flex flex-col items-center justify-center min-w-0">
-            <h2 className="font-semibold text-white text-base truncate max-w-[200px]">{chatName}</h2>
-            <p className={`text-xs ${lastSeenStatus === 'онлайн' ? 'text-emerald-400' : 'text-[#6ab3f3]'}`}>
-              {isGroup 
-                ? `${participantCount || 0} участник${participantCount === 1 ? '' : participantCount && participantCount < 5 ? 'а' : 'ов'}`
-                : lastSeenStatus
-              }
-            </p>
-          </div>
+          {/* Avatar + Name + Status - clickable to profile */}
+          <button
+            onClick={() => navigate(`/contact/${otherUserId}`, { state: { name: chatName, avatar: chatAvatar, conversationId } })}
+            className="flex items-center gap-3 flex-1 min-w-0 hover:bg-white/5 rounded-lg px-2 py-1 transition-colors"
+          >
+            <img
+              src={chatAvatar}
+              alt={chatName}
+              className="w-10 h-10 rounded-full object-cover bg-[#6ab3f3] flex-shrink-0"
+            />
+            <div className="flex flex-col items-start min-w-0">
+              <h2 className="font-semibold text-white text-base truncate max-w-[180px]">{chatName}</h2>
+              <p className={`text-xs ${lastSeenStatus === 'онлайн' ? 'text-emerald-400' : 'text-[#6ab3f3]'}`}>
+                {isGroup 
+                  ? `${participantCount || 0} участник${participantCount === 1 ? '' : participantCount && participantCount < 5 ? 'а' : 'ов'}`
+                  : lastSeenStatus
+                }
+              </p>
+            </div>
+          </button>
           
-          {/* Right - Call buttons + Avatar */}
-          <div className="flex items-center gap-1">
+          {/* Right - Call buttons */}
+          <div className="flex items-center">
             {/* Audio call button */}
             {!isGroup && (
               <button
@@ -294,18 +304,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 <Video className="w-5 h-5 text-[#6ab3f3]" />
               </button>
             )}
-            
-            {/* Avatar - clickable to open contact profile */}
-            <button
-              onClick={() => navigate(`/contact/${otherUserId}`, { state: { name: chatName, avatar: chatAvatar, conversationId } })}
-              className="ml-1"
-            >
-              <img
-                src={chatAvatar}
-                alt={chatName}
-                className="w-10 h-10 rounded-full object-cover bg-[#6ab3f3]"
-              />
-            </button>
           </div>
         </div>
         
