@@ -70,6 +70,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recordingMimeTypeRef = useRef<string | null>(null);
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isHoldingRef = useRef(false);
 
@@ -170,7 +171,21 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+
+      // Pick best supported audio container/codec (iOS Safari often can't play webm/opus)
+      const preferredTypes = [
+        "audio/mp4",
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+      ];
+
+      const mimeType = preferredTypes.find((t) => MediaRecorder.isTypeSupported(t)) || "";
+      recordingMimeTypeRef.current = mimeType || null;
+
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -194,10 +209,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     
     return new Promise<void>((resolve) => {
       mediaRecorderRef.current!.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const mimeType = recordingMimeTypeRef.current || mediaRecorderRef.current?.mimeType || "audio/webm";
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         
         if (duration > 0) {
-          const file = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+          const ext = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
+          const file = new File([audioBlob], `voice_${Date.now()}.${ext}`, { type: mimeType });
           await sendMediaMessage(file, 'voice', duration);
         }
 
