@@ -95,7 +95,7 @@ export function ProfilePage() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white/50 dark:bg-card backdrop-blur-md sticky top-0 z-20">
+      <div className="flex items-center justify-between px-4 py-3 bg-white/80 dark:bg-card backdrop-blur-md sticky top-0 z-20">
         <div className="w-10" />
         <div className="flex items-center gap-1.5">
           <h1 className="font-semibold text-lg">{profile.display_name || 'Профиль'}</h1>
@@ -107,7 +107,7 @@ export function ProfilePage() {
       </div>
 
       {/* Profile Info Row */}
-      <div className="px-4 py-4 bg-white/50 dark:bg-transparent backdrop-blur-md">
+      <div className="px-4 py-4 bg-white/80 dark:bg-transparent backdrop-blur-md">
         <div className="flex items-start gap-4">
           {/* Avatar - clickable to open create menu */}
           <button 
@@ -184,7 +184,7 @@ export function ProfilePage() {
       </div>
 
       {/* Content Tabs */}
-      <div className="border-t border-white/30 dark:border-border sticky top-[52px] z-10 bg-white/50 dark:bg-card backdrop-blur-md">
+      <div className="border-t border-white/30 dark:border-border sticky top-[52px] z-10 bg-white/80 dark:bg-card backdrop-blur-md">
         <div className="flex">
           {tabs.map((tab) => {
             const Icon = tab.icon;
