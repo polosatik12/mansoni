@@ -1,4 +1,4 @@
-import { MessageCircle, Bell, BellOff, Phone, Image, FileText, Link2, Mic, Users, Ban, X, User, Loader2, QrCode } from "lucide-react";
+import { MessageCircle, Bell, BellOff, Phone, Video, Image, FileText, Link2, Mic, Users, Ban, X, User, Loader2, QrCode } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -143,6 +143,12 @@ export function ContactProfilePage() {
     }
   };
 
+  const handleVideoCall = async () => {
+    if (userId && state?.conversationId) {
+      await startCall(userId, state.conversationId, 'video');
+    }
+  };
+
   if (loading && !profile) {
     return (
       <div className="min-h-screen bg-[#17212b] flex items-center justify-center">
@@ -219,6 +225,16 @@ export function ContactProfilePage() {
                 <Phone className="w-6 h-6 text-white" />
               </div>
               <span className="text-xs text-white/70">Звонок</span>
+            </button>
+
+            <button 
+              onClick={handleVideoCall}
+              className="flex flex-col items-center gap-1.5"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <Video className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs text-white/70">Видео</span>
             </button>
           </div>
         </div>
