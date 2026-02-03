@@ -246,8 +246,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
-      {/* Header - Telegram style with avatar on left */}
-      <div className="flex-shrink-0 bg-[#17212b] safe-area-top">
+      {/* Header - Liquid glass style with avatar on left */}
+      <div className="flex-shrink-0 bg-black/30 backdrop-blur-xl border-b border-white/10 safe-area-top">
         <div className="flex items-center px-2 py-2">
           {/* Back button */}
           <button 
@@ -309,7 +309,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         
         {/* Add participants banner for groups */}
         {isGroup && (
-          <button className="w-full py-2.5 px-4 bg-[#1e2c3a] flex items-center justify-center gap-2 border-t border-white/5">
+          <button className="w-full py-2.5 px-4 bg-white/5 flex items-center justify-center gap-2 border-t border-white/10">
             <span className="text-[#6ab3f3] text-sm font-medium">Добавить участников</span>
             <span className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center">
               <X className="w-3 h-3 text-white/40" />
@@ -517,7 +517,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       </div>
 
       {/* Input area - Telegram style */}
-      <div className="flex-shrink-0 bg-[#17212b] safe-area-bottom">
+      <div className="flex-shrink-0 bg-black/30 backdrop-blur-xl border-t border-white/10 safe-area-bottom">
         {/* Emoji Picker - Telegram style inline above input */}
         <EmojiStickerPicker
           open={showEmojiPicker}
@@ -533,12 +533,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             <div className="flex items-center gap-2">
               <button 
                 onClick={cancelRecording}
-                className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
+                className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0"
               >
                 <X className="w-5 h-5 text-white/70" />
               </button>
               
-              <div className="flex-1 flex items-center gap-3 h-11 px-4 rounded-full bg-[#242f3d]">
+              <div className="flex-1 flex items-center gap-3 h-11 px-4 rounded-full bg-white/10 backdrop-blur-md">
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
                 <span className="text-sm text-white/70">
                   Запись... {formatTime(recordingTime)}
@@ -557,7 +557,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               {/* Attachment button */}
               <button 
                 onClick={() => setShowAttachmentSheet(true)}
-                className="w-11 h-11 rounded-full bg-[#242f3d] flex items-center justify-center shrink-0"
+                className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0"
               >
                 <Paperclip className="w-5 h-5 text-white/60 rotate-45" />
               </button>
@@ -571,7 +571,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   onFocus={() => setShowEmojiPicker(false)}
-                  className="w-full h-11 px-4 pr-12 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
+                  className="w-full h-11 px-4 pr-12 rounded-full bg-white/10 backdrop-blur-md text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all border border-white/10"
                 />
                 {/* Emoji button inside input */}
                 <button
