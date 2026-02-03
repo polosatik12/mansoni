@@ -24,32 +24,27 @@ export function AppLayout() {
     >
       {/* Apple-style aurora gradient background for light mode */}
       {!isReelsPage && (
-        <div className="absolute inset-0 dark:hidden overflow-hidden pointer-events-none">
-          {/* Base gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-violet-100/80 via-fuchsia-50/50 to-rose-50/30" />
+        <div className="absolute inset-0 dark:hidden overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+          {/* Base gradient - more vibrant */}
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-200/90 via-fuchsia-100/70 to-orange-100/50" />
           
-          {/* Aurora orbs */}
+          {/* Aurora orbs - larger and more vibrant */}
           <div 
-            className="absolute -top-32 -left-32 w-96 h-96 rounded-full opacity-60 blur-3xl"
-            style={{ background: 'radial-gradient(circle, rgba(167, 139, 250, 0.4) 0%, transparent 70%)' }}
+            className="absolute -top-20 -left-20 w-[500px] h-[500px] rounded-full blur-[100px]"
+            style={{ background: 'radial-gradient(circle, rgba(167, 139, 250, 0.6) 0%, transparent 60%)' }}
           />
           <div 
-            className="absolute top-1/4 -right-32 w-80 h-80 rounded-full opacity-50 blur-3xl"
-            style={{ background: 'radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, transparent 70%)' }}
+            className="absolute top-40 -right-20 w-[400px] h-[400px] rounded-full blur-[80px]"
+            style={{ background: 'radial-gradient(circle, rgba(236, 72, 153, 0.5) 0%, transparent 60%)' }}
           />
           <div 
-            className="absolute bottom-1/3 left-1/4 w-72 h-72 rounded-full opacity-40 blur-3xl"
-            style={{ background: 'radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 70%)' }}
+            className="absolute top-[60%] left-10 w-[350px] h-[350px] rounded-full blur-[90px]"
+            style={{ background: 'radial-gradient(circle, rgba(139, 92, 246, 0.55) 0%, transparent 60%)' }}
           />
           <div 
-            className="absolute -bottom-20 right-1/3 w-96 h-96 rounded-full opacity-30 blur-3xl"
-            style={{ background: 'radial-gradient(circle, rgba(251, 146, 60, 0.25) 0%, transparent 70%)' }}
+            className="absolute bottom-0 right-0 w-[450px] h-[450px] rounded-full blur-[100px]"
+            style={{ background: 'radial-gradient(circle, rgba(251, 146, 60, 0.4) 0%, transparent 60%)' }}
           />
-          
-          {/* Subtle noise texture overlay */}
-          <div className="absolute inset-0 opacity-[0.015]" style={{ 
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-          }} />
         </div>
       )}
 
