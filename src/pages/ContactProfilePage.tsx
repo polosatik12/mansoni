@@ -40,6 +40,8 @@ export function ContactProfilePage() {
     commonGroups: 0,
   });
   const [galleryType, setGalleryType] = useState<'photos' | 'files' | 'links' | 'voice' | null>(null);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
 
   // Hydrate from navigation state immediately
   useEffect(() => {
@@ -280,7 +282,10 @@ export function ContactProfilePage() {
           </div>
 
           {/* Block User */}
-          <button className="w-full flex items-center gap-4 p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 hover:bg-white/15 transition-colors">
+          <button 
+            onClick={() => setShowBlockModal(true)}
+            className="w-full flex items-center gap-4 p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 hover:bg-white/15 transition-colors"
+          >
             <Ban className="w-5 h-5 text-red-400" />
             <span className="text-red-400">Заблокировать</span>
           </button>
@@ -304,6 +309,60 @@ export function ContactProfilePage() {
         }
         type={galleryType || 'photos'}
       />
+
+      {/* Block Confirmation Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowBlockModal(false)}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-[#1e2c3a]/95 backdrop-blur-xl rounded-2xl border border-white/20 p-6 max-w-sm w-full shadow-2xl">
+            <h2 className="text-lg font-semibold text-white mb-3">
+              Заблокировать {profile?.display_name || 'пользователя'}
+            </h2>
+            <p className="text-white/70 text-sm mb-6">
+              Запретить {profile?.display_name || 'пользователю'} писать Вам сообщения и звонить через Telegram?
+            </p>
+            
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowBlockModal(false)}
+                className="px-4 py-2 text-white/70 hover:text-white transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={async () => {
+                  if (!userId) return;
+                  setIsBlocking(true);
+                  try {
+                    const { error } = await supabase
+                      .from('blocked_users')
+                      .insert({ blocker_id: (await supabase.auth.getUser()).data.user?.id, blocked_id: userId });
+                    
+                    if (!error) {
+                      setShowBlockModal(false);
+                      navigate(-1);
+                    }
+                  } catch (err) {
+                    console.error('Error blocking user:', err);
+                  } finally {
+                    setIsBlocking(false);
+                  }
+                }}
+                disabled={isBlocking}
+                className="px-4 py-2 text-red-400 hover:text-red-300 font-medium transition-colors disabled:opacity-50"
+              >
+                {isBlocking ? 'Блокировка...' : 'Заблокировать'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
