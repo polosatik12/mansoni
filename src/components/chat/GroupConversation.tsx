@@ -94,8 +94,8 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
-      {/* Header - Liquid glass style */}
-      <div className="flex-shrink-0 bg-black/40 backdrop-blur-2xl border-b border-white/20 shadow-lg shadow-black/20 safe-area-top">
+      {/* Header - Telegram dark style */}
+      <div className="flex-shrink-0 bg-[#17212b] safe-area-top">
         <div className="flex items-center px-2 py-2">
           {/* Back button */}
           <button 
@@ -142,7 +142,7 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
         </div>
         
         {/* Add participants banner */}
-        <button className="w-full py-2.5 px-4 bg-white/10 flex items-center justify-center gap-2 border-t border-white/20">
+        <button className="w-full py-2.5 px-4 bg-[#1e2c3a] flex items-center justify-center gap-2 border-t border-white/5">
           <span className="text-[#6ab3f3] text-sm font-medium">Добавить участников</span>
           <span className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center">
             <X className="w-3 h-3 text-white/40" />
@@ -231,7 +231,7 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 px-2 py-2 bg-black/40 backdrop-blur-2xl border-t border-white/20 shadow-lg shadow-black/20 safe-area-bottom">
+      <div className="flex-shrink-0 px-2 py-2 bg-[#17212b] safe-area-bottom">
         <div className="flex items-center gap-2">
           {/* Input field */}
           <div className="flex-1">
@@ -241,7 +241,7 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              className="w-full h-11 px-4 rounded-full bg-white/15 backdrop-blur-xl text-white placeholder:text-white/50 outline-none focus:ring-2 focus:ring-white/30 transition-all border border-white/20"
+              className="w-full h-11 px-4 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
             />
           </div>
           
