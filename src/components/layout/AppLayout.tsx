@@ -15,7 +15,9 @@ export function AppLayout() {
     <div 
       className={cn(
         "h-full flex flex-col safe-area-top safe-area-left safe-area-right",
-        isReelsPage ? "bg-black" : "bg-background"
+        isReelsPage 
+          ? "bg-black" 
+          : "bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:bg-background dark:from-background dark:via-background dark:to-background"
       )}
       style={{ 
         position: 'relative',

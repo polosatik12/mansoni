@@ -8,35 +8,47 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    /* Liquid Glass Light Theme - soft gradient background */
+    --background: 220 30% 96%;
     --foreground: 222 47% 11%;
 
+    /* Frosted glass cards */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 60%;
+    /* Vibrant blue primary */
+    --primary: 217 91% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
+    /* Soft secondary with slight blue tint */
+    --secondary: 220 20% 94%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted with glass effect */
+    --muted: 220 20% 94%;
+    --muted-foreground: 220 12% 50%;
 
-    --accent: 217 91% 60%;
+    /* Accent matching primary */
+    --accent: 217 91% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    /* Softer borders for glass effect */
+    --border: 220 20% 88%;
+    --input: 220 20% 90%;
+    --ring: 217 91% 55%;
 
     --radius: 0.75rem;
+
+    /* Glass effect tokens */
+    --glass-bg: 0 0% 100% / 0.7;
+    --glass-border: 0 0% 100% / 0.5;
+    --glass-shadow: 220 60% 50% / 0.08;
 
     /* Custom tokens for app */
     --success: 142 76% 36%;
