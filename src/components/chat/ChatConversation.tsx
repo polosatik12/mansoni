@@ -786,20 +786,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           onReaction={handleMessageReaction}
           onReply={handleMessageReply}
           onForward={handleMessageForward}
-        >
-          {/* Render the focused message preview */}
-          <div
-            className={`max-w-[280px] rounded-2xl px-3 py-2 ${
-              contextMenuMessage.isOwn
-                ? "bg-[#2b5278] text-white rounded-br-sm"
-                : "bg-[#182533] text-white rounded-bl-sm"
-            }`}
-          >
-            <p className="text-[15px] leading-[1.4] whitespace-pre-wrap line-clamp-4">
-              {contextMenuMessage.content}
-            </p>
-          </div>
-        </MessageContextMenu>
+        />
       )}
 
     </div>
