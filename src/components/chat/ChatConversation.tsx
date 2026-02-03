@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, X, Play, Pause, Check, CheckCheck, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -220,22 +220,51 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     setIsRecording(false);
   };
 
-  const toggleVoicePlay = (messageId: string, mediaUrl?: string) => {
+  const toggleVoicePlay = async (messageId: string, mediaUrl?: string) => {
     if (playingVoice === messageId) {
       audioRef.current?.pause();
       setPlayingVoice(null);
     } else {
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current = null;
       }
       if (mediaUrl) {
-        audioRef.current = new Audio(mediaUrl);
-        audioRef.current.onended = () => setPlayingVoice(null);
-        audioRef.current.play();
-        setPlayingVoice(messageId);
+        try {
+          const audio = new Audio(mediaUrl);
+          audio.onended = () => setPlayingVoice(null);
+          audio.onerror = (e) => {
+            console.error('Audio playback error:', e);
+            setPlayingVoice(null);
+          };
+          await audio.play();
+          audioRef.current = audio;
+          setPlayingVoice(messageId);
+        } catch (error) {
+          console.error('Failed to play audio:', error);
+          setPlayingVoice(null);
+        }
       }
     }
   };
+
+  // Generate stable waveform heights for voice messages
+  const getWaveformHeights = useMemo(() => {
+    const cache: Record<string, number[]> = {};
+    return (messageId: string): number[] => {
+      if (!cache[messageId]) {
+        // Use message ID as seed for consistent random heights
+        const heights: number[] = [];
+        let seed = messageId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        for (let i = 0; i < 20; i++) {
+          seed = (seed * 1103515245 + 12345) % 2147483648;
+          heights.push((seed % 16) + 8);
+        }
+        cache[messageId] = heights;
+      }
+      return cache[messageId];
+    };
+  }, []);
 
   const handleVideoRecord = async (videoBlob: Blob, duration: number) => {
     const file = new File([videoBlob], `video_circle_${Date.now()}.webm`, { type: 'video/webm' });
@@ -571,11 +600,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                       </Button>
                       <div className="flex-1">
                         <div className="h-6 flex items-center gap-0.5">
-                          {Array.from({ length: 20 }).map((_, i) => (
+                          {getWaveformHeights(message.id).map((height, i) => (
                             <div
                               key={i}
-                              className="w-1 rounded-full bg-white/30"
-                              style={{ height: `${Math.random() * 16 + 8}px` }}
+                              className={`w-1 rounded-full transition-all duration-150 ${
+                                playingVoice === message.id ? 'bg-white/70' : 'bg-white/30'
+                              }`}
+                              style={{ 
+                                height: `${height}px`,
+                                animationDelay: playingVoice === message.id ? `${i * 50}ms` : undefined
+                              }}
                             />
                           ))}
                         </div>
