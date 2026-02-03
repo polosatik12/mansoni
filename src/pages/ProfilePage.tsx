@@ -139,91 +139,81 @@ export function ProfilePage() {
           </button>
         </div>
 
-        {/* Profile Section */}
-        <div className="flex flex-col items-center px-4 pt-4 pb-6">
-          {/* Glass Avatar */}
-          <button 
-            className="relative mb-4"
-            onClick={() => setShowCreateMenu(true)}
-          >
-            <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
-            <Avatar className="w-24 h-24 border-2 border-white/30 relative">
-              <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
-              <AvatarFallback className="bg-violet-500/80 backdrop-blur-xl text-white text-3xl font-medium">
-                {profile.display_name?.charAt(0)?.toUpperCase() || <User className="w-10 h-10" />}
-              </AvatarFallback>
-            </Avatar>
-            {/* Add story button */}
-            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary border-2 border-white/30 flex items-center justify-center shadow-lg">
-              <Plus className="w-4 h-4 text-primary-foreground" />
-            </div>
-          </button>
+        {/* Profile Info Row */}
+        <div className="px-4 py-4">
+          <div className="flex items-start gap-4">
+            {/* Avatar - clickable to open create menu */}
+            <button 
+              className="relative cursor-pointer"
+              onClick={() => setShowCreateMenu(true)}
+            >
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
+              <Avatar className="w-20 h-20 border-2 border-white/30 relative">
+                <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
+                <AvatarFallback className="bg-violet-500/80 backdrop-blur-xl text-white text-2xl font-medium">
+                  {profile.display_name?.charAt(0)?.toUpperCase() || <User className="w-8 h-8" />}
+                </AvatarFallback>
+              </Avatar>
+              {/* Add story button */}
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-white/30 flex items-center justify-center">
+                <Plus className="w-4 h-4 text-primary-foreground" />
+              </div>
+            </button>
 
-          {/* Name & Verified */}
-          <div className="flex items-center gap-1.5 mb-1">
-            <h1 className="text-xl font-semibold text-white">{profile.display_name || 'Пользователь'}</h1>
-            {profile.verified && <VerifiedBadge size="md" />}
+            {/* Stats */}
+            <div className="flex-1">
+              <div className="flex items-center gap-1.5 mb-2">
+                <h1 className="text-lg font-semibold text-white">{profile.display_name || 'Пользователь'}</h1>
+                {profile.verified && <VerifiedBadge size="md" />}
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="font-bold text-white">{profile.stats.postsCount}</p>
+                  <p className="text-xs text-white/60">публикации</p>
+                </div>
+                <button 
+                  className="text-center"
+                  onClick={() => setShowFollowers(true)}
+                >
+                  <p className="font-bold text-white">{formatNumber(profile.stats.followersCount)}</p>
+                  <p className="text-xs text-white/60">подписчики</p>
+                </button>
+                <button 
+                  className="text-center"
+                  onClick={() => setShowFollowing(true)}
+                >
+                  <p className="font-bold text-white">{formatNumber(profile.stats.followingCount)}</p>
+                  <p className="text-xs text-white/60">подписки</p>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Bio */}
-          {profile.bio && (
-            <p className="text-sm text-white/70 text-center max-w-[280px] mb-2">{profile.bio}</p>
-          )}
-          {profile.website && (
-            <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
-               target="_blank" 
-               rel="noopener noreferrer"
-               className="text-sm text-[#6ab3f3] font-medium mb-4">
-              {profile.website}
-            </a>
-          )}
-
-          {/* Stats */}
-          <div className="flex items-center gap-8 mb-6">
-            <div className="text-center">
-              <p className="font-bold text-white text-lg">{profile.stats.postsCount}</p>
-              <p className="text-xs text-white/60">публикации</p>
-            </div>
-            <button 
-              className="text-center"
-              onClick={() => setShowFollowers(true)}
-            >
-              <p className="font-bold text-white text-lg">{formatNumber(profile.stats.followersCount)}</p>
-              <p className="text-xs text-white/60">подписчики</p>
-            </button>
-            <button 
-              className="text-center"
-              onClick={() => setShowFollowing(true)}
-            >
-              <p className="font-bold text-white text-lg">{formatNumber(profile.stats.followingCount)}</p>
-              <p className="text-xs text-white/60">подписки</p>
-            </button>
+          <div className="mt-3">
+            {profile.bio && (
+              <p className="text-sm text-white/80">{profile.bio}</p>
+            )}
+            {profile.website && (
+              <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 className="text-sm text-[#6ab3f3] font-medium">
+                {profile.website}
+              </a>
+            )}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 mt-4">
             <button 
               onClick={() => navigate('/profile/edit')}
-              className="flex flex-col items-center gap-1.5"
+              className="flex-1 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
             >
-              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <Edit3 className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xs text-white/70">Изменить</span>
+              Редактировать профиль
             </button>
-
-            <button className="flex flex-col items-center gap-1.5">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <Share2 className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xs text-white/70">Поделиться</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-1.5">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <QrCode className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xs text-white/70">QR-код</span>
+            <button className="flex-1 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
+              Поделиться профилем
             </button>
           </div>
         </div>
