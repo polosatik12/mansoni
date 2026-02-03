@@ -1,9 +1,9 @@
 import { useState, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Loader2 } from "lucide-react";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { StoryViewer } from "@/components/feed/StoryViewer";
 import { cn } from "@/lib/utils";
-
 // Animation constants
 const EXPANDED_AVATAR_SIZE = 64;
 const COLLAPSED_AVATAR_SIZE = 32;
@@ -274,12 +274,15 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
         })}
       </div>
 
-      <StoryViewer
-        usersWithStories={usersWithStories}
-        initialUserIndex={selectedUserIndex}
-        isOpen={viewerOpen}
-        onClose={() => setViewerOpen(false)}
-      />
+      {viewerOpen && createPortal(
+        <StoryViewer
+          usersWithStories={usersWithStories}
+          initialUserIndex={selectedUserIndex}
+          isOpen={viewerOpen}
+          onClose={() => setViewerOpen(false)}
+        />,
+        document.body
+      )}
     </>
   );
 }
