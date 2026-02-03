@@ -16,7 +16,7 @@ const filters: { id: ContentFilter; label: string }[] = [
 
 export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
   return (
-    <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto scrollbar-hide bg-white/30 dark:bg-transparent backdrop-blur-sm">
+    <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
       {filters.map((f) => (
         <button
           key={f.id}
@@ -24,8 +24,8 @@ export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
           className={cn(
             "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200",
             filter === f.id
-              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-              : "bg-white/70 dark:bg-secondary backdrop-blur-sm text-secondary-foreground hover:bg-white/90 dark:hover:bg-secondary/80 border border-white/50 dark:border-transparent shadow-sm"
+              ? "bg-foreground/90 dark:bg-primary text-background dark:text-primary-foreground"
+              : "bg-white/30 dark:bg-secondary/50 backdrop-blur-sm text-foreground/70 dark:text-secondary-foreground hover:bg-white/50 dark:hover:bg-secondary/80"
           )}
         >
           {f.label}
