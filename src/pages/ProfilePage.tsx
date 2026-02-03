@@ -205,14 +205,14 @@ export function ProfilePage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-1.5 mt-4">
+          <div className="flex items-center gap-2 mt-4">
             <button 
               onClick={() => navigate('/profile/edit')}
-              className="flex-1 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
+              className="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
             >
               Редактировать профиль
             </button>
-            <button className="flex-1 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
+            <button className="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
               Поделиться профилем
             </button>
           </div>
