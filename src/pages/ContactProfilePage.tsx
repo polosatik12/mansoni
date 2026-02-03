@@ -4,6 +4,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useVideoCallContext } from "@/contexts/VideoCallContext";
+import { MediaGallerySheet } from "@/components/chat/MediaGallerySheet";
 
 interface ContactProfile {
   display_name: string | null;
@@ -38,6 +39,7 @@ export function ContactProfilePage() {
     voiceMessages: 0,
     commonGroups: 0,
   });
+  const [galleryType, setGalleryType] = useState<'photos' | 'files' | 'links' | 'voice' | null>(null);
 
   // Hydrate from navigation state immediately
   useEffect(() => {
@@ -216,22 +218,34 @@ export function ContactProfilePage() {
 
           {/* Media Stats Card */}
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10">
+            <button 
+              onClick={() => setGalleryType('photos')}
+              className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10"
+            >
               <Image className="w-5 h-5 text-white/60" />
               <span className="text-white flex-1 text-left">{mediaStats.photos} фотографий</span>
             </button>
             
-            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10">
+            <button 
+              onClick={() => setGalleryType('files')}
+              className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10"
+            >
               <FileText className="w-5 h-5 text-white/60" />
               <span className="text-white flex-1 text-left">{mediaStats.files} файлов</span>
             </button>
             
-            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10">
+            <button 
+              onClick={() => setGalleryType('links')}
+              className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10"
+            >
               <Link2 className="w-5 h-5 text-white/60" />
               <span className="text-white flex-1 text-left">{mediaStats.links} ссылок</span>
             </button>
             
-            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10">
+            <button 
+              onClick={() => setGalleryType('voice')}
+              className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10"
+            >
               <Mic className="w-5 h-5 text-white/60" />
               <span className="text-white flex-1 text-left">{mediaStats.voiceMessages} голосовых сообщений</span>
             </button>
@@ -252,6 +266,21 @@ export function ContactProfilePage() {
         {/* Bottom padding */}
         <div className="h-8" />
       </div>
+
+      {/* Media Gallery Sheet */}
+      <MediaGallerySheet
+        isOpen={galleryType !== null}
+        onClose={() => setGalleryType(null)}
+        conversationId={state?.conversationId}
+        userId={userId}
+        title={
+          galleryType === 'photos' ? 'Фотографии' :
+          galleryType === 'files' ? 'Файлы' :
+          galleryType === 'links' ? 'Ссылки' :
+          'Голосовые сообщения'
+        }
+        type={galleryType || 'photos'}
+      />
     </div>
   );
 }
