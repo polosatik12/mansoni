@@ -381,16 +381,16 @@ export function ChatsPage() {
             </div>
           )}
 
-          {/* Unified list sorted by activity */}
-          <div className="space-y-2">
-          {combinedItems.map((item) => {
+          {/* Unified list sorted by activity - Telegram style */}
+          <div className="divide-y divide-white/10">
+          {combinedItems.map((item, index) => {
             if (item.kind === "channel") {
               const channel = item.channel;
               return (
                 <div
                   key={`channel-${channel.id}`}
                   onClick={() => setSelectedChannel(channel)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer"
                 >
                   <div className="relative flex-shrink-0">
                     <GradientAvatar
@@ -400,27 +400,27 @@ export function ChatsPage() {
                       size="md"
                     />
                     {channel.is_member && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-white/20">
-                        <Check className="w-3 h-3 text-primary-foreground" />
+                      <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-slate-900">
+                        <Check className="w-3 h-3 text-white" />
                       </div>
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="font-semibold text-white truncate flex items-center gap-1">
+                      <span className="font-medium text-white truncate flex items-center gap-1.5">
                         <Megaphone className="w-4 h-4 text-cyan-400 flex-shrink-0" />
                         {channel.name}
                       </span>
-                      <span className="text-xs text-white/50 flex-shrink-0 ml-2">
+                      <span className="text-xs text-white/40 flex-shrink-0 ml-2">
                         {formatTime(channel.last_message?.created_at || channel.updated_at)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-white/60 truncate flex-1">
+                      <p className="text-sm text-white/50 truncate flex-1">
                         {channel.last_message?.content || channel.description || `${channel.member_count} подписчиков`}
                       </p>
-                      <div className="flex items-center gap-1 text-xs text-white/50 ml-2">
+                      <div className="flex items-center gap-1 text-xs text-white/40 ml-2">
                         <Users className="w-3 h-3" />
                         {channel.member_count}
                       </div>
@@ -436,7 +436,7 @@ export function ChatsPage() {
                 <div
                   key={`group-${group.id}`}
                   onClick={() => setSelectedGroup(group)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer"
                 >
                   <div className="relative flex-shrink-0">
                     <GradientAvatar
@@ -445,21 +445,21 @@ export function ChatsPage() {
                       avatarUrl={group.avatar_url}
                       size="md"
                     />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-white/20">
-                      <Users className="w-3 h-3 text-primary-foreground" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-slate-900">
+                      <Users className="w-3 h-3 text-white" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="font-semibold text-white truncate flex items-center gap-1">
+                      <span className="font-medium text-white truncate">
                         {group.name}
                       </span>
-                      <span className="text-xs text-white/50 flex-shrink-0 ml-2">
+                      <span className="text-xs text-white/40 flex-shrink-0 ml-2">
                         {formatTime(group.last_message?.created_at || group.updated_at)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-white/60 truncate flex-1">
+                      <p className="text-sm text-white/50 truncate flex-1">
                         {group.last_message?.content || `${group.member_count} участников`}
                       </p>
                     </div>
@@ -477,7 +477,7 @@ export function ChatsPage() {
               <div
                 key={`dm-${conv.id}`}
                 onClick={() => setSelectedConversation(conv)}
-                className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer"
               >
                 <div className="relative flex-shrink-0">
                   <GradientAvatar
@@ -490,10 +490,10 @@ export function ChatsPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-semibold text-white truncate">
+                    <span className="font-medium text-white truncate">
                       {other.display_name || "Пользователь"}
                     </span>
-                    <span className="text-xs text-white/50 flex-shrink-0 ml-2">
+                    <span className="text-xs text-white/40 flex-shrink-0 ml-2">
                       {formatTime(lastMessage?.created_at || conv.updated_at)}
                     </span>
                   </div>
@@ -503,9 +503,9 @@ export function ChatsPage() {
                         <CheckCheck className="w-4 h-4 text-cyan-400 flex-shrink-0" />
                       )}
                       {isMyMessage && !lastMessage?.is_read && (
-                        <Check className="w-4 h-4 text-white/50 flex-shrink-0" />
+                        <Check className="w-4 h-4 text-white/40 flex-shrink-0" />
                       )}
-                      <p className="text-sm text-white/60 truncate">
+                      <p className="text-sm text-white/50 truncate">
                         {lastMessage?.media_type === 'video_circle' 
                           ? '🎥 Видеосообщение'
                           : lastMessage?.media_type === 'voice'
@@ -517,7 +517,7 @@ export function ChatsPage() {
                     </div>
 
                     {conv.unread_count > 0 && (
-                      <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px] flex-shrink-0 ml-2 bg-cyan-500 text-white">
+                      <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px] flex-shrink-0 ml-2 bg-cyan-500 text-white border-0">
                         {conv.unread_count}
                       </Badge>
                     )}
