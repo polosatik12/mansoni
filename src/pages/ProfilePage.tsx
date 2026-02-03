@@ -7,7 +7,6 @@ import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
 import { FollowersSheet } from "@/components/profile/FollowersSheet";
-import { SubtleGradientBackground } from "@/components/layout/SubtleGradientBackground";
 import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
@@ -72,9 +71,14 @@ export function ProfilePage() {
   if (profileLoading) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        <SubtleGradientBackground />
+        {/* Aurora Background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900/90 to-slate-800">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/35 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/30 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/35 rounded-full blur-3xl animate-pulse delay-500" />
+        </div>
         <div className="relative z-10 min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <Loader2 className="w-8 h-8 animate-spin text-white/60" />
         </div>
       </div>
     );
@@ -83,20 +87,26 @@ export function ProfilePage() {
   if (!user || !profile) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        <SubtleGradientBackground />
+        {/* Aurora Background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900/90 to-slate-800">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/35 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/30 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/35 rounded-full blur-3xl animate-pulse delay-500" />
+        </div>
         <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">
-          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-            <User className="w-10 h-10 text-muted-foreground" />
+          <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
+            <User className="w-10 h-10 text-white/60" />
           </div>
-          <h2 className="text-lg font-semibold text-foreground mb-2">Войдите в аккаунт</h2>
-          <p className="text-muted-foreground text-center mb-4">
+          <h2 className="text-lg font-semibold text-white mb-2">Войдите в аккаунт</h2>
+          <p className="text-white/60 text-center mb-4">
             Чтобы просматривать свой профиль, войдите в аккаунт
           </p>
-          <Button 
+          <button 
             onClick={() => window.location.href = '/auth'}
+            className="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 text-white font-medium hover:bg-white/20 transition-colors"
           >
             Войти
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -104,7 +114,12 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <SubtleGradientBackground />
+      {/* Aurora Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900/90 to-slate-800">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/35 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/30 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/35 rounded-full blur-3xl animate-pulse delay-500" />
+      </div>
 
       {/* Content */}
       <div className="relative z-10 min-h-screen pb-24">
@@ -112,14 +127,14 @@ export function ProfilePage() {
         <div className="flex items-center justify-between px-4 py-3 pt-safe">
           <div className="w-10" />
           <div className="flex items-center gap-1.5">
-            <h1 className="font-semibold text-lg text-foreground">{profile.display_name || 'Профиль'}</h1>
+            <h1 className="font-semibold text-lg text-white">{profile.display_name || 'Профиль'}</h1>
             {profile.verified && <VerifiedBadge size="md" />}
           </div>
           <button 
             onClick={() => navigate('/settings')}
-            className="w-10 h-10 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
           >
-            <Settings className="w-5 h-5 text-foreground" />
+            <Settings className="w-5 h-5 text-white" />
           </button>
         </div>
 
@@ -131,14 +146,15 @@ export function ProfilePage() {
               className="relative cursor-pointer"
               onClick={() => setShowCreateMenu(true)}
             >
-              <Avatar className="w-20 h-20 border-2 border-border relative">
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
+              <Avatar className="w-20 h-20 border-2 border-white/30 relative">
                 <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
-                <AvatarFallback className="bg-primary/80 text-primary-foreground text-2xl font-medium">
+                <AvatarFallback className="bg-violet-500/80 backdrop-blur-xl text-white text-2xl font-medium">
                   {profile.display_name?.charAt(0)?.toUpperCase() || <User className="w-8 h-8" />}
                 </AvatarFallback>
               </Avatar>
               {/* Add story button */}
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-white/30 flex items-center justify-center">
                 <Plus className="w-4 h-4 text-primary-foreground" />
               </div>
             </button>
@@ -146,27 +162,27 @@ export function ProfilePage() {
             {/* Stats */}
             <div className="flex-1">
               <div className="flex items-center gap-1.5 mb-2">
-                <h1 className="text-lg font-semibold text-foreground">{profile.display_name || 'Пользователь'}</h1>
+                <h1 className="text-lg font-semibold text-white">{profile.display_name || 'Пользователь'}</h1>
                 {profile.verified && <VerifiedBadge size="md" />}
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-center">
-                  <p className="font-bold text-foreground">{profile.stats.postsCount}</p>
-                  <p className="text-xs text-muted-foreground">публикации</p>
+                  <p className="font-bold text-white">{profile.stats.postsCount}</p>
+                  <p className="text-xs text-white/60">публикации</p>
                 </div>
                 <button 
                   className="text-center"
                   onClick={() => setShowFollowers(true)}
                 >
-                  <p className="font-bold text-foreground">{formatNumber(profile.stats.followersCount)}</p>
-                  <p className="text-xs text-muted-foreground">подписчики</p>
+                  <p className="font-bold text-white">{formatNumber(profile.stats.followersCount)}</p>
+                  <p className="text-xs text-white/60">подписчики</p>
                 </button>
                 <button 
                   className="text-center"
                   onClick={() => setShowFollowing(true)}
                 >
-                  <p className="font-bold text-foreground">{formatNumber(profile.stats.followingCount)}</p>
-                  <p className="text-xs text-muted-foreground">подписки</p>
+                  <p className="font-bold text-white">{formatNumber(profile.stats.followingCount)}</p>
+                  <p className="text-xs text-white/60">подписки</p>
                 </button>
               </div>
             </div>
@@ -175,13 +191,13 @@ export function ProfilePage() {
           {/* Bio */}
           <div className="mt-3">
             {profile.bio && (
-              <p className="text-sm text-foreground">{profile.bio}</p>
+              <p className="text-sm text-white/80">{profile.bio}</p>
             )}
             {profile.website && (
               <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
                  target="_blank" 
                  rel="noopener noreferrer"
-                 className="text-sm text-primary font-medium">
+                 className="text-sm text-[#6ab3f3] font-medium">
                 {profile.website}
               </a>
             )}
@@ -189,22 +205,21 @@ export function ProfilePage() {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 mt-4">
-            <Button 
-              variant="outline"
+            <button 
               onClick={() => navigate('/profile/edit')}
-              className="flex-1"
+              className="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
             >
               Редактировать профиль
-            </Button>
-            <Button variant="outline" className="flex-1">
+            </button>
+            <button className="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
               Поделиться профилем
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* Content Tabs */}
         <div className="px-4 mb-3">
-          <div className="bg-muted rounded-2xl p-1 flex">
+          <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-1 flex">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -215,8 +230,8 @@ export function ProfilePage() {
                   className={cn(
                     "flex-1 flex items-center justify-center py-2.5 rounded-xl transition-all",
                     isActive
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-white/20 text-white"
+                      : "text-white/50 hover:text-white/70"
                   )}
                 >
                   <Icon className={cn("w-5 h-5", tab.id === "reels" && "fill-current")} />
@@ -232,7 +247,7 @@ export function ProfilePage() {
             <>
               {postsLoading ? (
                 <div className="p-12 flex justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-8 h-8 animate-spin text-white/60" />
                 </div>
               ) : posts.length > 0 ? (
                 <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden">
@@ -240,7 +255,7 @@ export function ProfilePage() {
                     const imageUrl = getPostImage(post);
                     const isVideo = post.post_media?.[0]?.media_type === 'video';
                     return (
-                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-muted">
+                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10">
                         {imageUrl ? (
                           <img
                             src={imageUrl}
@@ -249,7 +264,7 @@ export function ProfilePage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Grid3X3 className="w-6 h-6 text-muted-foreground" />
+                            <Grid3X3 className="w-6 h-6 text-white/40" />
                           </div>
                         )}
                         {isVideo && (
@@ -269,11 +284,11 @@ export function ProfilePage() {
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                    <Grid3X3 className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                    <Grid3X3 className="w-8 h-8 text-white/60" />
                   </div>
-                  <h3 className="font-semibold text-foreground mb-1">Нет публикаций</h3>
-                  <p className="text-sm text-muted-foreground">Создайте свой первый пост</p>
+                  <h3 className="font-semibold text-white mb-1">Нет публикаций</h3>
+                  <p className="text-sm text-white/60">Создайте свой первый пост</p>
                 </div>
               )}
             </>
@@ -283,14 +298,14 @@ export function ProfilePage() {
             <>
               {savedLoading ? (
                 <div className="p-12 flex justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-8 h-8 animate-spin text-white/60" />
                 </div>
               ) : savedPosts.length > 0 ? (
                 <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden">
                   {savedPosts.map((post: any) => {
                     const imageUrl = post.post_media?.[0]?.media_url;
                     return (
-                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-muted">
+                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10">
                         {imageUrl ? (
                           <img
                             src={imageUrl}
@@ -299,7 +314,7 @@ export function ProfilePage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Bookmark className="w-6 h-6 text-muted-foreground" />
+                            <Bookmark className="w-6 h-6 text-white/40" />
                           </div>
                         )}
                       </div>
@@ -308,11 +323,11 @@ export function ProfilePage() {
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                    <Bookmark className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                    <Bookmark className="w-8 h-8 text-white/60" />
                   </div>
-                  <h3 className="font-semibold text-foreground mb-1">Сохранённое</h3>
-                  <p className="text-sm text-muted-foreground">Сохраняйте понравившиеся публикации</p>
+                  <h3 className="font-semibold text-white mb-1">Сохранённое</h3>
+                  <p className="text-sm text-white/60">Сохраняйте понравившиеся публикации</p>
                 </div>
               )}
             </>
@@ -320,21 +335,21 @@ export function ProfilePage() {
 
           {activeTab === "reels" && (
             <div className="py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                <Play className="w-8 h-8 text-muted-foreground" />
+              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                <Play className="w-8 h-8 text-white/60" />
               </div>
-              <h3 className="font-semibold text-foreground mb-1">Reels</h3>
-              <p className="text-sm text-muted-foreground">Ваши видео Reels</p>
+              <h3 className="font-semibold text-white mb-1">Reels</h3>
+              <p className="text-sm text-white/60">Ваши видео Reels</p>
             </div>
           )}
 
           {activeTab === "tagged" && (
             <div className="py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                <AtSign className="w-8 h-8 text-muted-foreground" />
+              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                <AtSign className="w-8 h-8 text-white/60" />
               </div>
-              <h3 className="font-semibold text-foreground mb-1">Отметки</h3>
-              <p className="text-sm text-muted-foreground">Публикации с вашими отметками</p>
+              <h3 className="font-semibold text-white mb-1">Отметки</h3>
+              <p className="text-sm text-white/60">Публикации с вашими отметками</p>
             </div>
           )}
         </div>
