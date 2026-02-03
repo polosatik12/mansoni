@@ -261,7 +261,7 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
 
               {/* Name - CSS handles transition */}
               <span
-                className="story-name text-xs text-foreground font-medium max-w-16 truncate overflow-hidden mt-1"
+                className="story-name text-xs text-white font-medium max-w-16 truncate overflow-hidden mt-1"
                 style={{
                   opacity: styles.nameOpacity,
                   height: styles.nameOpacity > 0.1 ? '16px' : '0px',
