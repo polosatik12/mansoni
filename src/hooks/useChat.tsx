@@ -287,7 +287,13 @@ export function useMessages(conversationId: string | null) {
           },
           (payload) => {
             const newMessage = payload.new as ChatMessage;
-            setMessages((prev) => [...prev, newMessage]);
+            // Prevent duplicates by checking if message already exists
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === newMessage.id)) {
+                return prev;
+              }
+              return [...prev, newMessage];
+            });
           }
         )
         .subscribe();
