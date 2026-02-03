@@ -366,7 +366,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
       {/* Messages - scrollable with Telegram-style background */}
       <div 
-        className="flex-1 overflow-y-auto p-4 space-y-1 native-scroll"
+        className="flex-1 overflow-y-auto p-4 native-scroll flex flex-col"
         style={{
           backgroundImage: `url(${chatBackground})`,
           backgroundSize: 'cover',
@@ -374,6 +374,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           backgroundAttachment: 'fixed'
         }}
       >
+        {/* Spacer to push messages to bottom */}
+        <div className="flex-1" />
+        
         {loading && (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
@@ -385,6 +388,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             <p className="text-muted-foreground">Начните переписку!</p>
           </div>
         )}
+        
+        <div className="space-y-1">
 
         {messages.map((message, index) => {
           const isOwn = message.sender_id === user?.id;
@@ -564,6 +569,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             </div>
           );
         })}
+        </div>
         <div ref={messagesEndRef} />
       </div>
 
