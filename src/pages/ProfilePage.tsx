@@ -71,7 +71,7 @@ export function ProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -79,7 +79,7 @@ export function ProfilePage() {
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <User className="w-16 h-16 text-muted-foreground mb-4" />
         <h2 className="text-lg font-semibold mb-2">Войдите в аккаунт</h2>
         <p className="text-muted-foreground text-center mb-4">
@@ -93,9 +93,9 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3 bg-white/50 dark:bg-card backdrop-blur-md sticky top-0 z-20">
         <div className="w-10" />
         <div className="flex items-center gap-1.5">
           <h1 className="font-semibold text-lg">{profile.display_name || 'Профиль'}</h1>
@@ -107,7 +107,7 @@ export function ProfilePage() {
       </div>
 
       {/* Profile Info Row */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 bg-white/50 dark:bg-transparent backdrop-blur-md">
         <div className="flex items-start gap-4">
           {/* Avatar - clickable to open create menu */}
           <button 
@@ -184,7 +184,7 @@ export function ProfilePage() {
       </div>
 
       {/* Content Tabs */}
-      <div className="border-t border-border sticky top-0 z-10 bg-card">
+      <div className="border-t border-white/30 dark:border-border sticky top-[52px] z-10 bg-white/50 dark:bg-card backdrop-blur-md">
         <div className="flex">
           {tabs.map((tab) => {
             const Icon = tab.icon;
