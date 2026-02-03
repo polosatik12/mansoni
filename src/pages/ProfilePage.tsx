@@ -184,7 +184,7 @@ export function ProfilePage() {
       </div>
 
       {/* Content Tabs */}
-      <div className="border-t border-white/30 dark:border-border sticky top-[52px] z-10 bg-white/80 dark:bg-card backdrop-blur-md">
+      <div className="sticky top-[52px] z-10 bg-white/90 dark:bg-card backdrop-blur-md">
         <div className="flex">
           {tabs.map((tab) => {
             const Icon = tab.icon;
