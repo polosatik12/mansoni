@@ -278,23 +278,35 @@ html, body, #root {
 }
 
 /* ============================================
-   iOS-STYLE EMOJI PICKER
+   iOS-STYLE EMOJI PICKER - LIGHT THEME
    ============================================ */
 
 .emoji-picker-ios .EmojiPickerReact {
+  --epr-bg-color: #f8f8f8 !important;
+  --epr-category-label-bg-color: #f8f8f8 !important;
+  --epr-hover-bg-color: rgba(0, 0, 0, 0.05) !important;
+  --epr-focus-bg-color: rgba(0, 0, 0, 0.08) !important;
+  --epr-search-input-bg-color: #ebebeb !important;
+  --epr-category-icon-active-color: #007aff !important;
+  --epr-text-color: #1c1c1e !important;
+  --epr-search-input-text-color: #1c1c1e !important;
+  --epr-search-input-placeholder-color: rgba(0, 0, 0, 0.4) !important;
+  --epr-picker-border-color: transparent !important;
+  --epr-category-navigation-button-size: 28px !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* Dark theme override */
+.dark .emoji-picker-ios .EmojiPickerReact {
   --epr-bg-color: #1c1c1e !important;
   --epr-category-label-bg-color: #1c1c1e !important;
   --epr-hover-bg-color: rgba(255, 255, 255, 0.1) !important;
   --epr-focus-bg-color: rgba(255, 255, 255, 0.15) !important;
   --epr-search-input-bg-color: #2c2c2e !important;
-  --epr-category-icon-active-color: #007aff !important;
   --epr-text-color: #ffffff !important;
   --epr-search-input-text-color: #ffffff !important;
   --epr-search-input-placeholder-color: rgba(255, 255, 255, 0.5) !important;
-  --epr-picker-border-color: transparent !important;
-  --epr-category-navigation-button-size: 28px !important;
-  border: none !important;
-  border-radius: 0 !important;
 }
 
 .emoji-picker-ios .EmojiPickerReact .epr-search-container {
@@ -319,10 +331,14 @@ html, body, #root {
 .emoji-picker-ios .EmojiPickerReact .epr-emoji-category-label {
   font-size: 13px !important;
   font-weight: 600 !important;
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(0, 0, 0, 0.5) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
   padding: 8px 12px 4px !important;
+}
+
+.dark .emoji-picker-ios .EmojiPickerReact .epr-emoji-category-label {
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .emoji-picker-ios .EmojiPickerReact .epr-body {
@@ -354,6 +370,10 @@ html, body, #root {
 }
 
 .emoji-picker-ios .EmojiPickerReact::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(0, 0, 0, 0.15) !important;
   border-radius: 4px !important;
+}
+
+.dark .emoji-picker-ios .EmojiPickerReact::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2) !important;
 }
