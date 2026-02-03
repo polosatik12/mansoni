@@ -54,6 +54,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const [lastSeenStatus, setLastSeenStatus] = useState<string>("был(а) недавно");
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -145,6 +146,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     try {
       await sendMessage(inputText);
       setInputText("");
+      // Keep focus on input to prevent keyboard closing on mobile
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
     } catch (error) {
       console.error("[handleSendMessage] error:", error);
       toast.error("Не удалось отправить сообщение");
@@ -557,6 +562,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               {/* Input field */}
               <div className="flex-1 relative">
                 <input
+                  ref={inputRef}
                   type="text"
                   placeholder="Сообщение"
                   value={inputText}
@@ -577,6 +583,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               {/* Send or toggleable Mic button */}
               {inputText.trim() ? (
                 <button
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={handleSendMessage}
                   className="w-11 h-11 rounded-full bg-[#6ab3f3] flex items-center justify-center shrink-0"
                 >
