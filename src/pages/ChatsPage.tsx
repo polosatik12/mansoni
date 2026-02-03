@@ -158,15 +158,21 @@ export function ChatsPage() {
   // Show auth prompt if not logged in
   if (!authLoading && !user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-          <MessageCircle className="w-10 h-10 text-muted-foreground" />
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center relative">
+        {/* Aurora Background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 -z-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-violet-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
-        <h2 className="text-xl font-semibold mb-2">Войдите для доступа к чатам</h2>
-        <p className="text-muted-foreground mb-6">
+        <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
+          <MessageCircle className="w-10 h-10 text-white/60" />
+        </div>
+        <h2 className="text-xl font-semibold mb-2 text-white">Войдите для доступа к чатам</h2>
+        <p className="text-white/60 mb-6">
           Чтобы переписываться и сохранять историю сообщений, необходимо войти в аккаунт
         </p>
-        <Button onClick={() => navigate("/auth")} className="gap-2">
+        <Button onClick={() => navigate("/auth")} className="gap-2 bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20">
           <LogIn className="w-4 h-4" />
           Войти
         </Button>
@@ -255,10 +261,18 @@ export function ChatsPage() {
 
   return (
     <ScrollContainerProvider value={chatListRef}>
-      <div className="h-full flex flex-col overflow-hidden">
+      <div className="h-full flex flex-col overflow-hidden relative">
+        {/* Aurora Background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 -z-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-violet-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+        </div>
+
         {/* Dynamic Header with stories stack/row */}
         <div 
-          className="flex-shrink-0 border-b border-border bg-background overflow-hidden"
+          className="flex-shrink-0 overflow-hidden bg-white/5 backdrop-blur-xl border-b border-white/10"
           style={{ 
             height: headerHeight,
             transition: 'height 0.25s cubic-bezier(0.25, 0.1, 0.25, 1)',
@@ -284,7 +298,7 @@ export function ChatsPage() {
             
             {/* Title - shifts based on expand */}
             <h1 
-              className="text-lg font-semibold absolute left-1/2"
+              className="text-lg font-semibold absolute left-1/2 text-white"
               style={{
                 transform: `translateX(-50%) translateX(${(1 - expandProgress) * 30}px)`,
                 transition: 'transform 0.25s cubic-bezier(0.25, 0.1, 0.25, 1)',
@@ -297,15 +311,15 @@ export function ChatsPage() {
             <div className="flex items-center gap-1">
               <button 
                 onClick={() => setSearchOpen(true)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 transition-colors"
               >
-                <Search className="w-5 h-5 text-foreground" />
+                <Search className="w-5 h-5 text-white" />
               </button>
               <button 
                 onClick={() => setCreateOpen(true)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20 transition-colors"
               >
-                <Plus className="w-5 h-5 text-foreground" />
+                <Plus className="w-5 h-5 text-white" />
               </button>
             </div>
           </div>
@@ -330,23 +344,23 @@ export function ChatsPage() {
         {/* Scrollable list - unified view */}
         <div 
           ref={chatListRef}
-          className="flex-1 overflow-y-auto overscroll-contain"
+          className="flex-1 overflow-y-auto overscroll-contain px-3 py-2"
         >
           {/* Loading */}
           {(chatsLoading || channelsLoading || groupsLoading) && (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/50" />
             </div>
           )}
 
           {/* Error */}
           {!chatsLoading && chatsError && (
-            <div className="px-4 py-3">
-              <div className="rounded-xl border border-border bg-card p-4">
-                <p className="font-semibold text-foreground">Не удалось загрузить чаты</p>
-                <p className="mt-1 text-sm text-muted-foreground break-words">{chatsError}</p>
+            <div className="py-3">
+              <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 p-4">
+                <p className="font-semibold text-white">Не удалось загрузить чаты</p>
+                <p className="mt-1 text-sm text-white/60 break-words">{chatsError}</p>
                 <div className="mt-3">
-                  <Button variant="outline" size="sm" onClick={() => refetch()}>Повторить</Button>
+                  <Button variant="outline" size="sm" onClick={() => refetch()} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Повторить</Button>
                 </div>
               </div>
             </div>
@@ -356,17 +370,18 @@ export function ChatsPage() {
           {!chatsLoading && !groupsLoading && !channelsLoading && !chatsError && 
            conversations.length === 0 && groups.length === 0 && channels.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <MessageCircle className="w-8 h-8 text-muted-foreground" />
+              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
+                <MessageCircle className="w-8 h-8 text-white/60" />
               </div>
-              <h3 className="font-semibold mb-1">Нет чатов</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-semibold mb-1 text-white">Нет чатов</h3>
+              <p className="text-sm text-white/60">
                 Найдите пользователей через поиск или создайте группу/канал
               </p>
             </div>
           )}
 
           {/* Unified list sorted by activity */}
+          <div className="space-y-2">
           {combinedItems.map((item) => {
             if (item.kind === "channel") {
               const channel = item.channel;
@@ -374,16 +389,16 @@ export function ChatsPage() {
                 <div
                   key={`channel-${channel.id}`}
                   onClick={() => setSelectedChannel(channel)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
                 >
                   <div className="relative flex-shrink-0">
                     <img
                       src={channel.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${channel.id}`}
                       alt={channel.name}
-                      className="w-14 h-14 rounded-full object-cover bg-muted"
+                      className="w-14 h-14 rounded-full object-cover bg-white/10 border border-white/20"
                     />
                     {channel.is_member && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-background">
+                      <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-white/20">
                         <Check className="w-3 h-3 text-primary-foreground" />
                       </div>
                     )}
@@ -391,19 +406,19 @@ export function ChatsPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="font-semibold text-foreground truncate flex items-center gap-1">
-                        <Megaphone className="w-4 h-4 text-primary flex-shrink-0" />
+                      <span className="font-semibold text-white truncate flex items-center gap-1">
+                        <Megaphone className="w-4 h-4 text-cyan-400 flex-shrink-0" />
                         {channel.name}
                       </span>
-                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                      <span className="text-xs text-white/50 flex-shrink-0 ml-2">
                         {formatTime(channel.last_message?.created_at || channel.updated_at)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground truncate flex-1">
+                      <p className="text-sm text-white/60 truncate flex-1">
                         {channel.last_message?.content || channel.description || `${channel.member_count} подписчиков`}
                       </p>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
+                      <div className="flex items-center gap-1 text-xs text-white/50 ml-2">
                         <Users className="w-3 h-3" />
                         {channel.member_count}
                       </div>
@@ -419,29 +434,29 @@ export function ChatsPage() {
                 <div
                   key={`group-${group.id}`}
                   onClick={() => setSelectedGroup(group)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
                 >
                   <div className="relative flex-shrink-0">
                     <img
                       src={group.avatar_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${group.id}`}
                       alt={group.name}
-                      className="w-14 h-14 rounded-full object-cover bg-muted"
+                      className="w-14 h-14 rounded-full object-cover bg-white/10 border border-white/20"
                     />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-background">
+                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center border-2 border-white/20">
                       <Users className="w-3 h-3 text-primary-foreground" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <span className="font-semibold text-foreground truncate flex items-center gap-1">
+                      <span className="font-semibold text-white truncate flex items-center gap-1">
                         {group.name}
                       </span>
-                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                      <span className="text-xs text-white/50 flex-shrink-0 ml-2">
                         {formatTime(group.last_message?.created_at || group.updated_at)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground truncate flex-1">
+                      <p className="text-sm text-white/60 truncate flex-1">
                         {group.last_message?.content || `${group.member_count} участников`}
                       </p>
                     </div>
@@ -459,34 +474,34 @@ export function ChatsPage() {
               <div
                 key={`dm-${conv.id}`}
                 onClick={() => setSelectedConversation(conv)}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted border-b border-border/50"
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 transition-colors cursor-pointer active:bg-white/20"
               >
                 <div className="relative flex-shrink-0">
                   <img
                     src={other.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.id}`}
                     alt={other.display_name || "User"}
-                    className="w-14 h-14 rounded-full object-cover bg-muted"
+                    className="w-14 h-14 rounded-full object-cover bg-white/10 border border-white/20"
                   />
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-semibold text-foreground truncate">
+                    <span className="font-semibold text-white truncate">
                       {other.display_name || "Пользователь"}
                     </span>
-                    <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                    <span className="text-xs text-white/50 flex-shrink-0 ml-2">
                       {formatTime(lastMessage?.created_at || conv.updated_at)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 flex-1 min-w-0">
                       {isMyMessage && lastMessage?.is_read && (
-                        <CheckCheck className="w-4 h-4 text-primary flex-shrink-0" />
+                        <CheckCheck className="w-4 h-4 text-cyan-400 flex-shrink-0" />
                       )}
                       {isMyMessage && !lastMessage?.is_read && (
-                        <Check className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <Check className="w-4 h-4 text-white/50 flex-shrink-0" />
                       )}
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-sm text-white/60 truncate">
                         {lastMessage?.media_type === 'video_circle' 
                           ? '🎥 Видеосообщение'
                           : lastMessage?.media_type === 'voice'
@@ -498,7 +513,7 @@ export function ChatsPage() {
                     </div>
 
                     {conv.unread_count > 0 && (
-                      <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px] flex-shrink-0 ml-2 bg-primary">
+                      <Badge className="h-5 min-w-5 rounded-full px-1.5 text-[11px] flex-shrink-0 ml-2 bg-cyan-500 text-white">
                         {conv.unread_count}
                       </Badge>
                     )}
@@ -507,6 +522,7 @@ export function ChatsPage() {
               </div>
             );
           })}
+          </div>
         </div>
 
         {/* Search Sheet */}
