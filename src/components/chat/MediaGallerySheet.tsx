@@ -76,116 +76,103 @@ export function MediaGallerySheet({ isOpen, onClose, conversationId, userId, tit
     const fetchMedia = async () => {
       setLoading(true);
       try {
-        // For demo purposes, generate mock data based on type
-        // In production, this would fetch from Supabase with proper filters
-        const mockData: GroupedMedia[] = [];
+        let mediaFilter: string[] = [];
         
         if (type === 'photos') {
+          mediaFilter = ['image'];
+        } else if (type === 'files') {
+          mediaFilter = ['file'];
+        } else if (type === 'voice') {
+          mediaFilter = ['voice'];
+        }
+        
+        // For photos, files, voice - fetch from messages table
+        if (type !== 'links') {
           const { data: messages } = await supabase
             .from('messages')
-            .select('id, media_url, media_type, created_at')
+            .select('id, media_url, media_type, created_at, content, duration_seconds, sender_id')
             .eq('conversation_id', conversationId)
             .not('media_url', 'is', null)
-            .in('media_type', ['image'])
+            .in('media_type', mediaFilter)
             .order('created_at', { ascending: false });
 
           if (messages && messages.length > 0) {
+            // Get sender profiles for voice messages
+            const senderIds = [...new Set(messages.map(m => m.sender_id))];
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('user_id, display_name')
+              .in('user_id', senderIds);
+            
+            const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) || []);
+            
             const grouped: Record<string, MediaItem[]> = {};
             messages.forEach(msg => {
               const date = new Date(msg.created_at);
               const monthKey = format(date, 'LLLL yyyy', { locale: ru });
               const capitalizedMonth = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
               if (!grouped[capitalizedMonth]) grouped[capitalizedMonth] = [];
+              
+              // Extract filename from URL for files
+              const filename = msg.media_url ? msg.media_url.split('/').pop() || 'file' : 'file';
+              
               grouped[capitalizedMonth].push({
                 id: msg.id,
                 url: msg.media_url!,
-                type: 'image',
+                type: type === 'photos' ? 'image' : type === 'files' ? 'file' : 'voice',
                 created_at: msg.created_at,
+                filename: type === 'files' ? filename : undefined,
+                duration: type === 'voice' ? (msg.duration_seconds || 0) : undefined,
+                sender_name: type === 'voice' ? (profileMap.get(msg.sender_id) || 'Пользователь') : undefined,
               });
             });
             setMedia(Object.entries(grouped).map(([month, items]) => ({ month, items })));
           } else {
             setMedia([]);
           }
-        } else if (type === 'files') {
-          // Mock file data
-          mockData.push({
-            month: 'Январь',
-            items: [
-              { id: '1', url: '#', type: 'file', created_at: '2025-01-06T21:33:00', filename: 'СТОК 19.05.2025.xls', filesize: 3.8 * 1024 * 1024 },
-            ]
-          }, {
-            month: 'Декабрь',
-            items: [
-              { id: '2', url: '#', type: 'file', created_at: '2024-12-20T20:56:00', filename: 'IMG_4670.HEIC', filesize: 2.2 * 1024 * 1024 },
-              { id: '3', url: '#', type: 'file', created_at: '2024-12-20T20:56:00', filename: 'IMG_4671.HEIC', filesize: 2.4 * 1024 * 1024 },
-            ]
-          }, {
-            month: 'Сентябрь 2025 г.',
-            items: [
-              { id: '4', url: '#', type: 'file', created_at: '2025-09-02T04:54:00', filename: '68S9BC_1H-VKO-AER.pdf', filesize: 154.8 * 1024 },
-            ]
-          });
-          setMedia(mockData);
-        } else if (type === 'voice') {
-          // Mock voice data
-          mockData.push({
-            month: 'Февраль',
-            items: [
-              { id: '1', url: '#', type: 'voice', created_at: '2025-02-03T03:14:00', sender_name: 'Руха', duration: 10 },
-              { id: '2', url: '#', type: 'voice', created_at: '2025-02-02T19:25:00', sender_name: 'Руха', duration: 10 },
-              { id: '3', url: '#', type: 'voice', created_at: '2025-02-02T19:22:00', sender_name: 'Руха', duration: 24 },
-              { id: '4', url: '#', type: 'voice', created_at: '2025-02-02T19:22:00', sender_name: 'Руха', duration: 14 },
-            ]
-          }, {
-            month: 'Январь',
-            items: [
-              { id: '5', url: '#', type: 'voice', created_at: '2025-01-27T04:45:00', sender_name: 'Александр', duration: 2 },
-              { id: '6', url: '#', type: 'voice', created_at: '2025-01-27T04:45:00', sender_name: 'Александр', duration: 26 },
-              { id: '7', url: '#', type: 'voice', created_at: '2025-01-25T20:52:00', sender_name: 'Руха', duration: 59 },
-              { id: '8', url: '#', type: 'voice', created_at: '2025-01-25T20:50:00', sender_name: 'Александр', duration: 11 },
-              { id: '9', url: '#', type: 'voice', created_at: '2025-01-25T20:49:00', sender_name: 'Александр', duration: 5 },
-              { id: '10', url: '#', type: 'voice', created_at: '2025-01-25T20:48:00', sender_name: 'Руха', duration: 11 },
-            ]
-          });
-          setMedia(mockData);
-        } else if (type === 'links') {
-          // Mock links data
-          mockData.push({
-            month: '3 февраля',
-            items: [
-              { id: '1', url: '#', type: 'link', created_at: '2025-02-03T00:00:00', link_title: '5302000503431763', link_description: '02/31' },
-            ]
-          }, {
-            month: '7 января',
-            items: [
-              { id: '2', url: '#', type: 'link', created_at: '2025-01-07T00:00:00', link_title: '⚡ Массовое отравление кониной произошло в Подмосковье — восемь человек, включая детей, заразились ботулизмом, — СМИ...', link_description: '🔥 Topor Live. Подписаться', link_preview: 'T' },
-            ]
-          }, {
-            month: '6 января',
-            items: [
-              { id: '3', url: 'https://spusk.ru/', type: 'link', created_at: '2025-01-06T00:00:00', link_title: '"Лата Трэк"- Многофункциональный Спорти...', link_description: 'Комплекс, расположенный на западе Москвы в районе Крылатское, предназначенный как для зимнего, так и для летнего спортивно-развлека...' },
-            ]
-          }, {
-            month: '3 января',
-            items: [
-              { id: '4', url: '#', type: 'link', created_at: '2025-01-03T00:00:00', link_title: '❗ Что изменилось для россиян с 1 января:', link_description: '◾ НДС вырастет с 20% до 22%, льготная ставка...\nКлуб директоров', link_preview: 'T' },
-            ]
-          }, {
-            month: '1 января',
-            items: [
-              { id: '5', url: '#', type: 'link', created_at: '2025-01-01T00:00:00', link_title: 'В Парке Горького открыли долгожданную набережную', link_description: '...\nМосква 360°', link_preview: 'T' },
-            ]
-          }, {
-            month: '29 ноября',
-            items: [
-              { id: '6', url: 'https://www.youtube.com/watch?v=JNU7VhFVjj8...', type: 'link', created_at: '2024-11-29T00:00:00', link_title: '⚡КТО ПОСМЕЛ ОТЛУПИТЬ ПУПСИКА?! 😡 (Сб...', link_description: 'Самое выгодное пополнение Roblox - https://bit.ly/4glHgVT\nПромокод: KARINA5 даст скидку до 5%!...' },
-            ]
-          });
-          setMedia(mockData);
+        } else {
+          // For links - find messages containing URLs
+          const { data: messages } = await supabase
+            .from('messages')
+            .select('id, content, created_at')
+            .eq('conversation_id', conversationId)
+            .order('created_at', { ascending: false });
+
+          if (messages && messages.length > 0) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const linkMessages = messages.filter(m => m.content && urlRegex.test(m.content));
+            
+            if (linkMessages.length > 0) {
+              const grouped: Record<string, MediaItem[]> = {};
+              linkMessages.forEach(msg => {
+                const date = new Date(msg.created_at);
+                const monthKey = format(date, 'd MMMM', { locale: ru });
+                if (!grouped[monthKey]) grouped[monthKey] = [];
+                
+                // Extract URL from content
+                const urls = msg.content.match(urlRegex) || [];
+                urls.forEach((url, idx) => {
+                  grouped[monthKey].push({
+                    id: `${msg.id}-${idx}`,
+                    url: url,
+                    type: 'link',
+                    created_at: msg.created_at,
+                    link_title: url.length > 50 ? url.substring(0, 50) + '...' : url,
+                    link_description: msg.content.replace(url, '').trim() || undefined,
+                  });
+                });
+              });
+              setMedia(Object.entries(grouped).map(([month, items]) => ({ month, items })));
+            } else {
+              setMedia([]);
+            }
+          } else {
+            setMedia([]);
+          }
         }
       } catch (err) {
         console.error('Error fetching media:', err);
+        setMedia([]);
       } finally {
         setLoading(false);
       }
