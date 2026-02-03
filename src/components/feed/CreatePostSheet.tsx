@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Image, MapPin, Users, Smile, MoreHorizontal, ChevronDown, Loader2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,7 @@ import { usePostActions } from "@/hooks/usePosts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SimpleMediaEditor } from "@/components/editor";
+import { useChatOpen } from "@/contexts/ChatOpenContext";
 
 interface CreatePostSheetProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface CreatePostSheetProps {
 export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
   const { user } = useAuth();
   const { createPost } = usePostActions();
+  const { setIsCreatingContent } = useChatOpen();
   const [text, setText] = useState("");
   const [selectedImages, setSelectedImages] = useState<{ file: File; preview: string; edited?: boolean }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -24,6 +26,12 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
   // Editor state
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  // Hide bottom nav when creating content
+  useEffect(() => {
+    setIsCreatingContent(isOpen);
+    return () => setIsCreatingContent(false);
+  }, [isOpen, setIsCreatingContent]);
 
   const handleAddPhoto = () => {
     fileInputRef.current?.click();
