@@ -1,45 +1,43 @@
-import { Grid3X3, Bookmark, Play, MessageCircle, Phone, Video, Mail, User, Loader2, ChevronLeft } from "lucide-react";
+import { MessageCircle, Bell, BellOff, Phone, MoreHorizontal, Image, FileText, Link2, Mic, Users, Ban, X, User, Loader2, QrCode } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { supabase } from "@/integrations/supabase/client";
-
-const tabs = [
-  { id: "posts", label: "Публикации", icon: Grid3X3 },
-  { id: "saved", label: "Медиа", icon: Bookmark },
-];
-
-function formatNumber(num: number): string {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-  }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  }
-  return num.toString();
-}
+import { useVideoCallContext } from "@/contexts/VideoCallContext";
 
 interface ContactProfile {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
   verified: boolean | null;
+  last_seen_at: string | null;
+}
+
+interface MediaStats {
+  photos: number;
+  files: number;
+  links: number;
+  voiceMessages: number;
+  commonGroups: number;
 }
 
 export function ContactProfilePage() {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const location = useLocation();
-  const state = location.state as { name?: string; avatar?: string } | null;
+  const state = location.state as { name?: string; avatar?: string; conversationId?: string } | null;
+  const { startCall } = useVideoCallContext();
   
   const [profile, setProfile] = useState<ContactProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("posts");
-  const [posts, setPosts] = useState<any[]>([]);
-  const [postsLoading, setPostsLoading] = useState(false);
-  const [stats, setStats] = useState({ postsCount: 0, followersCount: 0, followingCount: 0 });
+  const [isMuted, setIsMuted] = useState(false);
+  const [mediaStats, setMediaStats] = useState<MediaStats>({
+    photos: 0,
+    files: 0,
+    links: 0,
+    voiceMessages: 0,
+    commonGroups: 0,
+  });
 
   // Hydrate from navigation state immediately
   useEffect(() => {
@@ -49,6 +47,7 @@ export function ContactProfilePage() {
         avatar_url: state.avatar || null,
         bio: null,
         verified: null,
+        last_seen_at: null,
       });
     }
   }, [state]);
@@ -60,9 +59,9 @@ export function ContactProfilePage() {
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('profiles')
-          .select('display_name, avatar_url, bio, verified')
+          .select('display_name, avatar_url, bio, verified, last_seen_at')
           .eq('user_id', userId)
           .limit(1)
           .maybeSingle();
@@ -70,18 +69,15 @@ export function ContactProfilePage() {
         if (data) {
           setProfile(data);
         }
-        
-        // Fetch stats
-        const [postsRes, followersRes, followingRes] = await Promise.all([
-          supabase.from('posts').select('id', { count: 'exact', head: true }).eq('author_id', userId),
-          supabase.from('followers').select('id', { count: 'exact', head: true }).eq('following_id', userId),
-          supabase.from('followers').select('id', { count: 'exact', head: true }).eq('follower_id', userId),
-        ]);
-        
-        setStats({
-          postsCount: postsRes.count || 0,
-          followersCount: followersRes.count || 0,
-          followingCount: followingRes.count || 0,
+
+        // Fetch media stats from conversation
+        // For now using mock data - in real app would query messages table
+        setMediaStats({
+          photos: Math.floor(Math.random() * 20),
+          files: Math.floor(Math.random() * 10),
+          links: Math.floor(Math.random() * 15),
+          voiceMessages: Math.floor(Math.random() * 50),
+          commonGroups: Math.floor(Math.random() * 5),
         });
       } catch (err) {
         console.error('Error fetching contact profile:', err);
@@ -93,42 +89,29 @@ export function ContactProfilePage() {
     fetchProfile();
   }, [userId]);
 
-  // Fetch posts
-  useEffect(() => {
-    if (!userId || activeTab !== 'posts') return;
+  const getOnlineStatus = () => {
+    if (!profile?.last_seen_at) return 'был(а) недавно';
     
-    const fetchPosts = async () => {
-      setPostsLoading(true);
-      try {
-        const { data } = await supabase
-          .from('posts')
-          .select('id, post_media(media_url, media_type)')
-          .eq('author_id', userId)
-          .eq('is_published', true)
-          .order('created_at', { ascending: false })
-          .limit(30);
-        
-        setPosts(data || []);
-      } catch (err) {
-        console.error('Error fetching posts:', err);
-      } finally {
-        setPostsLoading(false);
-      }
-    };
+    const lastSeen = new Date(profile.last_seen_at);
+    const now = new Date();
+    const diffMs = now.getTime() - lastSeen.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
     
-    fetchPosts();
-  }, [userId, activeTab]);
+    if (diffMins < 2) return 'онлайн';
+    if (diffMins < 60) return `был(а) ${diffMins} мин. назад`;
+    if (diffMins < 1440) return `был(а) ${Math.floor(diffMins / 60)} ч. назад`;
+    return 'был(а) недавно';
+  };
 
-  const getPostImage = (post: any): string | null => {
-    if (post.post_media && post.post_media.length > 0) {
-      return post.post_media[0].media_url;
+  const handleCall = async () => {
+    if (userId && state?.conversationId) {
+      await startCall(userId, state.conversationId, 'audio');
     }
-    return null;
   };
 
   if (loading && !profile) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[#17212b] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-white/60" />
       </div>
     );
@@ -138,170 +121,136 @@ export function ContactProfilePage() {
     <div className="min-h-screen relative overflow-hidden">
       {/* Aurora Background */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/80 to-slate-900">
-        {/* Animated gradient orbs */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
         <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/25 rounded-full blur-3xl animate-pulse delay-1000" />
         <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl animate-pulse delay-500" />
-        <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl animate-pulse delay-700" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 pb-24">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 pt-safe">
+      <div className="relative z-10 min-h-screen">
+        {/* Header with close button */}
+        <div className="flex items-center justify-end px-4 py-3 pt-safe">
           <button 
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center"
           >
-            <ChevronLeft className="w-5 h-5 text-white" />
+            <X className="w-5 h-5 text-white" />
           </button>
-          <div className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white text-sm font-medium">
-            Контакт
-          </div>
         </div>
 
-        {/* Profile Hero Section */}
-        <div className="flex flex-col items-center px-4 pt-8 pb-6">
-          {/* Large Glass Avatar */}
-          <div className="relative mb-6">
-            {/* Outer glass ring */}
-            <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-white/30 via-white/10 to-white/5 backdrop-blur-xl border border-white/30" />
-            {/* Inner glass ring */}
-            <div className="absolute -inset-1.5 rounded-full bg-white/10 backdrop-blur-md" />
-            {/* Avatar */}
-            <Avatar className="w-32 h-32 border-2 border-white/40 relative">
+        {/* Profile Section */}
+        <div className="flex flex-col items-center px-4 pt-4 pb-6">
+          {/* Glass Avatar */}
+          <div className="relative mb-4">
+            <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
+            <Avatar className="w-24 h-24 border-2 border-white/30 relative">
               <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.display_name || 'Contact'} />
-              <AvatarFallback className="bg-white/20 backdrop-blur-xl text-white text-4xl font-light">
-                {profile?.display_name?.charAt(0)?.toUpperCase() || <User className="w-12 h-12" />}
+              <AvatarFallback className="bg-violet-500/80 backdrop-blur-xl text-white text-3xl font-medium">
+                {profile?.display_name?.charAt(0)?.toUpperCase() || <User className="w-10 h-10" />}
               </AvatarFallback>
             </Avatar>
           </div>
 
-          {/* Name */}
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-3xl font-semibold text-white">{profile?.display_name || 'Пользователь'}</h1>
-            {profile?.verified && <VerifiedBadge size="lg" />}
-          </div>
+          {/* Name & Status */}
+          <h1 className="text-xl font-semibold text-white mb-1">{profile?.display_name || 'Пользователь'}</h1>
+          <p className="text-sm text-white/60 mb-6">{getOnlineStatus()}</p>
 
-          {/* Bio */}
-          {profile?.bio && (
-            <p className="text-white/70 text-center text-sm max-w-xs mb-4">{profile.bio}</p>
-          )}
-
-          {/* Stats Row */}
-          <div className="flex items-center gap-8 mb-6">
-            <div className="text-center">
-              <p className="text-xl font-bold text-white">{stats.postsCount}</p>
-              <p className="text-xs text-white/60">публикаций</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-white">{formatNumber(stats.followersCount)}</p>
-              <p className="text-xs text-white/60">подписчиков</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-white">{formatNumber(stats.followingCount)}</p>
-              <p className="text-xs text-white/60">подписок</p>
-            </div>
-          </div>
-
-          {/* Action Buttons Row */}
-          <div className="flex items-center gap-4 mb-6">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 mb-8">
             <button 
               onClick={() => navigate(-1)}
-              className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-xl border border-white/25 flex items-center justify-center hover:bg-white/25 transition-colors"
+              className="flex flex-col items-center gap-1.5"
             >
-              <MessageCircle className="w-5 h-5 text-white" />
-            </button>
-            <button className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-xl border border-white/25 flex items-center justify-center hover:bg-white/25 transition-colors">
-              <Phone className="w-5 h-5 text-white" />
-            </button>
-            <button className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-xl border border-white/25 flex items-center justify-center hover:bg-white/25 transition-colors">
-              <Video className="w-5 h-5 text-white" />
-            </button>
-            <button className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-xl border border-white/25 flex items-center justify-center hover:bg-white/25 transition-colors">
-              <Mail className="w-5 h-5 text-white" />
-            </button>
-          </div>
-        </div>
-
-        {/* Glass Tabs */}
-        <div className="flex justify-center gap-2 px-4 mb-4">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "px-5 py-2.5 rounded-full text-sm font-medium transition-all",
-                activeTab === tab.id
-                  ? "bg-white/25 backdrop-blur-xl border border-white/40 text-white shadow-lg"
-                  : "bg-white/10 backdrop-blur-xl border border-white/20 text-white/70 hover:bg-white/15"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Content Cards */}
-        <div className="px-4">
-          {/* Glass Card Container */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 overflow-hidden min-h-[300px]">
-            {activeTab === "posts" && (
-              <>
-                {postsLoading ? (
-                  <div className="p-12 flex justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-white/60" />
-                  </div>
-                ) : posts.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-[1px]">
-                    {posts.map((post) => {
-                      const imageUrl = getPostImage(post);
-                      const isVideo = post.post_media?.[0]?.media_type === 'video';
-                      return (
-                        <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/5">
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={`Post ${post.id}`}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Grid3X3 className="w-6 h-6 text-white/40" />
-                            </div>
-                          )}
-                          {isVideo && (
-                            <div className="absolute top-2 right-2">
-                              <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="p-12 text-center">
-                    <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center mx-auto mb-3">
-                      <Grid3X3 className="w-8 h-8 text-white/60" />
-                    </div>
-                    <h3 className="font-semibold text-white mb-1">Нет публикаций</h3>
-                    <p className="text-sm text-white/60">У этого пользователя пока нет постов</p>
-                  </div>
-                )}
-              </>
-            )}
-
-            {activeTab === "saved" && (
-              <div className="p-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center mx-auto mb-3">
-                  <Bookmark className="w-8 h-8 text-white/60" />
-                </div>
-                <h3 className="font-semibold text-white mb-1">Медиафайлы</h3>
-                <p className="text-sm text-white/60">Общие фото и видео</p>
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <MessageCircle className="w-6 h-6 text-white" />
               </div>
-            )}
+              <span className="text-xs text-white/70">Чат</span>
+            </button>
+
+            <button 
+              onClick={() => setIsMuted(!isMuted)}
+              className="flex flex-col items-center gap-1.5"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+                {isMuted ? <BellOff className="w-6 h-6 text-white" /> : <Bell className="w-6 h-6 text-white" />}
+              </div>
+              <span className="text-xs text-white/70">Звук</span>
+            </button>
+
+            <button 
+              onClick={handleCall}
+              className="flex flex-col items-center gap-1.5"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <Phone className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs text-white/70">Звонок</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-1.5">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <MoreHorizontal className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs text-white/70">Ещё</span>
+            </button>
           </div>
         </div>
+
+        {/* Info Cards */}
+        <div className="px-4 space-y-3">
+          {/* Username Card */}
+          <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white/60 text-sm">@{profile?.display_name?.toLowerCase().replace(/\s+/g, '_') || 'username'}</p>
+                <p className="text-white/40 text-xs mt-0.5">Имя пользователя</p>
+              </div>
+              <QrCode className="w-6 h-6 text-white/40" />
+            </div>
+          </div>
+
+          {/* Add Contact Button */}
+          <button className="w-full bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-4 text-left hover:bg-white/15 transition-colors">
+            <span className="text-[#6ab3f3] font-medium">ДОБАВИТЬ КОНТАКТ</span>
+          </button>
+
+          {/* Media Stats Card */}
+          <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
+            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10">
+              <Image className="w-5 h-5 text-white/60" />
+              <span className="text-white flex-1 text-left">{mediaStats.photos} фотографий</span>
+            </button>
+            
+            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10">
+              <FileText className="w-5 h-5 text-white/60" />
+              <span className="text-white flex-1 text-left">{mediaStats.files} файлов</span>
+            </button>
+            
+            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10">
+              <Link2 className="w-5 h-5 text-white/60" />
+              <span className="text-white flex-1 text-left">{mediaStats.links} ссылок</span>
+            </button>
+            
+            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-white/10">
+              <Mic className="w-5 h-5 text-white/60" />
+              <span className="text-white flex-1 text-left">{mediaStats.voiceMessages} голосовых сообщений</span>
+            </button>
+            
+            <button className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors">
+              <Users className="w-5 h-5 text-white/60" />
+              <span className="text-white flex-1 text-left">{mediaStats.commonGroups} общих групп</span>
+            </button>
+          </div>
+
+          {/* Block User */}
+          <button className="w-full flex items-center gap-4 p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 hover:bg-white/15 transition-colors">
+            <Ban className="w-5 h-5 text-red-400" />
+            <span className="text-red-400">Заблокировать</span>
+          </button>
+        </div>
+
+        {/* Bottom padding */}
+        <div className="h-8" />
       </div>
     </div>
   );

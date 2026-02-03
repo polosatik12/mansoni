@@ -272,7 +272,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             
             {/* Avatar - clickable to open contact profile */}
             <button
-              onClick={() => navigate(`/contact/${otherUserId}`, { state: { name: chatName, avatar: chatAvatar } })}
+              onClick={() => navigate(`/contact/${otherUserId}`, { state: { name: chatName, avatar: chatAvatar, conversationId } })}
               className="ml-1"
             >
               <img
