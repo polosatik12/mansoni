@@ -1,4 +1,4 @@
-import { Settings, Grid3X3, Bookmark, Play, Plus, AtSign, Share2, Eye, User, Loader2 } from "lucide-react";
+import { Settings, Grid3X3, Bookmark, Play, Plus, AtSign, Share2, Eye, User, Loader2, Edit3, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -15,10 +15,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 const tabs = [
-  { id: "posts", icon: Grid3X3 },
-  { id: "saved", icon: Bookmark },
-  { id: "reels", icon: Play },
-  { id: "tagged", icon: AtSign },
+  { id: "posts", icon: Grid3X3, label: "Публикации" },
+  { id: "saved", icon: Bookmark, label: "Сохранённое" },
+  { id: "reels", icon: Play, label: "Reels" },
+  { id: "tagged", icon: AtSign, label: "Отметки" },
 ];
 
 function formatNumber(num: number): string {
@@ -71,253 +71,299 @@ export function ProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Aurora Background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/80 to-slate-900">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/25 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl animate-pulse delay-500" />
+        </div>
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-white/60" />
+        </div>
       </div>
     );
   }
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <User className="w-16 h-16 text-muted-foreground mb-4" />
-        <h2 className="text-lg font-semibold mb-2">Войдите в аккаунт</h2>
-        <p className="text-muted-foreground text-center mb-4">
-          Чтобы просматривать свой профиль, войдите в аккаунт
-        </p>
-        <Button onClick={() => window.location.href = '/auth'}>
-          Войти
-        </Button>
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Aurora Background */}
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/80 to-slate-900">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/25 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl animate-pulse delay-500" />
+        </div>
+        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">
+          <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
+            <User className="w-10 h-10 text-white/60" />
+          </div>
+          <h2 className="text-lg font-semibold text-white mb-2">Войдите в аккаунт</h2>
+          <p className="text-white/60 text-center mb-4">
+            Чтобы просматривать свой профиль, войдите в аккаунт
+          </p>
+          <button 
+            onClick={() => window.location.href = '/auth'}
+            className="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 text-white font-medium hover:bg-white/20 transition-colors"
+          >
+            Войти
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="w-10" />
-        <div className="flex items-center gap-1.5">
-          <h1 className="font-semibold text-lg">{profile.display_name || 'Профиль'}</h1>
-          {profile.verified && <VerifiedBadge size="md" />}
-        </div>
-        <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-          <Settings className="w-6 h-6" />
-        </Button>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Aurora Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/80 to-slate-900">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/25 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl animate-pulse delay-500" />
       </div>
 
-      {/* Profile Info Row */}
-      <div className="px-4 py-4">
-        <div className="flex items-start gap-4">
-          {/* Avatar - clickable to open create menu */}
+      {/* Content */}
+      <div className="relative z-10 min-h-screen pb-24">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 pt-safe">
+          <div className="w-10" />
+          <div className="flex items-center gap-1.5">
+            <h1 className="font-semibold text-lg text-white">{profile.display_name || 'Профиль'}</h1>
+            {profile.verified && <VerifiedBadge size="md" />}
+          </div>
           <button 
-            className="relative cursor-pointer"
+            onClick={() => setShowSettings(true)}
+            className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+          >
+            <Settings className="w-5 h-5 text-white" />
+          </button>
+        </div>
+
+        {/* Profile Section */}
+        <div className="flex flex-col items-center px-4 pt-4 pb-6">
+          {/* Glass Avatar */}
+          <button 
+            className="relative mb-4"
             onClick={() => setShowCreateMenu(true)}
           >
-            <Avatar className="w-20 h-20 border-2 border-border">
+            <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
+            <Avatar className="w-24 h-24 border-2 border-white/30 relative">
               <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
-              <AvatarFallback className="bg-muted">
-                <User className="w-8 h-8 text-muted-foreground" />
+              <AvatarFallback className="bg-violet-500/80 backdrop-blur-xl text-white text-3xl font-medium">
+                {profile.display_name?.charAt(0)?.toUpperCase() || <User className="w-10 h-10" />}
               </AvatarFallback>
             </Avatar>
             {/* Add story button */}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary border-2 border-white/30 flex items-center justify-center shadow-lg">
               <Plus className="w-4 h-4 text-primary-foreground" />
             </div>
           </button>
 
-          {/* Stats */}
-          <div className="flex-1">
-            <div className="flex items-center gap-1.5 mb-2">
-              <h1 className="text-lg font-semibold">{profile.display_name || 'Пользователь'}</h1>
-              {profile.verified && <VerifiedBadge size="md" />}
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <p className="font-bold text-foreground">{profile.stats.postsCount}</p>
-                <p className="text-xs text-muted-foreground">публикации</p>
-              </div>
-              <button 
-                className="text-center"
-                onClick={() => setShowFollowers(true)}
-              >
-                <p className="font-bold text-foreground">{formatNumber(profile.stats.followersCount)}</p>
-                <p className="text-xs text-muted-foreground">подписчики</p>
-              </button>
-              <button 
-                className="text-center"
-                onClick={() => setShowFollowing(true)}
-              >
-                <p className="font-bold text-foreground">{formatNumber(profile.stats.followingCount)}</p>
-                <p className="text-xs text-muted-foreground">подписки</p>
-              </button>
-            </div>
+          {/* Name & Verified */}
+          <div className="flex items-center gap-1.5 mb-1">
+            <h1 className="text-xl font-semibold text-white">{profile.display_name || 'Пользователь'}</h1>
+            {profile.verified && <VerifiedBadge size="md" />}
           </div>
-        </div>
 
-        {/* Bio */}
-        <div className="mt-3">
-          <p className="text-sm text-foreground">{profile.bio || ''}</p>
+          {/* Bio */}
+          {profile.bio && (
+            <p className="text-sm text-white/70 text-center max-w-[280px] mb-2">{profile.bio}</p>
+          )}
           {profile.website && (
             <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
                target="_blank" 
                rel="noopener noreferrer"
-               className="text-sm text-primary font-medium">
+               className="text-sm text-[#6ab3f3] font-medium mb-4">
               {profile.website}
             </a>
           )}
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-1.5 mt-4">
-          <Button 
-            variant="secondary" 
-            className="flex-1 rounded-lg h-8 text-sm font-semibold px-3"
-            onClick={() => navigate('/profile/edit')}
-          >
-            Редактировать профиль
-          </Button>
-          <Button variant="secondary" className="flex-1 rounded-lg h-8 text-sm font-semibold px-3">
-            Поделиться профилем
-          </Button>
-        </div>
-      </div>
-
-      {/* Content Tabs */}
-      <div className="border-t border-border sticky top-0 z-10 bg-card">
-        <div className="flex">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={cn(
-                  "flex-1 flex items-center justify-center py-3 transition-all border-b-2",
-                  isActive
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Icon className={cn("w-6 h-6", tab.id === "reels" && "fill-current")} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Posts Grid */}
-      <div>
-        {activeTab === "posts" && (
-          <>
-            {postsLoading ? (
-              <div className="p-12 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : posts.length > 0 ? (
-              <div className="grid grid-cols-3 gap-[2px]">
-                {posts.map((post) => {
-                  const imageUrl = getPostImage(post);
-                  const isVideo = post.post_media?.[0]?.media_type === 'video';
-                  return (
-                    <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-muted">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={`Post ${post.id}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Grid3X3 className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                      )}
-                      {isVideo && (
-                        <>
-                          <div className="absolute top-2 right-2">
-                            <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
-                          </div>
-                          <div className="absolute bottom-2 left-2 flex items-center gap-1">
-                            <Eye className="w-4 h-4 text-white drop-shadow-lg" />
-                            <span className="text-white text-xs font-medium drop-shadow-lg">{post.views_count}</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="p-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                  <Grid3X3 className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-1">Нет публикаций</h3>
-                <p className="text-sm text-muted-foreground">Создайте свой первый пост</p>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === "saved" && (
-          <>
-            {savedLoading ? (
-              <div className="p-12 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : savedPosts.length > 0 ? (
-              <div className="grid grid-cols-3 gap-[2px]">
-                {savedPosts.map((post: any) => {
-                  const imageUrl = post.post_media?.[0]?.media_url;
-                  return (
-                    <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-muted">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={`Saved ${post.id}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Bookmark className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="p-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                  <Bookmark className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-1">Сохранённое</h3>
-                <p className="text-sm text-muted-foreground">Сохраняйте понравившиеся публикации</p>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === "reels" && (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-              <Play className="w-8 h-8 text-muted-foreground" />
+          {/* Stats */}
+          <div className="flex items-center gap-8 mb-6">
+            <div className="text-center">
+              <p className="font-bold text-white text-lg">{profile.stats.postsCount}</p>
+              <p className="text-xs text-white/60">публикации</p>
             </div>
-            <h3 className="font-semibold text-foreground mb-1">Reels</h3>
-            <p className="text-sm text-muted-foreground">Ваши видео Reels</p>
+            <button 
+              className="text-center"
+              onClick={() => setShowFollowers(true)}
+            >
+              <p className="font-bold text-white text-lg">{formatNumber(profile.stats.followersCount)}</p>
+              <p className="text-xs text-white/60">подписчики</p>
+            </button>
+            <button 
+              className="text-center"
+              onClick={() => setShowFollowing(true)}
+            >
+              <p className="font-bold text-white text-lg">{formatNumber(profile.stats.followingCount)}</p>
+              <p className="text-xs text-white/60">подписки</p>
+            </button>
           </div>
-        )}
 
-        {activeTab === "tagged" && (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-              <AtSign className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="font-semibold text-foreground mb-1">Отметки</h3>
-            <p className="text-sm text-muted-foreground">Публикации с вашими отметками</p>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/profile/edit')}
+              className="flex flex-col items-center gap-1.5"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <Edit3 className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs text-white/70">Изменить</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-1.5">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <Share2 className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs text-white/70">Поделиться</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-1.5">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+                <QrCode className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs text-white/70">QR-код</span>
+            </button>
           </div>
-        )}
+        </div>
+
+        {/* Content Tabs */}
+        <div className="px-4 mb-3">
+          <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-1 flex">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={cn(
+                    "flex-1 flex items-center justify-center py-2.5 rounded-xl transition-all",
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "text-white/50 hover:text-white/70"
+                  )}
+                >
+                  <Icon className={cn("w-5 h-5", tab.id === "reels" && "fill-current")} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Posts Grid */}
+        <div className="px-4">
+          {activeTab === "posts" && (
+            <>
+              {postsLoading ? (
+                <div className="p-12 flex justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-white/60" />
+                </div>
+              ) : posts.length > 0 ? (
+                <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden">
+                  {posts.map((post) => {
+                    const imageUrl = getPostImage(post);
+                    const isVideo = post.post_media?.[0]?.media_type === 'video';
+                    return (
+                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={`Post ${post.id}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Grid3X3 className="w-6 h-6 text-white/40" />
+                          </div>
+                        )}
+                        {isVideo && (
+                          <>
+                            <div className="absolute top-2 right-2">
+                              <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
+                            </div>
+                            <div className="absolute bottom-2 left-2 flex items-center gap-1">
+                              <Eye className="w-4 h-4 text-white drop-shadow-lg" />
+                              <span className="text-white text-xs font-medium drop-shadow-lg">{post.views_count}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                    <Grid3X3 className="w-8 h-8 text-white/60" />
+                  </div>
+                  <h3 className="font-semibold text-white mb-1">Нет публикаций</h3>
+                  <p className="text-sm text-white/60">Создайте свой первый пост</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === "saved" && (
+            <>
+              {savedLoading ? (
+                <div className="p-12 flex justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-white/60" />
+                </div>
+              ) : savedPosts.length > 0 ? (
+                <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden">
+                  {savedPosts.map((post: any) => {
+                    const imageUrl = post.post_media?.[0]?.media_url;
+                    return (
+                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={`Saved ${post.id}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Bookmark className="w-6 h-6 text-white/40" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                    <Bookmark className="w-8 h-8 text-white/60" />
+                  </div>
+                  <h3 className="font-semibold text-white mb-1">Сохранённое</h3>
+                  <p className="text-sm text-white/60">Сохраняйте понравившиеся публикации</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === "reels" && (
+            <div className="py-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                <Play className="w-8 h-8 text-white/60" />
+              </div>
+              <h3 className="font-semibold text-white mb-1">Reels</h3>
+              <p className="text-sm text-white/60">Ваши видео Reels</p>
+            </div>
+          )}
+
+          {activeTab === "tagged" && (
+            <div className="py-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                <AtSign className="w-8 h-8 text-white/60" />
+              </div>
+              <h3 className="font-semibold text-white mb-1">Отметки</h3>
+              <p className="text-sm text-white/60">Публикации с вашими отметками</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Create Menu */}
