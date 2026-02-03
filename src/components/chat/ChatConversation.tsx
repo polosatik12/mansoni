@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, X, Play, Pause, Check, CheckCheck, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,10 @@ import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
 import { SharedPostCard } from "./SharedPostCard";
 import { SharedReelCard } from "./SharedReelCard";
 import { EmojiStickerPicker } from "./EmojiStickerPicker";
+import { MessageContextMenu } from "./MessageContextMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { formatLastSeen } from "@/hooks/usePresence";
+
 interface ChatConversationProps {
   conversationId: string;
   chatName: string;
@@ -52,6 +54,14 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const [viewingVideo, setViewingVideo] = useState<string | null>(null);
   const [recordMode, setRecordMode] = useState<'voice' | 'video'>('voice');
   const [lastSeenStatus, setLastSeenStatus] = useState<string>("был(а) недавно");
+  
+  // Context menu state
+  const [contextMenuMessage, setContextMenuMessage] = useState<{
+    id: string;
+    content: string;
+    isOwn: boolean;
+  } | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -247,6 +257,37 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
   const handleStartVideoCall = async () => {
     await startCall(otherUserId, conversationId, "video");
+  };
+
+  // Long press handlers for context menu
+  const handleMessageLongPressStart = useCallback((messageId: string, content: string, isOwn: boolean) => {
+    longPressTimerRef.current = setTimeout(() => {
+      setContextMenuMessage({ id: messageId, content, isOwn });
+    }, 500);
+  }, []);
+
+  const handleMessageLongPressEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleMessageDelete = async (messageId: string) => {
+    const result = await deleteMessage(messageId);
+    if (result.error) {
+      toast.error("Не удалось удалить сообщение");
+    }
+  };
+
+  const handleMessagePin = async (messageId: string) => {
+    // TODO: Implement pin functionality
+    toast.success("Сообщение закреплено");
+  };
+
+  const handleMessageReaction = async (messageId: string, emoji: string) => {
+    // TODO: Implement reaction functionality
+    toast.success(`Реакция ${emoji} добавлена`);
   };
 
   return (
@@ -462,11 +503,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               ) : (
                 <div
-                  className={`max-w-[75%] rounded-2xl px-3 py-2 ${
+                  className={`max-w-[75%] rounded-2xl px-3 py-2 select-none ${
                     isOwn
                       ? "bg-[#2b5278] text-white rounded-br-sm"
                       : "bg-[#182533] text-white rounded-bl-sm"
                   }`}
+                  onMouseDown={() => handleMessageLongPressStart(message.id, message.content, isOwn)}
+                  onMouseUp={handleMessageLongPressEnd}
+                  onMouseLeave={handleMessageLongPressEnd}
+                  onTouchStart={() => handleMessageLongPressStart(message.id, message.content, isOwn)}
+                  onTouchEnd={handleMessageLongPressEnd}
                 >
                   {/* Sender name for group chats */}
                   {showSenderName && (
@@ -690,6 +736,33 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           src={viewingVideo}
           onClose={() => setViewingVideo(null)}
         />
+      )}
+
+      {/* Message Context Menu */}
+      {contextMenuMessage && (
+        <MessageContextMenu
+          isOpen={!!contextMenuMessage}
+          onClose={() => setContextMenuMessage(null)}
+          messageId={contextMenuMessage.id}
+          messageContent={contextMenuMessage.content}
+          isOwn={contextMenuMessage.isOwn}
+          onDelete={handleMessageDelete}
+          onPin={handleMessagePin}
+          onReaction={handleMessageReaction}
+        >
+          {/* Render the focused message preview */}
+          <div
+            className={`max-w-[280px] rounded-2xl px-3 py-2 ${
+              contextMenuMessage.isOwn
+                ? "bg-[#2b5278] text-white rounded-br-sm"
+                : "bg-[#182533] text-white rounded-bl-sm"
+            }`}
+          >
+            <p className="text-[15px] leading-[1.4] whitespace-pre-wrap line-clamp-4">
+              {contextMenuMessage.content}
+            </p>
+          </div>
+        </MessageContextMenu>
       )}
 
     </div>
