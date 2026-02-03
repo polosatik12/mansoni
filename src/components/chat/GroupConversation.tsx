@@ -5,7 +5,7 @@ import { useGroupMessages, useGroupMembers, GroupChat } from "@/hooks/useGroupCh
 import { useAuth } from "@/hooks/useAuth";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
-import chatBackground from "@/assets/chat-background.jpg";
+import chatBackground from "@/assets/chat-background-light.jpg";
 import {
   DropdownMenu,
   DropdownMenuContent,
