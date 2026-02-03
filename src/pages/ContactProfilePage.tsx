@@ -71,16 +71,6 @@ export function ContactProfilePage() {
         if (data) {
           setProfile(data);
         }
-
-        // Fetch media stats from conversation
-        // For now using mock data - in real app would query messages table
-        setMediaStats({
-          photos: Math.floor(Math.random() * 20),
-          files: Math.floor(Math.random() * 10),
-          links: Math.floor(Math.random() * 15),
-          voiceMessages: Math.floor(Math.random() * 50),
-          commonGroups: Math.floor(Math.random() * 5),
-        });
       } catch (err) {
         console.error('Error fetching contact profile:', err);
       } finally {
@@ -90,6 +80,46 @@ export function ContactProfilePage() {
     
     fetchProfile();
   }, [userId]);
+
+  // Fetch real media stats from conversation
+  useEffect(() => {
+    if (!state?.conversationId) {
+      setMediaStats({ photos: 0, files: 0, links: 0, voiceMessages: 0, commonGroups: 0 });
+      return;
+    }
+
+    const fetchMediaStats = async () => {
+      try {
+        // Fetch all messages with media
+        const { data: messages } = await supabase
+          .from('messages')
+          .select('media_type, content')
+          .eq('conversation_id', state.conversationId);
+
+        if (messages) {
+          const photos = messages.filter(m => m.media_type === 'image').length;
+          const files = messages.filter(m => m.media_type === 'file').length;
+          const voiceMessages = messages.filter(m => m.media_type === 'voice').length;
+          // Count links in message content (simple URL detection)
+          const links = messages.filter(m => 
+            m.content && (m.content.includes('http://') || m.content.includes('https://'))
+          ).length;
+
+          setMediaStats({
+            photos,
+            files,
+            links,
+            voiceMessages,
+            commonGroups: 0, // Would need separate query for groups
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching media stats:', err);
+      }
+    };
+
+    fetchMediaStats();
+  }, [state?.conversationId]);
 
   const getOnlineStatus = () => {
     if (!profile?.last_seen_at) return 'был(а) недавно';
