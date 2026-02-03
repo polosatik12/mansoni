@@ -1,4 +1,4 @@
-import { MessageCircle, Bell, BellOff, Phone, MoreHorizontal, Image, FileText, Link2, Mic, Users, Ban, X, User, Loader2, QrCode } from "lucide-react";
+import { MessageCircle, Bell, BellOff, Phone, Image, FileText, Link2, Mic, Users, Ban, X, User, Loader2, QrCode } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -217,13 +217,6 @@ export function ContactProfilePage() {
                 <Phone className="w-6 h-6 text-white" />
               </div>
               <span className="text-xs text-white/70">Звонок</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-1.5">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <MoreHorizontal className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xs text-white/70">Ещё</span>
             </button>
           </div>
         </div>
