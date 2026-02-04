@@ -757,7 +757,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              {/* Input field - dark transparent like Telegram */}
+              {/* Input field - fully transparent with border */}
               <div className="flex-1 relative">
                 <input
                   ref={inputRef}
@@ -767,7 +767,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   onFocus={() => setShowEmojiPicker(false)}
-                  className="w-full h-11 px-5 pr-20 rounded-full text-white placeholder:text-white/50 outline-none bg-black/40 border-0 transition-all"
+                  className="w-full h-11 px-5 pr-20 rounded-full text-foreground placeholder:text-muted-foreground outline-none bg-transparent border border-white/30 transition-all backdrop-blur-sm"
                 />
                 {/* Icons inside input */}
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
