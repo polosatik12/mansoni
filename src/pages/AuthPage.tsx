@@ -80,23 +80,55 @@ export function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Dark elegant gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900" />
+      {/* Brand gradient background - logo colors */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#071420]" />
       
-      {/* Aurora-like floating orbs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-0 w-80 h-80 bg-blue-600/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/3 -right-20 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      <div className="absolute bottom-1/3 -left-10 w-64 h-64 bg-teal-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+      {/* Animated floating orbs in logo colors */}
+      <div 
+        className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-60"
+        style={{
+          background: 'radial-gradient(circle, #0066CC 0%, transparent 70%)',
+          animation: 'float-orb-1 15s ease-in-out infinite',
+        }}
+      />
+      <div 
+        className="absolute bottom-20 right-0 w-[450px] h-[450px] rounded-full blur-[100px] opacity-50"
+        style={{
+          background: 'radial-gradient(circle, #00A3B4 0%, transparent 70%)',
+          animation: 'float-orb-2 18s ease-in-out infinite',
+          animationDelay: '-5s',
+        }}
+      />
+      <div 
+        className="absolute top-1/3 -right-20 w-[400px] h-[400px] rounded-full blur-[90px] opacity-55"
+        style={{
+          background: 'radial-gradient(circle, #00C896 0%, transparent 70%)',
+          animation: 'float-orb-3 20s ease-in-out infinite',
+          animationDelay: '-10s',
+        }}
+      />
+      <div 
+        className="absolute bottom-1/3 -left-10 w-[350px] h-[350px] rounded-full blur-[80px] opacity-45"
+        style={{
+          background: 'radial-gradient(circle, #4FD080 0%, transparent 70%)',
+          animation: 'float-orb-4 22s ease-in-out infinite',
+          animationDelay: '-3s',
+        }}
+      />
       
-      {/* Subtle mesh gradient overlay */}
-      <div className="absolute inset-0 opacity-30" style={{
-        backgroundImage: `radial-gradient(at 40% 20%, hsla(212,70%,60%,0.3) 0px, transparent 50%),
-                          radial-gradient(at 80% 0%, hsla(189,80%,50%,0.2) 0px, transparent 50%),
-                          radial-gradient(at 0% 50%, hsla(255,60%,50%,0.2) 0px, transparent 50%),
-                          radial-gradient(at 80% 50%, hsla(340,70%,50%,0.15) 0px, transparent 50%),
-                          radial-gradient(at 0% 100%, hsla(210,80%,40%,0.2) 0px, transparent 50%)`,
-      }} />
+      {/* Shimmer mesh overlay */}
+      <div 
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage: `radial-gradient(at 30% 20%, hsla(200,100%,40%,0.25) 0px, transparent 50%),
+                            radial-gradient(at 70% 10%, hsla(175,80%,45%,0.2) 0px, transparent 50%),
+                            radial-gradient(at 10% 60%, hsla(160,70%,50%,0.2) 0px, transparent 50%),
+                            radial-gradient(at 90% 70%, hsla(140,60%,50%,0.15) 0px, transparent 50%),
+                            radial-gradient(at 50% 90%, hsla(185,90%,40%,0.2) 0px, transparent 50%)`,
+          backgroundSize: '200% 200%',
+          animation: 'shimmer-gradient 8s ease-in-out infinite',
+        }}
+      />
 
       {/* Back button */}
       {mode !== "select" && (
@@ -116,13 +148,75 @@ export function AuthPage() {
       <div className="relative z-10 flex-1 flex flex-col justify-center p-6 safe-area-top safe-area-bottom">
         <div className="max-w-sm mx-auto w-full space-y-8">
           
-          {/* Glass avatar circle */}
+          {/* Glossy bubble avatar - mirror glass effect */}
           <div className="flex justify-center">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-white/20 rounded-full blur-xl" />
-              <div className="relative w-32 h-32 rounded-full bg-white/10 backdrop-blur-xl border border-white/30 flex items-center justify-center shadow-2xl overflow-hidden">
-                <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
-                <img src={logo} alt="Logo" className="w-20 h-20 object-contain relative z-10" />
+            <div 
+              className="relative"
+              style={{ animation: 'bubble-breathe 4s ease-in-out infinite' }}
+            >
+              {/* Outer glow in logo colors */}
+              <div 
+                className="absolute -inset-6 rounded-full blur-2xl opacity-60"
+                style={{
+                  background: 'linear-gradient(135deg, #0066CC 0%, #00A3B4 50%, #00C896 100%)',
+                }}
+              />
+              
+              {/* Main bubble container */}
+              <div className="relative w-36 h-36 rounded-full overflow-hidden"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(0,102,204,0.1) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: `
+                    0 0 60px rgba(0,163,180,0.3),
+                    0 0 40px rgba(0,200,150,0.2),
+                    inset 0 -10px 30px rgba(0,102,204,0.2),
+                    inset 0 5px 20px rgba(255,255,255,0.3)
+                  `,
+                  border: '1px solid rgba(255,255,255,0.25)',
+                }}
+              >
+                {/* Top highlight/reflection */}
+                <div 
+                  className="absolute top-1 left-3 right-3 h-12 rounded-full opacity-80"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.1) 60%, transparent 100%)',
+                  }}
+                />
+                
+                {/* Secondary reflection */}
+                <div 
+                  className="absolute top-6 left-6 w-5 h-5 rounded-full opacity-70"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%)',
+                  }}
+                />
+                
+                {/* Inner gradient overlay */}
+                <div 
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: 'radial-gradient(circle at 30% 30%, transparent 30%, rgba(0,163,180,0.05) 70%, rgba(0,102,204,0.1) 100%)',
+                  }}
+                />
+                
+                {/* Logo */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <img 
+                    src={logo} 
+                    alt="Logo" 
+                    className="w-20 h-20 object-contain drop-shadow-lg"
+                    style={{ filter: 'drop-shadow(0 4px 12px rgba(0,163,180,0.3))' }}
+                  />
+                </div>
+                
+                {/* Bottom reflection */}
+                <div 
+                  className="absolute bottom-2 left-4 right-4 h-6 rounded-full opacity-30"
+                  style={{
+                    background: 'linear-gradient(0deg, rgba(0,200,150,0.3) 0%, transparent 100%)',
+                  }}
+                />
               </div>
             </div>
           </div>
