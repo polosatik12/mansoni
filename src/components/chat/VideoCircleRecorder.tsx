@@ -4,9 +4,10 @@ import { ArrowUp, Pause, Play, Camera, Zap, ZapOff } from "lucide-react";
 interface VideoCircleRecorderProps {
   onRecord: (videoBlob: Blob, duration: number) => void;
   onCancel: () => void;
+  autoRecord?: boolean; // If true, auto-send on release (hold-to-record mode)
 }
 
-export function VideoCircleRecorder({ onRecord, onCancel }: VideoCircleRecorderProps) {
+export function VideoCircleRecorder({ onRecord, onCancel, autoRecord = true }: VideoCircleRecorderProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -189,6 +190,33 @@ export function VideoCircleRecorder({ onRecord, onCancel }: VideoCircleRecorderP
       startRecording();
     }
   }, [hasPermission]);
+
+  // Auto-send on release (hold-to-record mode)
+  useEffect(() => {
+    if (!autoRecord) return;
+    
+    const handleGlobalRelease = () => {
+      // Only auto-send if recording for at least 1 second
+      if (isRecording && recordingTime >= 1) {
+        stopRecording();
+      } else if (isRecording && recordingTime < 1) {
+        // Too short - cancel
+        handleCancel();
+      }
+    };
+    
+    // Use a small delay to avoid immediate trigger
+    const timeoutId = setTimeout(() => {
+      window.addEventListener('touchend', handleGlobalRelease, { once: true });
+      window.addEventListener('mouseup', handleGlobalRelease, { once: true });
+    }, 300);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('touchend', handleGlobalRelease);
+      window.removeEventListener('mouseup', handleGlobalRelease);
+    };
+  }, [autoRecord, isRecording, recordingTime]);
 
   return (
     <div className="fixed inset-0 z-[300] flex flex-col bg-gradient-to-br from-purple-900/90 via-slate-900/95 to-blue-900/90 backdrop-blur-xl">
