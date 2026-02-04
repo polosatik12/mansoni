@@ -104,7 +104,7 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
   return (
     <div className="h-full flex flex-col relative">
       {/* Brand background - same as auth page */}
-      <div className="absolute inset-0 -z-10">
+      <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#071420]" />
         <div 
           className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-60"
@@ -139,7 +139,7 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
         />
       </div>
       {/* Header - Telegram style */}
-      <div className="flex-shrink-0 flex items-center gap-2 px-2 py-2 bg-card border-b border-border">
+      <div className="flex-shrink-0 flex items-center gap-2 px-2 py-2 bg-card border-b border-border relative z-10">
         {/* Back button with unread count */}
         <button 
           onClick={onBack} 
@@ -176,7 +176,7 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
       </div>
 
       {/* Pinned message bar */}
-      <div className="flex-shrink-0 bg-card border-b border-border">
+      <div className="flex-shrink-0 bg-card border-b border-border relative z-10">
         <div className="flex items-center justify-between px-3 py-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="w-0.5 h-8 bg-primary rounded-full flex-shrink-0" />
@@ -199,7 +199,7 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-2 py-3 space-y-3"
+        className="flex-1 overflow-y-auto px-2 py-3 space-y-3 relative z-10"
       >
         {loading && (
           <div className="flex items-center justify-center py-8">
