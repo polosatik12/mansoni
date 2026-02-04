@@ -151,8 +151,8 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
 
       {/* Messages - scrollable with animated brand background */}
       <div className="flex-1 overflow-y-auto native-scroll relative">
-        {/* Brand background - same as auth page */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* Brand background - fixed to cover full screen */}
+        <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#071420]" />
           <div 
             className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-60"
