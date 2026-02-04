@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Video, Send, Mic, Paperclip, X, Play, Pause, Check, CheckCheck, Smile } from "lucide-react";
+import { ArrowLeft, Phone, Video, Send, Mic, X, Play, Pause, Check, CheckCheck, Smile } from "lucide-react";
+import { AttachmentIcon } from "./AttachmentIcon";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
@@ -784,7 +785,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     onClick={() => setShowAttachmentSheet(true)}
                     className="text-white/40 hover:text-white/70 transition-colors"
                   >
-                    <Paperclip className="w-5 h-5 -rotate-45" />
+                    <AttachmentIcon className="w-5 h-5" />
                   </button>
                 </div>
               </div>
