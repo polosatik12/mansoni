@@ -10,27 +10,26 @@ export function AttachmentIcon({ className }: AttachmentIconProps) {
       className={className}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Rotated capsule/pill shape - tilted at -45deg like reference */}
-      <g transform="rotate(-45 12 12)">
-        <rect
-          x="8"
-          y="3"
-          width="8"
-          height="18"
-          rx="4"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          fill="none"
-        />
-        {/* Two dots inside - arranged vertically */}
-        <circle cx="12" cy="8" r="1.8" fill="currentColor" />
-        <circle cx="12" cy="14" r="1.8" fill="currentColor" />
-      </g>
-      {/* Small chevron arrow at bottom right corner */}
+      {/* Capsule rotated 45° clockwise - from bottom-left to top-right */}
+      <rect
+        x="6.5"
+        y="2.5"
+        width="11"
+        height="19"
+        rx="5.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        fill="none"
+        transform="rotate(45 12 12)"
+      />
+      {/* Two dots inside - positioned diagonally along capsule axis */}
+      <circle cx="9.5" cy="9.5" r="1.6" fill="currentColor" />
+      <circle cx="14.5" cy="14.5" r="1.6" fill="currentColor" />
+      {/* Small chevron "v" at bottom right outside capsule */}
       <path 
-        d="M17 18.5L19 20.5L21 18.5" 
+        d="M18 19L20 21L22 19" 
         stroke="currentColor" 
-        strokeWidth="1.5" 
+        strokeWidth="1.6" 
         strokeLinecap="round" 
         strokeLinejoin="round"
         fill="none"
