@@ -6,9 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
-import chatBackgroundDark from "@/assets/chat-background.jpg";
-import chatBackgroundLight from "@/assets/chat-background-light.jpg";
 
 interface ChannelConversationProps {
   channel: Channel;
@@ -47,7 +44,6 @@ const sampleReactions = [
 export function ChannelConversation({ channel, onBack, onLeave }: ChannelConversationProps) {
   const { user } = useAuth();
   const { setIsChatOpen } = useChatOpen();
-  const { theme } = useTheme();
   const { messages, loading } = useChannelMessages(channel.id);
   const { joinChannel, leaveChannel } = useJoinChannel();
   const [isMember, setIsMember] = useState(channel.is_member);
@@ -55,9 +51,6 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
-
-  const isDark = theme === "dark";
-  const chatBackground = isDark ? chatBackgroundDark : chatBackgroundLight;
 
   // Mark chat as open/closed for hiding bottom nav
   useEffect(() => {
@@ -109,14 +102,42 @@ export function ChannelConversation({ channel, onBack, onLeave }: ChannelConvers
   };
 
   return (
-    <div 
-      className="h-full flex flex-col"
-      style={{ 
-        backgroundImage: `url(${chatBackground})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center"
-      }}
-    >
+    <div className="h-full flex flex-col relative">
+      {/* Brand background - same as auth page */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#071420]" />
+        <div 
+          className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-60"
+          style={{
+            background: 'radial-gradient(circle, #0066CC 0%, transparent 70%)',
+            animation: 'float-orb-1 15s ease-in-out infinite',
+          }}
+        />
+        <div 
+          className="absolute bottom-20 right-0 w-[450px] h-[450px] rounded-full blur-[100px] opacity-50"
+          style={{
+            background: 'radial-gradient(circle, #00A3B4 0%, transparent 70%)',
+            animation: 'float-orb-2 18s ease-in-out infinite',
+            animationDelay: '-5s',
+          }}
+        />
+        <div 
+          className="absolute top-1/3 -right-20 w-[400px] h-[400px] rounded-full blur-[90px] opacity-55"
+          style={{
+            background: 'radial-gradient(circle, #00C896 0%, transparent 70%)',
+            animation: 'float-orb-3 20s ease-in-out infinite',
+            animationDelay: '-10s',
+          }}
+        />
+        <div 
+          className="absolute bottom-1/3 -left-10 w-[350px] h-[350px] rounded-full blur-[80px] opacity-45"
+          style={{
+            background: 'radial-gradient(circle, #4FD080 0%, transparent 70%)',
+            animation: 'float-orb-4 22s ease-in-out infinite',
+            animationDelay: '-3s',
+          }}
+        />
+      </div>
       {/* Header - Telegram style */}
       <div className="flex-shrink-0 flex items-center gap-2 px-2 py-2 bg-card border-b border-border">
         {/* Back button with unread count */}

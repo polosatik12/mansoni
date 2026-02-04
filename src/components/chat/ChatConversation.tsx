@@ -10,7 +10,7 @@ import { useVideoCallContext } from "@/contexts/VideoCallContext";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import chatBackground from "@/assets/chat-background-light.jpg";
+import { BrandBackground } from "@/components/ui/brand-background";
 import { VideoCircleRecorder } from "./VideoCircleRecorder";
 import { VideoCircleMessage } from "./VideoCircleMessage";
 import { AttachmentSheet } from "./AttachmentSheet";
@@ -488,16 +488,43 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         )}
       </div>
 
-      {/* Messages - scrollable with Telegram-style background */}
-      <div 
-        className="flex-1 overflow-y-auto p-4 native-scroll flex flex-col"
-        style={{
-          backgroundImage: `url(${chatBackground})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
-        }}
-      >
+      {/* Messages - scrollable with animated brand background */}
+      <div className="flex-1 overflow-y-auto p-4 native-scroll flex flex-col relative">
+        {/* Brand background - same as auth page */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#071420]" />
+          <div 
+            className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-60"
+            style={{
+              background: 'radial-gradient(circle, #0066CC 0%, transparent 70%)',
+              animation: 'float-orb-1 15s ease-in-out infinite',
+            }}
+          />
+          <div 
+            className="absolute bottom-20 right-0 w-[450px] h-[450px] rounded-full blur-[100px] opacity-50"
+            style={{
+              background: 'radial-gradient(circle, #00A3B4 0%, transparent 70%)',
+              animation: 'float-orb-2 18s ease-in-out infinite',
+              animationDelay: '-5s',
+            }}
+          />
+          <div 
+            className="absolute top-1/3 -right-20 w-[400px] h-[400px] rounded-full blur-[90px] opacity-55"
+            style={{
+              background: 'radial-gradient(circle, #00C896 0%, transparent 70%)',
+              animation: 'float-orb-3 20s ease-in-out infinite',
+              animationDelay: '-10s',
+            }}
+          />
+          <div 
+            className="absolute bottom-1/3 -left-10 w-[350px] h-[350px] rounded-full blur-[80px] opacity-45"
+            style={{
+              background: 'radial-gradient(circle, #4FD080 0%, transparent 70%)',
+              animation: 'float-orb-4 22s ease-in-out infinite',
+              animationDelay: '-3s',
+            }}
+          />
+        </div>
         {/* Spacer to push messages to bottom */}
         <div className="flex-1" />
         
