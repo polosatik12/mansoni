@@ -26,6 +26,49 @@ interface VideoCallScreenProps {
   onRetry: () => void;
 }
 
+// Brand background component for call screen
+function CallBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* Base gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#071420]" />
+      
+      {/* Animated floating orbs */}
+      <div 
+        className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-60"
+        style={{
+          background: 'radial-gradient(circle, #0066CC 0%, transparent 70%)',
+          animation: 'float-orb-1 15s ease-in-out infinite',
+        }}
+      />
+      <div 
+        className="absolute bottom-20 right-0 w-[450px] h-[450px] rounded-full blur-[100px] opacity-50"
+        style={{
+          background: 'radial-gradient(circle, #00A3B4 0%, transparent 70%)',
+          animation: 'float-orb-2 18s ease-in-out infinite',
+          animationDelay: '-5s',
+        }}
+      />
+      <div 
+        className="absolute top-1/3 -right-20 w-[400px] h-[400px] rounded-full blur-[90px] opacity-55"
+        style={{
+          background: 'radial-gradient(circle, #00C896 0%, transparent 70%)',
+          animation: 'float-orb-3 20s ease-in-out infinite',
+          animationDelay: '-10s',
+        }}
+      />
+      <div 
+        className="absolute bottom-1/3 -left-10 w-[350px] h-[350px] rounded-full blur-[80px] opacity-45"
+        style={{
+          background: 'radial-gradient(circle, #4FD080 0%, transparent 70%)',
+          animation: 'float-orb-4 22s ease-in-out infinite',
+          animationDelay: '-3s',
+        }}
+      />
+    </div>
+  );
+}
+
 export function VideoCallScreen({
   call,
   status,
@@ -170,30 +213,39 @@ export function VideoCallScreen({
             <div className="absolute inset-0 bg-black/40" />
             
             <div className="relative z-10 flex flex-col items-center">
-              {/* Avatar with pulse animation */}
+              {/* Glass avatar circle */}
               <div className="relative">
+                {/* Pulse animation ring */}
                 <div
-                  className="absolute inset-0 w-24 h-24 rounded-full border-4 border-white/30 animate-ping"
+                  className="absolute -inset-3 rounded-full border-2 border-white/20 animate-ping"
                   style={{ animationDuration: "2s" }}
                 />
-                <div className="relative w-24 h-24 rounded-full border-4 border-white/50 overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                {/* Glass effect circle */}
+                <div 
+                  className="relative w-28 h-28 rounded-full overflow-hidden flex items-center justify-center backdrop-blur-xl"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 0 40px rgba(0,163,180,0.3)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                  }}
+                >
                   {otherAvatar ? (
                     <img src={otherAvatar} alt={otherName} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-3xl text-white font-bold">{getInitials(otherName)}</span>
+                    <span className="text-4xl text-white/90 font-light">{getInitials(otherName)}</span>
                   )}
                 </div>
               </div>
 
               {/* Name and status */}
-              <h3 className="text-xl font-semibold text-white mt-4 mb-1 drop-shadow-lg">{otherName}</h3>
+              <h3 className="text-2xl font-semibold text-white mt-6 mb-2 drop-shadow-lg">{otherName}</h3>
               <div className="flex items-center">
-                <span className="text-white/90 text-base drop-shadow-lg">{getStatusText()}</span>
+                <span className="text-white/80 text-base drop-shadow-lg">{getStatusText()}</span>
                 {!showRetryButton && (
                   <span className="flex ml-0.5">
-                    <span className="animate-bounce text-white/90" style={{ animationDelay: "0ms", animationDuration: "1s" }}>.</span>
-                    <span className="animate-bounce text-white/90" style={{ animationDelay: "200ms", animationDuration: "1s" }}>.</span>
-                    <span className="animate-bounce text-white/90" style={{ animationDelay: "400ms", animationDuration: "1s" }}>.</span>
+                    <span className="animate-bounce text-white/80" style={{ animationDelay: "0ms", animationDuration: "1s" }}>.</span>
+                    <span className="animate-bounce text-white/80" style={{ animationDelay: "200ms", animationDuration: "1s" }}>.</span>
+                    <span className="animate-bounce text-white/80" style={{ animationDelay: "400ms", animationDuration: "1s" }}>.</span>
                   </span>
                 )}
               </div>
@@ -202,7 +254,11 @@ export function VideoCallScreen({
               {showRetryButton && (
                 <button
                   onClick={onRetry}
-                  className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/20 backdrop-blur-sm text-white pointer-events-auto"
+                  className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full backdrop-blur-xl text-white pointer-events-auto"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                  }}
                 >
                   <RefreshCw className="w-4 h-4" />
                   <span>Повторить</span>
@@ -228,27 +284,27 @@ export function VideoCallScreen({
         {/* Bottom controls */}
         <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 safe-area-bottom z-20 bg-gradient-to-t from-black/50 to-transparent">
           <div className="flex items-center justify-around">
-            <ControlButton
+            <GlassControlButton
               icon={<Volume2 className="w-6 h-6" />}
-              label="динамик"
+              label="Динамик"
               isActive={isSpeakerOn}
               onClick={() => setIsSpeakerOn(!isSpeakerOn)}
             />
-            <ControlButton
+            <GlassControlButton
               icon={isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
-              label="видео"
+              label="Видео"
               isActive={!isVideoOff}
               onClick={onToggleVideo}
             />
-            <ControlButton
+            <GlassControlButton
               icon={isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-              label="убрать звук"
+              label="Звук"
               isActive={!isMuted}
               onClick={onToggleMute}
             />
-            <ControlButton
+            <GlassControlButton
               icon={<X className="w-6 h-6" />}
-              label="завершить"
+              label="Отбой"
               isEndButton
               onClick={onEnd}
             />
@@ -258,111 +314,119 @@ export function VideoCallScreen({
     );
   }
 
-  // Audio call or waiting state
+  // Audio call or waiting state - with brand background
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-purple-600 via-purple-500 to-blue-400 z-[100] flex flex-col">
-      {/* Top bar */}
-      <div className="p-4 pt-12 safe-area-top">
-        <button onClick={onEnd} className="flex items-center text-white">
-          <ChevronLeft className="w-6 h-6" />
-          <span className="text-lg">Назад</span>
-        </button>
-      </div>
+    <div className="fixed inset-0 z-[100] flex flex-col">
+      {/* Brand animated background */}
+      <CallBackground />
+      
+      {/* Content layer */}
+      <div className="relative z-10 flex flex-col flex-1">
+        {/* Top bar */}
+        <div className="p-4 pt-12 safe-area-top">
+          <button onClick={onEnd} className="flex items-center text-white/80 hover:text-white transition-colors">
+            <ChevronLeft className="w-6 h-6" />
+            <span className="text-lg">Назад</span>
+          </button>
+        </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center -mt-16">
-        {/* Avatar */}
-        <div className="relative">
-          <div className="absolute -inset-4 rounded-full bg-white/10 blur-xl" />
-          {showWaitingUI && (
-            <>
+        {/* Main content */}
+        <div className="flex-1 flex flex-col items-center justify-center -mt-16">
+          {/* Status text above avatar */}
+          <p className="text-white/60 text-sm mb-3">{getStatusText()}{showWaitingUI && !showRetryButton && '...'}</p>
+          
+          {/* Name */}
+          <h2 className="text-4xl font-semibold text-white mb-10">{otherName}</h2>
+
+          {/* Glass Avatar Circle */}
+          <div className="relative">
+            {/* Pulse animation for waiting state */}
+            {showWaitingUI && (
               <div
-                className="absolute inset-0 w-40 h-40 rounded-full border-4 border-white/20 animate-ping"
-                style={{ animationDuration: "2s" }}
+                className="absolute -inset-4 rounded-full border border-white/10 animate-ping"
+                style={{ animationDuration: "2.5s" }}
               />
-              <div className="absolute inset-0 w-40 h-40 rounded-full border-2 border-white/30" />
-            </>
-          )}
-          <div className="relative w-40 h-40 rounded-full border-4 border-white/30 overflow-hidden bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center">
-            {otherAvatar ? (
-              <img src={otherAvatar} alt={otherName} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-5xl text-white font-bold">{getInitials(otherName)}</span>
             )}
+            
+            {/* Glass effect circle */}
+            <div 
+              className="relative w-48 h-48 rounded-full overflow-hidden flex items-center justify-center backdrop-blur-xl"
+              style={{
+                background: 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.1), 0 0 60px rgba(0,163,180,0.2)',
+                border: '1px solid rgba(255,255,255,0.15)'
+              }}
+            >
+              {otherAvatar ? (
+                <img src={otherAvatar} alt={otherName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-6xl text-white/80 font-light tracking-wider">{getInitials(otherName)}</span>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Name */}
-        <h2 className="text-3xl font-semibold text-white mt-8 mb-3">{otherName}</h2>
-
-        {/* Status */}
-        <div className="flex items-center h-7">
-          <span className="text-white/80 text-lg">{getStatusText()}</span>
-          {showWaitingUI && !showRetryButton && (
-            <span className="flex ml-0.5">
-              <span className="animate-bounce text-white/80 text-lg" style={{ animationDelay: "0ms", animationDuration: "1s" }}>.</span>
-              <span className="animate-bounce text-white/80 text-lg" style={{ animationDelay: "200ms", animationDuration: "1s" }}>.</span>
-              <span className="animate-bounce text-white/80 text-lg" style={{ animationDelay: "400ms", animationDuration: "1s" }}>.</span>
-            </span>
+          {/* Retry button */}
+          {showRetryButton && (
+            <div className="mt-10 flex flex-col items-center gap-3">
+              <p className="text-white/50 text-sm text-center max-w-[280px]">
+                Проверьте интернет или настройки firewall
+              </p>
+              <button
+                onClick={onRetry}
+                className="flex items-center gap-2 px-6 py-3 rounded-full backdrop-blur-xl text-white transition-all hover:scale-105"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+                }}
+              >
+                <RefreshCw className="w-5 h-5" />
+                <span>Повторить</span>
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Retry button */}
-        {showRetryButton && (
-          <div className="mt-6 flex flex-col items-center gap-3">
-            <p className="text-white/70 text-sm text-center max-w-[280px]">
-              Проверьте интернет или настройки firewall
-            </p>
-            <button
-              onClick={onRetry}
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
-            >
-              <RefreshCw className="w-5 h-5" />
-              <span>Повторить</span>
-            </button>
-          </div>
+        {/* Audio element for audio calls */}
+        {!isVideoCall && remoteStream && (
+          <audio ref={remoteVideoRef as any} autoPlay playsInline />
         )}
-      </div>
 
-      {/* Audio element for audio calls */}
-      {!isVideoCall && remoteStream && (
-        <audio ref={remoteVideoRef as any} autoPlay playsInline />
-      )}
-
-      {/* Bottom controls */}
-      <div className="p-6 pb-10 safe-area-bottom">
-        <div className="flex items-center justify-around">
-          <ControlButton
-            icon={<Volume2 className="w-6 h-6" />}
-            label="динамик"
-            isActive={isSpeakerOn}
-            onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-          />
-          <ControlButton
-            icon={isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
-            label="видео"
-            isActive={!isVideoOff}
-            onClick={onToggleVideo}
-          />
-          <ControlButton
-            icon={isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-            label="убрать звук"
-            isActive={!isMuted}
-            onClick={onToggleMute}
-          />
-          <ControlButton
-            icon={<X className="w-6 h-6" />}
-            label="завершить"
-            isEndButton
-            onClick={onEnd}
-          />
+        {/* Bottom controls */}
+        <div className="p-6 pb-10 safe-area-bottom">
+          <div className="flex items-center justify-around">
+            <GlassControlButton
+              icon={<Volume2 className="w-6 h-6" />}
+              label="Динамик"
+              isActive={isSpeakerOn}
+              onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+            />
+            <GlassControlButton
+              icon={isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+              label="Видео"
+              isActive={!isVideoOff}
+              onClick={onToggleVideo}
+            />
+            <GlassControlButton
+              icon={isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+              label="Звук"
+              isActive={!isMuted}
+              onClick={onToggleMute}
+            />
+            <GlassControlButton
+              icon={<X className="w-6 h-6" />}
+              label="Отбой"
+              isEndButton
+              onClick={onEnd}
+            />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-interface ControlButtonProps {
+interface GlassControlButtonProps {
   icon: React.ReactNode;
   label: string;
   isActive?: boolean;
@@ -370,26 +434,33 @@ interface ControlButtonProps {
   onClick: () => void;
 }
 
-const ControlButton = ({
+const GlassControlButton = ({
   icon,
   label,
   isActive = true,
   isEndButton = false,
   onClick,
-}: ControlButtonProps) => (
+}: GlassControlButtonProps) => (
   <div className="flex flex-col items-center gap-2">
     <button
       onClick={onClick}
-      className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
-        isEndButton
-          ? "bg-red-500 text-white"
-          : isActive
-            ? "bg-white/20 backdrop-blur-sm text-white"
-            : "bg-white text-gray-800"
-      }`}
+      className="w-16 h-16 rounded-full flex items-center justify-center transition-all hover:scale-105 backdrop-blur-xl"
+      style={isEndButton ? {
+        background: 'linear-gradient(145deg, #ef4444 0%, #dc2626 100%)',
+        boxShadow: '0 4px 20px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+      } : {
+        background: isActive 
+          ? 'linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)'
+          : 'linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.2)',
+        color: isActive ? 'white' : '#1a1a1a'
+      }}
     >
-      {icon}
+      <span className={isEndButton ? 'text-white' : isActive ? 'text-white' : 'text-gray-800'}>
+        {icon}
+      </span>
     </button>
-    <span className="text-white/80 text-xs">{label}</span>
+    <span className="text-white/70 text-xs">{label}</span>
   </div>
 );
