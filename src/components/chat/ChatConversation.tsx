@@ -713,8 +713,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input area - Liquid Glass style */}
-      <div className="flex-shrink-0 bg-[#0a1628]/90 backdrop-blur-xl border-t border-white/5">
+      {/* Input area - Fully transparent like Telegram */}
+      <div className="flex-shrink-0">
         
         {/* Input controls */}
         <div className="px-3 py-3">
@@ -757,7 +757,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              {/* Input field - frosted glass */}
+              {/* Input field - dark transparent like Telegram */}
               <div className="flex-1 relative">
                 <input
                   ref={inputRef}
@@ -767,23 +767,19 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   onFocus={() => setShowEmojiPicker(false)}
-                  className="w-full h-12 px-5 pr-20 rounded-full text-white placeholder:text-white/40 outline-none backdrop-blur-xl border border-white/10 transition-all focus:border-white/20"
-                  style={{
-                    background: 'linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 20px rgba(0,0,0,0.3)'
-                  }}
+                  className="w-full h-11 px-5 pr-20 rounded-full text-white placeholder:text-white/50 outline-none bg-black/40 border-0 transition-all"
                 />
                 {/* Icons inside input */}
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                   <button
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className={`transition-colors ${showEmojiPicker ? 'text-cyan-400' : 'text-white/40 hover:text-white/70'}`}
+                    className={`transition-colors ${showEmojiPicker ? 'text-cyan-400' : 'text-white/50 hover:text-white/70'}`}
                   >
                     <Smile className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => setShowAttachmentSheet(true)}
-                    className="text-white/40 hover:text-white/70 transition-colors"
+                    className="text-white/50 hover:text-white/70 transition-colors"
                   >
                     <AttachmentIcon className="w-5 h-5" />
                   </button>
@@ -840,8 +836,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         />
       </div>
       
-      {/* Safe area for bottom */}
-      {!showEmojiPicker && <div className="bg-[#0a1628]/90 safe-area-bottom" />}
+      {/* Safe area for bottom - transparent */}
+      {!showEmojiPicker && <div className="safe-area-bottom" />}
 
       {/* Video Circle Recorder */}
       {showVideoRecorder && (
