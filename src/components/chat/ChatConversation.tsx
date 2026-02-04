@@ -791,13 +791,13 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 <button
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleSendMessage}
-                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all"
+                  className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
                   style={{
-                    background: 'linear-gradient(135deg, #00A3B4 0%, #0066CC 50%, #00C896 100%)',
-                    boxShadow: '0 0 25px rgba(0,163,180,0.5), 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+                    background: 'linear-gradient(145deg, #f0f8fa 0%, #e0eff3 100%)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)'
                   }}
                 >
-                  <Send className="w-5 h-5 text-white" />
+                  <Send className="w-5 h-5 text-[#00A3B4]" />
                 </button>
               ) : (
                 <button
@@ -807,18 +807,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   onMouseUp={handleRecordButtonUp}
                   onMouseLeave={handleRecordButtonLeave}
                   onContextMenu={(e) => e.preventDefault()}
-                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all backdrop-blur-xl border border-cyan-400/30 select-none"
+                  className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 select-none"
                   style={{
-                    background: recordMode === 'video' 
-                      ? 'linear-gradient(145deg, rgba(139,92,246,0.3) 0%, rgba(0,102,204,0.2) 100%)'
-                      : 'linear-gradient(145deg, rgba(0,163,180,0.3) 0%, rgba(0,102,204,0.2) 100%)',
-                    boxShadow: '0 0 20px rgba(0,163,180,0.3), inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.3)'
+                    background: 'linear-gradient(145deg, #f0f8fa 0%, #e0eff3 100%)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)'
                   }}
                 >
                   {recordMode === 'voice' ? (
-                    <Mic className="w-5 h-5 text-cyan-300" />
+                    <Mic className="w-5 h-5 text-[#00A3B4]" />
                   ) : (
-                    <Video className="w-5 h-5 text-purple-300" />
+                    <Video className="w-5 h-5 text-[#8B5CF6]" />
                   )}
                 </button>
               )}
