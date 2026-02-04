@@ -2,6 +2,7 @@ import { createContext, useContext, ReactNode, useState, useCallback, useEffect,
 import { useVideoCall, type VideoCall, type VideoCallStatus } from "@/hooks/useVideoCall";
 import { useIncomingCalls } from "@/hooks/useIncomingCalls";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface VideoCallContextType {
   // State
@@ -148,11 +149,25 @@ export function VideoCallProvider({ children }: { children: ReactNode }) {
       if (!result) {
         console.log("[VideoCallContext] startCall returned null, releasing UI-lock");
         setIsCallUiActive(false); // Release UI-lock if call failed
+        // Show permission error toast
+        toast.error(
+          callType === "video" 
+            ? "Нет доступа к камере или микрофону" 
+            : "Нет доступа к микрофону",
+          {
+            description: "Разрешите доступ в настройках браузера",
+            duration: 5000,
+          }
+        );
       }
       return result;
     } catch (err) {
       console.error("[VideoCallContext] startCall error:", err);
       setIsCallUiActive(false); // Release UI-lock on error
+      toast.error("Ошибка при начале звонка", {
+        description: "Попробуйте ещё раз",
+        duration: 4000,
+      });
       return null;
     }
   }, [user, startVideoCall]);
