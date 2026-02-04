@@ -307,9 +307,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   // Hold-to-record handlers for dynamic mic/video button
+  const holdStartedRef = useRef(false); // Track if mousedown happened on button
+
   const handleRecordButtonDown = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     isHoldingRef.current = false;
+    holdStartedRef.current = true;
     
     holdTimerRef.current = setTimeout(() => {
       isHoldingRef.current = true;
@@ -322,6 +325,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   }, [recordMode]);
 
   const handleRecordButtonUp = useCallback(() => {
+    // Only process if button down started on this button
+    if (!holdStartedRef.current) return;
+    holdStartedRef.current = false;
+    
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
@@ -338,6 +345,15 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     }
     isHoldingRef.current = false;
   }, [recordMode, isRecording]);
+
+  // Cancel hold timer when mouse leaves (but don't switch mode)
+  const handleRecordButtonLeave = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    // Don't reset holdStartedRef - mouseUp can still happen
+  }, []);
 
   // Long press handlers for context menu
   const handleMessageLongPressStart = useCallback((
@@ -792,7 +808,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   onTouchEnd={handleRecordButtonUp}
                   onMouseDown={handleRecordButtonDown}
                   onMouseUp={handleRecordButtonUp}
-                  onMouseLeave={handleRecordButtonUp}
+                  onMouseLeave={handleRecordButtonLeave}
                   onContextMenu={(e) => e.preventDefault()}
                   className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all backdrop-blur-xl border border-cyan-400/30 select-none"
                   style={{
