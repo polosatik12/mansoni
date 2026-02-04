@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { BrandBackground } from "@/components/ui/brand-background";
 
 type Screen = "main" | "saved" | "archive" | "activity" | "notifications" | "privacy" | "security" | "help" | "about";
 
@@ -331,12 +332,7 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Aurora Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/80 to-slate-900">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-500/25 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-violet-500/30 rounded-full blur-3xl animate-pulse delay-500" />
-      </div>
+      <BrandBackground />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col safe-area-top safe-area-bottom">
