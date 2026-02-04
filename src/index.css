@@ -6,6 +6,44 @@
 All colors MUST be HSL.
 */
 
+/* Auth page animations */
+@keyframes float-orb-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(40px, -30px) scale(1.1); }
+  50% { transform: translate(-30px, 40px) scale(0.95); }
+  75% { transform: translate(50px, 25px) scale(1.05); }
+}
+
+@keyframes float-orb-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-50px, 20px) scale(1.08); }
+  66% { transform: translate(30px, -40px) scale(0.92); }
+}
+
+@keyframes float-orb-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(25px, 35px) scale(1.06); }
+  40% { transform: translate(-40px, -20px) scale(0.94); }
+  60% { transform: translate(35px, -30px) scale(1.04); }
+  80% { transform: translate(-25px, 25px) scale(0.98); }
+}
+
+@keyframes float-orb-4 {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(45px, -35px) scale(1.1) rotate(180deg); }
+}
+
+@keyframes shimmer-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes bubble-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
 @layer base {
   :root {
     /* Clean white light theme */
