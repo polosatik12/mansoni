@@ -94,7 +94,7 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
       {/* Header - Telegram dark style */}
-      <div className="flex-shrink-0 bg-[#17212b] safe-area-top">
+      <div className="flex-shrink-0 bg-[#17212b] safe-area-top relative z-10">
         <div className="flex items-center px-2 py-2">
           {/* Back button */}
           <button 
@@ -261,7 +261,7 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 px-2 py-2 bg-[#17212b] safe-area-bottom">
+      <div className="flex-shrink-0 px-2 py-2 bg-[#17212b] safe-area-bottom relative z-10">
         <div className="flex items-center gap-2">
           {/* Input field */}
           <div className="flex-1">

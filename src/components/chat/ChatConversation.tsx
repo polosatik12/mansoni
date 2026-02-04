@@ -417,7 +417,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
       {/* Header - Telegram dark style */}
-      <div className="flex-shrink-0 bg-[#17212b] safe-area-top">
+      <div className="flex-shrink-0 bg-[#17212b] safe-area-top relative z-10">
         <div className="flex items-center px-2 py-2">
           {/* Back button */}
           <button 
@@ -745,7 +745,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       </div>
 
       {/* Input area - Fully transparent like Telegram */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 relative z-10">
         
         {/* Input controls */}
         <div className="px-3 py-3">
