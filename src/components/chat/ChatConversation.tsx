@@ -306,6 +306,39 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     await startCall(otherUserId, conversationId, "video");
   };
 
+  // Hold-to-record handlers for dynamic mic/video button
+  const handleRecordButtonDown = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    isHoldingRef.current = false;
+    
+    holdTimerRef.current = setTimeout(() => {
+      isHoldingRef.current = true;
+      if (recordMode === 'voice') {
+        startRecording();
+      } else {
+        setShowVideoRecorder(true);
+      }
+    }, 200); // 200ms delay to distinguish tap from hold
+  }, [recordMode]);
+
+  const handleRecordButtonUp = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    
+    if (isHoldingRef.current) {
+      // This was a hold — stop voice recording (video auto-sends on release in VideoCircleRecorder)
+      if (recordMode === 'voice' && isRecording) {
+        stopRecording();
+      }
+    } else {
+      // This was a tap — switch mode
+      setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
+    }
+    isHoldingRef.current = false;
+  }, [recordMode, isRecording]);
+
   // Long press handlers for context menu
   const handleMessageLongPressStart = useCallback((
     messageId: string, 
@@ -740,7 +773,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               </div>
               
-              {/* Right button - Mic (when empty) or Send (when has text) */}
+              {/* Right button - Dynamic based on text and record mode */}
               {inputText.trim() ? (
                 <button
                   onMouseDown={(e) => e.preventDefault()}
@@ -755,14 +788,25 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </button>
               ) : (
                 <button
-                  onClick={() => setShowVideoRecorder(true)}
-                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all backdrop-blur-xl border border-cyan-400/30"
+                  onTouchStart={handleRecordButtonDown}
+                  onTouchEnd={handleRecordButtonUp}
+                  onMouseDown={handleRecordButtonDown}
+                  onMouseUp={handleRecordButtonUp}
+                  onMouseLeave={handleRecordButtonUp}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all backdrop-blur-xl border border-cyan-400/30 select-none"
                   style={{
-                    background: 'linear-gradient(145deg, rgba(0,163,180,0.3) 0%, rgba(0,102,204,0.2) 100%)',
+                    background: recordMode === 'video' 
+                      ? 'linear-gradient(145deg, rgba(139,92,246,0.3) 0%, rgba(0,102,204,0.2) 100%)'
+                      : 'linear-gradient(145deg, rgba(0,163,180,0.3) 0%, rgba(0,102,204,0.2) 100%)',
                     boxShadow: '0 0 20px rgba(0,163,180,0.3), inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.3)'
                   }}
                 >
-                  <Mic className="w-5 h-5 text-cyan-300" />
+                  {recordMode === 'voice' ? (
+                    <Mic className="w-5 h-5 text-cyan-300" />
+                  ) : (
+                    <Video className="w-5 h-5 text-purple-300" />
+                  )}
                 </button>
               )}
             </div>
