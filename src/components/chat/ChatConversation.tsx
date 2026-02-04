@@ -552,9 +552,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               ) : isImage && message.media_url ? (
                 <div 
-                  className={`max-w-[75%] rounded-2xl overflow-hidden cursor-pointer ${
-                    isOwn ? "rounded-br-md bg-[#2b5278]" : "rounded-bl-md bg-[#182533]"
+                  className={`max-w-[75%] rounded-2xl overflow-hidden cursor-pointer backdrop-blur-xl ${
+                    isOwn 
+                      ? "rounded-br-md bg-white/10 border border-white/10" 
+                      : "rounded-bl-md bg-white/5 border border-white/10"
                   }`}
+                  style={{
+                    boxShadow: isOwn 
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.25)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 20px rgba(0,0,0,0.2)'
+                  }}
                   onClick={() => setViewingImage(message.media_url!)}
                 >
                   <img 
@@ -585,11 +592,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               ) : (
                 <div
-                  className={`max-w-[75%] rounded-2xl px-3 py-2 select-none ${
+                  className={`max-w-[75%] rounded-2xl px-3 py-2 select-none backdrop-blur-xl border border-white/10 ${
                     isOwn
-                      ? "bg-[#2b5278] text-white rounded-br-sm"
-                      : "bg-[#182533] text-white rounded-bl-sm"
+                      ? "bg-white/10 text-white rounded-br-sm"
+                      : "bg-white/5 text-white rounded-bl-sm"
                   }`}
+                  style={{
+                    boxShadow: isOwn 
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.25)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 20px rgba(0,0,0,0.2)'
+                  }}
                   onMouseDown={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
                   onMouseUp={handleMessageLongPressEnd}
                   onMouseLeave={handleMessageLongPressEnd}
@@ -602,36 +614,32 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   )}
                   
                   {isVoice ? (
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 text-white hover:bg-white/10"
+                    <div className="flex items-center gap-3 min-w-[180px]">
+                      <button
+                        className="w-10 h-10 shrink-0 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/15 transition-colors"
                         onClick={() => toggleVoicePlay(message.id, message.media_url || undefined)}
                       >
                         {playingVoice === message.id ? (
-                          <Pause className="w-4 h-4" />
+                          <Pause className="w-5 h-5 text-white" />
                         ) : (
-                          <Play className="w-4 h-4" />
+                          <Play className="w-5 h-5 text-white ml-0.5" />
                         )}
-                      </Button>
-                      <div className="flex-1">
-                        <div className="h-6 flex items-center gap-0.5">
-                          {getWaveformHeights(message.id).map((height, i) => (
-                            <div
-                              key={i}
-                              className={`w-1 rounded-full transition-all duration-150 ${
-                                playingVoice === message.id ? 'bg-white/70' : 'bg-white/30'
-                              }`}
-                              style={{ 
-                                height: `${height}px`,
-                                animationDelay: playingVoice === message.id ? `${i * 50}ms` : undefined
-                              }}
-                            />
-                          ))}
-                        </div>
+                      </button>
+                      <div className="flex-1 flex items-center gap-[2px]">
+                        {getWaveformHeights(message.id).map((height, i) => (
+                          <div
+                            key={i}
+                            className={`w-[3px] rounded-full transition-all duration-150 ${
+                              playingVoice === message.id ? 'bg-white/80' : 'bg-white/40'
+                            }`}
+                            style={{ 
+                              height: `${height}px`,
+                              animationDelay: playingVoice === message.id ? `${i * 50}ms` : undefined
+                            }}
+                          />
+                        ))}
                       </div>
-                      <span className="text-xs text-white/50">
+                      <span className="text-xs text-white/60 font-medium">
                         {message.duration_seconds ? formatTime(message.duration_seconds) : "0:00"}
                       </span>
                     </div>
