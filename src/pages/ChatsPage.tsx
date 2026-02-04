@@ -4,6 +4,7 @@ import { Search, Check, CheckCheck, LogIn, MessageCircle, Plus, Megaphone, Users
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
+import { BrandBackground } from "@/components/ui/brand-background";
 import { ChatConversation } from "@/components/chat/ChatConversation";
 import { ChatStories } from "@/components/chat/ChatStories";
 import { ChatSearchSheet } from "@/components/chat/ChatSearchSheet";
@@ -162,20 +163,15 @@ export function ChatsPage() {
   if (!authLoading && !user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center relative">
-        {/* Aurora Background */}
-        <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900/90 to-slate-800 -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/35 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-violet-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-        </div>
-        <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
+        <BrandBackground />
+        <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4 relative z-10">
           <MessageCircle className="w-10 h-10 text-white/60" />
         </div>
-        <h2 className="text-xl font-semibold mb-2 text-white">Войдите для доступа к чатам</h2>
-        <p className="text-white/60 mb-6">
+        <h2 className="text-xl font-semibold mb-2 text-white relative z-10">Войдите для доступа к чатам</h2>
+        <p className="text-white/60 mb-6 relative z-10">
           Чтобы переписываться и сохранять историю сообщений, необходимо войти в аккаунт
         </p>
-        <Button onClick={() => navigate("/auth")} className="gap-2 bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20">
+        <Button onClick={() => navigate("/auth")} className="gap-2 bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 relative z-10">
           <LogIn className="w-4 h-4" />
           Войти
         </Button>
@@ -271,13 +267,7 @@ export function ChatsPage() {
   return (
     <ScrollContainerProvider value={chatListRef}>
       <div className="h-full flex flex-col overflow-hidden relative">
-        {/* Aurora Background */}
-        <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900/90 to-slate-800 -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/35 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-40 left-1/4 w-80 h-80 bg-violet-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-pink-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
-        </div>
+        <BrandBackground />
 
         {/* Dynamic Header with stories stack/row */}
         <div 
