@@ -192,6 +192,18 @@ export function VideoCircleRecorder({ onRecord, onCancel }: VideoCircleRecorderP
 
   return (
     <div className="fixed inset-0 z-[300] flex flex-col bg-gradient-to-br from-purple-900/90 via-slate-900/95 to-blue-900/90 backdrop-blur-xl">
+      {/* Header with close button */}
+      <div className="flex-shrink-0 flex items-center justify-between px-4 pt-4 safe-area-top">
+        <button
+          onClick={handleCancel}
+          className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white font-medium"
+        >
+          Закрыть
+        </button>
+        <span className="text-white/60 text-sm">Видео-кружок</span>
+        <div className="w-20" />
+      </div>
+
       {/* Video preview - large circle in center */}
       <div className="flex-1 flex items-center justify-center">
         <div className="relative">
@@ -199,14 +211,29 @@ export function VideoCircleRecorder({ onRecord, onCancel }: VideoCircleRecorderP
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/30 to-blue-500/30 blur-xl scale-110" />
           
           {/* Video circle */}
-          <div className="relative w-72 h-72 rounded-full overflow-hidden border-[3px] border-white/20 shadow-2xl">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              className={`w-full h-full object-cover ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
-            />
+          <div className="relative w-72 h-72 rounded-full overflow-hidden border-[3px] border-white/20 shadow-2xl flex items-center justify-center bg-black/50">
+            {hasPermission ? (
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className={`w-full h-full object-cover ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
+              />
+            ) : (
+              <div className="text-center px-6">
+                <Camera className="w-12 h-12 text-white/40 mx-auto mb-3" />
+                <p className="text-white/70 text-sm">
+                  Разрешите доступ к камере
+                </p>
+                <button
+                  onClick={startCamera}
+                  className="mt-4 px-6 py-2 rounded-full bg-blue-500 text-white font-medium text-sm"
+                >
+                  Запросить доступ
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Progress ring when recording */}
@@ -262,37 +289,39 @@ export function VideoCircleRecorder({ onRecord, onCancel }: VideoCircleRecorderP
       )}
 
       {/* Bottom controls */}
-      <div className="pb-8 px-4">
+      <div className="pb-8 px-4 safe-area-bottom">
         {/* Camera controls row */}
-        <div className="flex items-center justify-between mb-4">
-          {/* Left: Camera switch & Flash */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={switchCamera}
-              className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center"
-            >
-              <Camera className="w-5 h-5 text-white" />
-            </button>
-            <button 
-              onClick={toggleFlash}
-              className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center"
-            >
-              {flashEnabled ? (
-                <Zap className="w-5 h-5 text-yellow-400" fill="currentColor" />
-              ) : (
-                <ZapOff className="w-5 h-5 text-white/60" />
-              )}
-            </button>
-          </div>
+        {hasPermission && (
+          <div className="flex items-center justify-between mb-4">
+            {/* Left: Camera switch & Flash */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={switchCamera}
+                className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center"
+              >
+                <Camera className="w-5 h-5 text-white" />
+              </button>
+              <button 
+                onClick={toggleFlash}
+                className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center"
+              >
+                {flashEnabled ? (
+                  <Zap className="w-5 h-5 text-yellow-400" fill="currentColor" />
+                ) : (
+                  <ZapOff className="w-5 h-5 text-white/60" />
+                )}
+              </button>
+            </div>
 
-          {/* Right: Empty space for balance */}
-          <div className="w-24" />
-        </div>
+            {/* Right: Empty space for balance */}
+            <div className="w-24" />
+          </div>
+        )}
 
         {/* Bottom row: Timer, Cancel, Send */}
         <div className="flex items-center justify-between">
           {/* Recording indicator & time */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-[100px]">
             {isRecording && (
               <>
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
@@ -320,13 +349,6 @@ export function VideoCircleRecorder({ onRecord, onCancel }: VideoCircleRecorderP
             <ArrowUp className="w-6 h-6 text-white" strokeWidth={2.5} />
           </button>
         </div>
-
-        {/* Permission error */}
-        {!hasPermission && (
-          <p className="text-white/70 mt-4 text-center">
-            Разрешите доступ к камере для записи видео-кружка
-          </p>
-        )}
       </div>
     </div>
   );
