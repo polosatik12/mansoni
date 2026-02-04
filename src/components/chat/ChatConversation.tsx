@@ -707,64 +707,6 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              {/* Mic button - left side with glow */}
-              <button
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  isHoldingRef.current = false;
-                  holdTimerRef.current = setTimeout(() => {
-                    isHoldingRef.current = true;
-                    if (recordMode === 'voice') startRecording();
-                    else setShowVideoRecorder(true);
-                  }, 200);
-                }}
-                onMouseUp={() => {
-                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-                  if (isHoldingRef.current) {
-                    if (recordMode === 'voice') stopRecording();
-                  } else {
-                    setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
-                  }
-                  isHoldingRef.current = false;
-                }}
-                onMouseLeave={() => {
-                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-                  if (isHoldingRef.current && recordMode === 'voice' && isRecording) {
-                    cancelRecording();
-                  }
-                  isHoldingRef.current = false;
-                }}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  isHoldingRef.current = false;
-                  holdTimerRef.current = setTimeout(() => {
-                    isHoldingRef.current = true;
-                    if (recordMode === 'voice') startRecording();
-                    else setShowVideoRecorder(true);
-                  }, 200);
-                }}
-                onTouchEnd={() => {
-                  if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-                  if (isHoldingRef.current) {
-                    if (recordMode === 'voice') stopRecording();
-                  } else {
-                    setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
-                  }
-                  isHoldingRef.current = false;
-                }}
-                className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all touch-none backdrop-blur-xl border border-cyan-400/30"
-                style={{
-                  background: 'linear-gradient(145deg, rgba(0,163,180,0.3) 0%, rgba(0,102,204,0.2) 100%)',
-                  boxShadow: '0 0 20px rgba(0,163,180,0.3), inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.3)'
-                }}
-              >
-                {recordMode === 'voice' ? (
-                  <Mic className="w-5 h-5 text-cyan-300" />
-                ) : (
-                  <Video className="w-5 h-5 text-cyan-300" />
-                )}
-              </button>
-              
               {/* Input field - frosted glass */}
               <div className="flex-1 relative">
                 <input
@@ -798,20 +740,31 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               </div>
               
-              {/* Send button - gradient glow */}
-              <button
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={inputText.trim() ? handleSendMessage : undefined}
-                className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all ${!inputText.trim() ? 'opacity-50' : ''}`}
-                style={{
-                  background: 'linear-gradient(135deg, #00A3B4 0%, #0066CC 50%, #00C896 100%)',
-                  boxShadow: inputText.trim() 
-                    ? '0 0 25px rgba(0,163,180,0.5), 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
-                    : '0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
-                }}
-              >
-                <Send className="w-5 h-5 text-white" />
-              </button>
+              {/* Right button - Mic (when empty) or Send (when has text) */}
+              {inputText.trim() ? (
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={handleSendMessage}
+                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, #00A3B4 0%, #0066CC 50%, #00C896 100%)',
+                    boxShadow: '0 0 25px rgba(0,163,180,0.5), 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <Send className="w-5 h-5 text-white" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowVideoRecorder(true)}
+                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all backdrop-blur-xl border border-cyan-400/30"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(0,163,180,0.3) 0%, rgba(0,102,204,0.2) 100%)',
+                    boxShadow: '0 0 20px rgba(0,163,180,0.3), inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  <Mic className="w-5 h-5 text-cyan-300" />
+                </button>
+              )}
             </div>
           )}
         </div>
