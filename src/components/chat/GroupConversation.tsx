@@ -93,8 +93,8 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
-      {/* Header - Telegram dark style */}
-      <div className="flex-shrink-0 bg-[#17212b] safe-area-top relative z-10">
+      {/* Header - transparent with glass effect */}
+      <div className="flex-shrink-0 safe-area-top relative z-10 backdrop-blur-xl bg-black/20 border-b border-white/10">
         <div className="flex items-center px-2 py-2">
           {/* Back button */}
           <button 
@@ -141,7 +141,7 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
         </div>
         
         {/* Add participants banner */}
-        <button className="w-full py-2.5 px-4 bg-[#1e2c3a] flex items-center justify-center gap-2 border-t border-white/5">
+        <button className="w-full py-2.5 px-4 bg-white/5 flex items-center justify-center gap-2 border-t border-white/5">
           <span className="text-[#6ab3f3] text-sm font-medium">Добавить участников</span>
           <span className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center">
             <X className="w-3 h-3 text-white/40" />
@@ -261,7 +261,7 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 px-2 py-2 bg-[#17212b] safe-area-bottom relative z-10">
+      <div className="flex-shrink-0 px-2 py-2 relative z-10 backdrop-blur-xl bg-black/20 border-t border-white/10 safe-area-bottom">
         <div className="flex items-center gap-2">
           {/* Input field */}
           <div className="flex-1">
