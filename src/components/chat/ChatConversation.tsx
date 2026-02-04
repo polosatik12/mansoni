@@ -489,9 +489,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       </div>
 
       {/* Messages - scrollable with animated brand background */}
-      <div className="flex-1 overflow-y-auto p-4 native-scroll flex flex-col relative">
+      <div className="flex-1 overflow-y-auto native-scroll flex flex-col relative">
         {/* Brand background - same as auth page */}
-        <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#071420]" />
           <div 
             className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-60"
@@ -525,6 +525,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             }}
           />
         </div>
+        
+        {/* Content layer */}
+        <div className="relative z-10 flex-1 flex flex-col p-4">
         {/* Spacer to push messages to bottom */}
         <div className="flex-1" />
         
@@ -738,6 +741,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         })}
         </div>
         <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Input area - Fully transparent like Telegram */}

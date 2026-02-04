@@ -150,9 +150,9 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
       </div>
 
       {/* Messages - scrollable with animated brand background */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 native-scroll relative">
+      <div className="flex-1 overflow-y-auto native-scroll relative">
         {/* Brand background - same as auth page */}
-        <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#071420]" />
           <div 
             className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] opacity-60"
@@ -186,6 +186,9 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
             }}
           />
         </div>
+        
+        {/* Content layer */}
+        <div className="relative z-10 p-4 space-y-1">
         {loading && (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
@@ -254,6 +257,7 @@ export function GroupConversation({ group, onBack, onLeave }: GroupConversationP
           );
         })}
         <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Input */}
