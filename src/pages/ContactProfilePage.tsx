@@ -423,7 +423,7 @@ export function ContactProfilePage() {
               Заблокировать {profile?.display_name || 'пользователя'}
             </h2>
             <p className="relative text-white/70 text-sm mb-6">
-              Запретить {profile?.display_name || 'пользователю'} писать Вам сообщения и звонить через Mansoni?
+              Запретить {profile?.display_name || 'пользователю'} писать Вам сообщения и звонить через Maisoni?
             </p>
             
             <div className="relative flex items-center justify-end gap-3">
