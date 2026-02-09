@@ -6,6 +6,7 @@ import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { GroupInfoSheet } from "./GroupInfoSheet";
+import { DateSeparator, shouldShowDateSeparator } from "./DateSeparator";
 
 interface GroupConversationProps {
   group: GroupChat;
@@ -161,12 +162,14 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                 !isOwn && (!prevMessage || prevMessage.sender_id !== message.sender_id);
               const showSenderName = !isOwn && showAvatar;
               const senderColor = getMemberColor(message.sender_id);
+              const showDate = shouldShowDateSeparator(message.created_at, prevMessage?.created_at);
 
               return (
-                <div
-                  key={message.id}
-                  className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"}`}
-                >
+                <div key={message.id}>
+                  {showDate && <DateSeparator date={message.created_at} />}
+                  <div
+                    className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"}`}
+                  >
                   {/* Avatar for incoming messages */}
                   {!isOwn && (
                     <div className="w-8 shrink-0">
@@ -211,6 +214,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                       </span>
                       {isOwn && <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />}
                     </div>
+                  </div>
                   </div>
                 </div>
               );

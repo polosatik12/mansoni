@@ -198,9 +198,15 @@ export function useGroupMessages(groupId: string | null) {
             table: "group_chat_messages",
             filter: `group_id=eq.${groupId}`,
           },
-          async (payload) => {
+           async (payload) => {
             const newMessage = payload.new as GroupMessage;
             
+            // Prevent duplicates
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === newMessage.id)) return prev;
+              return prev; // will be updated below
+            });
+
             // Получаем профиль отправителя
             const { data: profile } = await supabase
               .from("profiles")
@@ -208,7 +214,10 @@ export function useGroupMessages(groupId: string | null) {
               .eq("user_id", newMessage.sender_id)
               .single();
             
-            setMessages((prev) => [...prev, { ...newMessage, sender: profile || undefined }]);
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === newMessage.id)) return prev;
+              return [...prev, { ...newMessage, sender: profile || undefined }];
+            });
           }
         )
         .subscribe();
