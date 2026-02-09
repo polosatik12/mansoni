@@ -216,15 +216,25 @@ export function useChannelMessages(channelId: string | null) {
     };
   }, [channelId]);
 
-  const sendMessage = async (content: string) => {
-    if (!channelId || !user || !content.trim()) return;
+  const sendMessage = async (content: string, mediaUrl?: string, mediaType?: string) => {
+    if (!channelId || !user || (!content.trim() && !mediaUrl)) return;
 
     try {
-      const { error } = await supabase.from("channel_messages").insert({
+      const insertData: {
+        channel_id: string;
+        sender_id: string;
+        content: string;
+        media_url?: string;
+        media_type?: string;
+      } = {
         channel_id: channelId,
         sender_id: user.id,
-        content: content.trim(),
-      });
+        content: content.trim() || (mediaType === "image" ? "📷 Фото" : "📎 Файл"),
+      };
+      if (mediaUrl) insertData.media_url = mediaUrl;
+      if (mediaType) insertData.media_type = mediaType;
+
+      const { error } = await supabase.from("channel_messages").insert(insertData);
 
       if (error) throw error;
 

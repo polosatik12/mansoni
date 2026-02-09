@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { ArrowLeft, Search, Check, Loader2, UserPlus } from "lucide-react";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { useGroupManagement } from "@/hooks/useGroupManagement";
+import { useChannelManagement } from "@/hooks/useChannelManagement";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -14,21 +15,24 @@ interface SearchResult {
 
 interface AddGroupMembersSheetProps {
   groupId: string;
-  existingMemberIds: string[];
+  existingMemberIds?: string[];
   open: boolean;
   onClose: () => void;
   onMembersAdded?: () => void;
+  isChannel?: boolean;
 }
 
 export function AddGroupMembersSheet({
   groupId,
-  existingMemberIds,
+  existingMemberIds = [],
   open,
   onClose,
   onMembersAdded,
+  isChannel = false,
 }: AddGroupMembersSheetProps) {
   const { user } = useAuth();
-  const { addMember } = useGroupManagement();
+  const { addMember: addGroupMember } = useGroupManagement();
+  const { addMember: addChannelMember } = useChannelManagement();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -102,8 +106,9 @@ export function AddGroupMembersSheet({
 
     setAdding(true);
     try {
+      const addFn = isChannel ? addChannelMember : addGroupMember;
       const promises = Array.from(selected).map((userId) =>
-        addMember(groupId, userId)
+        addFn(groupId, userId)
       );
       await Promise.all(promises);
       toast.success(`Добавлено: ${selected.size}`);
