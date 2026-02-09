@@ -20,8 +20,10 @@ import { SharedPostCard } from "./SharedPostCard";
 import { SharedReelCard } from "./SharedReelCard";
 import { EmojiStickerPicker } from "./EmojiStickerPicker";
 import { MessageContextMenu } from "./MessageContextMenu";
+import { MessageReactions } from "./MessageReactions";
 import { supabase } from "@/integrations/supabase/client";
 import { formatLastSeen } from "@/hooks/usePresence";
+import { useMessageReactions } from "@/hooks/useMessageReactions";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -40,6 +42,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const navigate = useNavigate();
   const { user } = useAuth();
   const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
+  const { reactions, toggleReaction } = useMessageReactions(conversationId);
   const { markConversationRead } = useMarkConversationRead();
   const { startCall } = useVideoCallContext();
   const { setIsChatOpen } = useChatOpen();
@@ -400,8 +403,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   const handleMessageReaction = async (messageId: string, emoji: string) => {
-    // TODO: Implement reaction functionality
-    toast.success(`Реакция ${emoji} добавлена`);
+    await toggleReaction(messageId, emoji);
   };
 
   const handleMessageReply = (messageId: string) => {
@@ -563,6 +565,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           // Hide message if it's currently shown in context menu
           const isInContextMenu = contextMenuMessage?.id === message.id;
 
+          const msgReactions = reactions[message.id] || [];
+
           return (
             <div
               key={message.id}
@@ -581,6 +585,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               )}
 
+              <div className={`flex flex-col ${isOwn ? "items-end" : "items-start"} max-w-[75%]`}>
               {isSharedReel && message.shared_reel_id ? (
                 <div className="flex flex-col gap-1">
                   <SharedReelCard 
@@ -632,7 +637,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               ) : isImage && message.media_url ? (
                 <div 
-                  className={`max-w-[75%] rounded-2xl overflow-hidden cursor-pointer backdrop-blur-xl ${
+                  className={`rounded-2xl overflow-hidden cursor-pointer backdrop-blur-xl ${
                     isOwn 
                       ? "rounded-br-md bg-white/10 border border-white/10" 
                       : "rounded-bl-md bg-white/5 border border-white/10"
@@ -672,7 +677,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               ) : (
                 <div
-                  className={`max-w-[75%] rounded-2xl px-3 py-2 select-none backdrop-blur-xl border border-white/10 ${
+                  className={`rounded-2xl px-3 py-2 select-none backdrop-blur-xl border border-white/10 ${
                     isOwn
                       ? "bg-white/10 text-white rounded-br-sm"
                       : "bg-white/5 text-white rounded-bl-sm"
@@ -736,6 +741,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   </div>
                 </div>
               )}
+
+              {/* Reactions row below message */}
+              {msgReactions.length > 0 && (
+                <MessageReactions
+                  reactions={msgReactions}
+                  isOwn={isOwn}
+                  onToggle={(emoji) => toggleReaction(message.id, emoji)}
+                />
+              )}
+              </div>
             </div>
           );
         })}
