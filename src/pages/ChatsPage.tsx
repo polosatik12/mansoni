@@ -554,6 +554,10 @@ export function ChatsPage() {
           open={searchOpen}
           onOpenChange={setSearchOpen}
           onStartChat={handleUserSelect}
+          onOpenChannel={(channel) => {
+            setSelectedChannel(channel);
+            setSearchOpen(false);
+          }}
           existingUserIds={conversationUserIds}
           currentUserId={user?.id}
         />
