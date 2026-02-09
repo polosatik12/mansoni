@@ -7,6 +7,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { GroupInfoSheet } from "./GroupInfoSheet";
 import { DateSeparator, shouldShowDateSeparator } from "./DateSeparator";
+import { useTypingIndicator, formatTypingText } from "@/hooks/useTypingIndicator";
+import { useProfile } from "@/hooks/useProfile";
 
 interface GroupConversationProps {
   group: GroupChat;
@@ -16,9 +18,15 @@ interface GroupConversationProps {
 
 export function GroupConversation({ group: initialGroup, onBack, onLeave }: GroupConversationProps) {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [group, setGroup] = useState(initialGroup);
   const { messages, loading, sendMessage } = useGroupMessages(group.id);
   const { setIsChatOpen } = useChatOpen();
+  const { sendTyping, stopTyping, typingUsers } = useTypingIndicator(
+    `typing:group:${group.id}`,
+    user?.id,
+    profile?.display_name || user?.email?.split("@")[0] || "User"
+  );
 
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
@@ -48,6 +56,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
 
     setSending(true);
     try {
+      stopTyping();
       await sendMessage(inputText);
       setInputText("");
     } catch {
@@ -92,9 +101,11 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
               <h2 className="font-semibold text-white text-base truncate max-w-[200px]">
                 {group.name}
               </h2>
-              <p className="text-xs text-[#6ab3f3]">
-                {group.member_count} участник
-                {group.member_count === 1 ? "" : group.member_count < 5 ? "а" : "ов"}
+              <p className={`text-xs ${typingUsers.length > 0 ? 'text-emerald-400 italic' : 'text-[#6ab3f3]'}`}>
+                {typingUsers.length > 0
+                  ? formatTypingText(typingUsers)
+                  : `${group.member_count} участник${group.member_count === 1 ? '' : group.member_count! < 5 ? 'а' : 'ов'}`
+                }
               </p>
             </button>
 
@@ -231,7 +242,10 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                 type="text"
                 placeholder="Сообщение"
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={(e) => {
+                  setInputText(e.target.value);
+                  sendTyping();
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 className="w-full h-11 px-4 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
               />
