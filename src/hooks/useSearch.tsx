@@ -31,11 +31,22 @@ export interface ExplorePost {
   }[];
 }
 
+export interface SearchChannel {
+  id: string;
+  name: string;
+  description: string | null;
+  avatar_url: string | null;
+  member_count: number;
+  is_member: boolean;
+}
+
 export function useSearch() {
   const { user } = useAuth();
   const [users, setUsers] = useState<SearchUser[]>([]);
+  const [channels, setChannels] = useState<SearchChannel[]>([]);
   const [explorePosts, setExplorePosts] = useState<ExplorePost[]>([]);
   const [loading, setLoading] = useState(false);
+  const [channelsLoading, setChannelsLoading] = useState(false);
   const [exploring, setExploring] = useState(false);
 
   const searchUsers = useCallback(async (query: string) => {
@@ -74,6 +85,46 @@ export function useSearch() {
       console.error("Error searching users:", error);
     } finally {
       setLoading(false);
+    }
+  }, [user]);
+
+  const searchChannels = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setChannels([]);
+      return;
+    }
+
+    setChannelsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("channels")
+        .select("id, name, description, avatar_url, member_count")
+        .eq("is_public", true)
+        .ilike("name", `%${query}%`)
+        .order("member_count", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      let memberChannelIds: string[] = [];
+      if (user) {
+        const { data: memberData } = await supabase
+          .from("channel_members")
+          .select("channel_id")
+          .eq("user_id", user.id);
+        memberChannelIds = (memberData || []).map(m => m.channel_id);
+      }
+
+      const channelsWithMembership: SearchChannel[] = (data || []).map(ch => ({
+        ...ch,
+        is_member: memberChannelIds.includes(ch.id),
+      }));
+
+      setChannels(channelsWithMembership);
+    } catch (error) {
+      console.error("Error searching channels:", error);
+    } finally {
+      setChannelsLoading(false);
     }
   }, [user]);
 
@@ -173,10 +224,13 @@ export function useSearch() {
 
   return {
     users,
+    channels,
     explorePosts,
     loading,
+    channelsLoading,
     exploring,
     searchUsers,
+    searchChannels,
     fetchExplorePosts,
     toggleFollow,
   };
