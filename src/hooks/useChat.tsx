@@ -296,6 +296,21 @@ export function useMessages(conversationId: string | null) {
             });
           }
         )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "messages",
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload) => {
+            const updated = payload.new as ChatMessage;
+            setMessages((prev) =>
+              prev.map((m) => (m.id === updated.id ? { ...m, is_read: updated.is_read } : m))
+            );
+          }
+        )
         .subscribe();
     };
 

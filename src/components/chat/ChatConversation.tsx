@@ -605,7 +605,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
-                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                      isRead 
+                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
+                        : <Check className="w-4 h-4 text-white/40" />
                     )}
                   </div>
                 </div>
@@ -625,7 +627,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
-                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                      isRead 
+                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
+                        : <Check className="w-4 h-4 text-white/40" />
                     )}
                   </div>
                 </div>
@@ -660,7 +664,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   <div className="px-3 py-1.5 flex items-center justify-end gap-1">
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
-                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                      isRead 
+                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
+                        : <Check className="w-4 h-4 text-white/40" />
                     )}
                   </div>
                 </div>
@@ -674,7 +680,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
-                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                      isRead 
+                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
+                        : <Check className="w-4 h-4 text-white/40" />
                     )}
                   </div>
                 </div>
@@ -739,7 +747,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   <div className="flex items-center justify-end gap-1 mt-1">
                     <span className="text-[11px] text-white/40">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
-                      <CheckCheck className={`w-4 h-4 ${isRead ? 'text-[#6ab3f3]' : 'text-white/40'}`} />
+                      isRead 
+                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
+                        : <Check className="w-4 h-4 text-white/40" />
                     )}
                   </div>
                 </div>
