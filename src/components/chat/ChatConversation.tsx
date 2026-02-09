@@ -648,7 +648,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           </div>
         )}
         
-        <div className="space-y-1">
+        <div className="flex flex-col">
 
         {messages.map((message, index) => {
           const isOwn = message.sender_id === user?.id;
@@ -660,34 +660,74 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const isSharedReel = !!message.shared_reel_id;
           const isRead = message.is_read;
 
-          // Group messages - show avatar only for first in sequence
           const prevMessage = index > 0 ? messages[index - 1] : null;
-          const showAvatar = !isOwn && (!prevMessage || prevMessage.sender_id !== message.sender_id);
-          const showSenderName = isGroup && !isOwn && showAvatar;
+          const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
           const showDate = shouldShowDateSeparator(message.created_at, prevMessage?.created_at);
+
+          // Grouping logic: same sender within 5 minutes
+          const FIVE_MINUTES = 5 * 60 * 1000;
+          const isSameGroupAsPrev = !showDate &&
+            prevMessage &&
+            prevMessage.sender_id === message.sender_id &&
+            (new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime()) < FIVE_MINUTES;
+
+          const isSameGroupAsNext =
+            nextMessage &&
+            nextMessage.sender_id === message.sender_id &&
+            (new Date(nextMessage.created_at).getTime() - new Date(message.created_at).getTime()) < FIVE_MINUTES &&
+            !shouldShowDateSeparator(nextMessage.created_at, message.created_at);
+
+          // Position in group: first, middle, last, or single
+          const isFirstInGroup = !isSameGroupAsPrev;
+          const isLastInGroup = !isSameGroupAsNext;
+
+          // Show avatar on last message of incoming group (Telegram-style)
+          const showAvatar = !isOwn && isLastInGroup;
+          const showSenderName = isGroup && !isOwn && isFirstInGroup;
+
+          // Tail on last message of each group
+          const hasTail = isLastInGroup;
+
+          // Spacing: tight within group, wider between groups
+          const topMargin = index === 0 ? '' : (isSameGroupAsPrev ? 'mt-[2px]' : 'mt-3');
 
           // Hide message if it's currently shown in context menu
           const isInContextMenu = contextMenuMessage?.id === message.id;
 
           const msgReactions = reactions[message.id] || [];
 
+          // Bubble border-radius based on position
+          const getBubbleRadius = () => {
+            if (isOwn) {
+              if (!isSameGroupAsPrev && !isSameGroupAsNext) return 'rounded-2xl rounded-br-[5px]'; // single
+              if (isFirstInGroup) return 'rounded-2xl rounded-br-md'; // first
+              if (isLastInGroup) return 'rounded-2xl rounded-tr-md rounded-br-[5px]'; // last (tail)
+              return 'rounded-2xl rounded-tr-md rounded-br-md'; // middle
+            } else {
+              if (!isSameGroupAsPrev && !isSameGroupAsNext) return 'rounded-2xl rounded-bl-[5px]'; // single
+              if (isFirstInGroup) return 'rounded-2xl rounded-bl-md'; // first
+              if (isLastInGroup) return 'rounded-2xl rounded-tl-md rounded-bl-[5px]'; // last (tail)
+              return 'rounded-2xl rounded-tl-md rounded-bl-md'; // middle
+            }
+          };
+
           return (
-            <div key={message.id} data-message-id={message.id}>
+            <div key={message.id} data-message-id={message.id} className={topMargin}>
               {showDate && <DateSeparator date={message.created_at} />}
               <div
-              className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""} ${highlightedMessageId === message.id ? "animate-highlight-message" : ""}`}
+              className={`flex items-end gap-1.5 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""} ${highlightedMessageId === message.id ? "animate-highlight-message" : ""}`}
               style={highlightedMessageId === message.id ? { 
                 animation: 'highlight-flash 1.5s ease-out',
               } : undefined}
             >
-              {/* Avatar for incoming messages */}
+              {/* Avatar for incoming messages - only on last in group */}
               {!isOwn && (
-                <div className="w-8 shrink-0">
+                <div className="w-7 shrink-0">
                   {showAvatar && (
                     <img 
                       src={chatAvatar} 
                       alt="" 
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-7 h-7 rounded-full object-cover"
                     />
                   )}
                 </div>
@@ -708,11 +748,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     }}
                   />
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
                       isRead 
-                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
-                        : <Check className="w-4 h-4 text-white/40" />
+                        ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
+                        : <Check className="w-3.5 h-3.5 text-white/40" />
                     )}
                   </div>
                 </div>
@@ -730,11 +771,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     }}
                   />
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
                       isRead 
-                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
-                        : <Check className="w-4 h-4 text-white/40" />
+                        ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
+                        : <Check className="w-3.5 h-3.5 text-white/40" />
                     )}
                   </div>
                 </div>
@@ -749,15 +791,15 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 </div>
               ) : isImage && message.media_url ? (
                 <div 
-                  className={`rounded-2xl overflow-hidden cursor-pointer backdrop-blur-xl ${
+                  className={`${getBubbleRadius()} overflow-hidden cursor-pointer backdrop-blur-xl ${
                     isOwn 
-                      ? "rounded-br-md bg-white/10 border border-white/10" 
-                      : "rounded-bl-md bg-white/5 border border-white/10"
+                      ? "bg-white/10 border border-white/10" 
+                      : "bg-white/5 border border-white/10"
                   }`}
                   style={{
                     boxShadow: isOwn 
-                      ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.25)'
-                      : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 20px rgba(0,0,0,0.2)'
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.2)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.15)'
                   }}
                   onClick={() => setViewingImage(message.media_url!)}
                 >
@@ -767,11 +809,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     className="max-w-full h-auto"
                   />
                   <div className="px-3 py-1.5 flex items-center justify-end gap-1">
+                    {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
                       isRead 
-                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
-                        : <Check className="w-4 h-4 text-white/40" />
+                        ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
+                        : <Check className="w-3.5 h-3.5 text-white/40" />
                     )}
                   </div>
                 </div>
@@ -783,25 +826,26 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     onFullscreen={() => setViewingVideo(message.media_url!)}
                   />
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
                       isRead 
-                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
-                        : <Check className="w-4 h-4 text-white/40" />
+                        ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
+                        : <Check className="w-3.5 h-3.5 text-white/40" />
                     )}
                   </div>
                 </div>
               ) : (
                 <div
-                  className={`rounded-2xl px-3 py-2 select-none backdrop-blur-xl border border-white/10 ${
+                  className={`${getBubbleRadius()} px-3 py-1.5 select-none backdrop-blur-xl border border-white/10 ${
                     isOwn
-                      ? "bg-white/10 text-white rounded-br-sm"
-                      : "bg-white/5 text-white rounded-bl-sm"
+                      ? "bg-white/10 text-white"
+                      : "bg-white/5 text-white"
                   }`}
                   style={{
                     boxShadow: isOwn 
-                      ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.25)'
-                      : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 20px rgba(0,0,0,0.2)'
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.2)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.15)'
                   }}
                   onMouseDown={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
                   onMouseUp={handleMessageLongPressEnd}
@@ -832,9 +876,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     </p>
                   )}
 
-                  {/* Sender name for group chats */}
+                  {/* Sender name for group chats - only first in group */}
                   {showSenderName && (
-                    <p className="text-[13px] font-medium text-[#6ab3f3] mb-0.5">Эдгар</p>
+                    <p className="text-[13px] font-medium text-[#6ab3f3] mb-0.5">{chatName}</p>
                   )}
                   
                   {isVoice ? (
@@ -868,19 +912,19 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                       </span>
                     </div>
                   ) : (
-                    <p className="text-[15px] leading-[1.4] whitespace-pre-wrap">{message.content}</p>
+                    <p className="text-[15px] leading-[1.35] whitespace-pre-wrap">{message.content}</p>
                   )}
                   
-                  {/* Time and read status */}
-                  <div className="flex items-center justify-end gap-1 mt-1">
+                  {/* Time and read status - inline float */}
+                  <div className="flex items-center justify-end gap-1 -mb-0.5 mt-0.5">
                     {message.edited_at && (
                       <span className="text-[10px] text-white/30 italic">ред.</span>
                     )}
                     <span className="text-[11px] text-white/40">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
                       isRead 
-                        ? <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />
-                        : <Check className="w-4 h-4 text-white/40" />
+                        ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
+                        : <Check className="w-3.5 h-3.5 text-white/40" />
                     )}
                   </div>
                 </div>
