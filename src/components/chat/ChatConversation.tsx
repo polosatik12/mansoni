@@ -87,6 +87,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     id: string;
     content: string;
     isOwn: boolean;
+    touchPoint: { x: number; y: number };
     position: { top: number; left: number; width: number; height: number; bottom: number; right: number };
   } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -428,12 +429,26 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   ) => {
     const target = event.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
+
+    // Capture exact touch/click coordinates
+    let clientX: number, clientY: number;
+    if ("touches" in event && event.touches.length > 0) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else if ("clientX" in event) {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    } else {
+      clientX = rect.left + rect.width / 2;
+      clientY = rect.top + rect.height / 2;
+    }
     
     longPressTimerRef.current = setTimeout(() => {
       setContextMenuMessage({ 
         id: messageId, 
         content, 
         isOwn,
+        touchPoint: { x: clientX, y: clientY },
         position: {
           top: rect.top,
           left: rect.left,
@@ -728,7 +743,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             <div key={message.id} data-message-id={message.id} className={topMargin}>
               {showDate && <DateSeparator date={message.created_at} />}
               <div
-              className={`flex items-end gap-1.5 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""} ${highlightedMessageId === message.id ? "animate-highlight-message" : ""}`}
+              className={`flex items-end gap-1.5 ${isOwn ? "justify-end" : "justify-start"} ${highlightedMessageId === message.id ? "animate-highlight-message" : ""}`}
               style={highlightedMessageId === message.id ? { 
                 animation: 'highlight-flash 1.5s ease-out',
               } : undefined}
@@ -1136,6 +1151,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           messageId={contextMenuMessage.id}
           messageContent={contextMenuMessage.content}
           isOwn={contextMenuMessage.isOwn}
+          touchPoint={contextMenuMessage.touchPoint}
           position={contextMenuMessage.position}
           onDelete={handleMessageDelete}
           onPin={handleMessagePin}
