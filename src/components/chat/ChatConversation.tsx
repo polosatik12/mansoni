@@ -18,6 +18,7 @@ import { AttachmentSheet } from "./AttachmentSheet";
 import { MediaPreviewOverlay } from "./MediaPreviewOverlay";
 import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
+import { MediaMessageBubble } from "./MediaMessageBubble";
 import { SharedPostCard } from "./SharedPostCard";
 import { SharedReelCard } from "./SharedReelCard";
 import { EmojiStickerPicker } from "./EmojiStickerPicker";
@@ -799,61 +800,29 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   <span className="text-[10px] text-white/50">{formatMessageTime(message.created_at)}</span>
                 </div>
               ) : isImage && message.media_url ? (
-                <div 
-                  className={`${getBubbleRadius()} overflow-hidden cursor-pointer backdrop-blur-xl ${
-                    isOwn 
-                      ? "bg-white/10 border border-white/10" 
-                      : "bg-white/5 border border-white/10"
-                  }`}
-                  style={{
-                    boxShadow: isOwn 
-                      ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.2)'
-                      : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.15)'
-                  }}
-                  onClick={() => setViewingImage(message.media_url!)}
-                >
-                  <img 
-                    src={message.media_url} 
-                    alt="Изображение" 
-                    className="max-w-full h-auto"
-                  />
-                  <div className="px-3 py-1.5">
-                    {/* Show caption if content is not the default placeholder */}
-                    {message.content && !['📷 Изображение', '📷 Фото', '📎 Файл'].includes(message.content) && (
-                      <p className="text-[15px] leading-[1.35] text-white whitespace-pre-wrap mb-1">{message.content}</p>
-                    )}
-                    <div className="flex items-center justify-end gap-1">
-                      {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
-                      <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
-                      {isOwn && (
-                        isRead 
-                          ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
-                          : <Check className="w-3.5 h-3.5 text-white/40" />
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <MediaMessageBubble
+                  mediaUrl={message.media_url}
+                  mediaType="image"
+                  content={message.content}
+                  time={formatMessageTime(message.created_at)}
+                  isOwn={isOwn}
+                  isRead={isRead}
+                  isEdited={!!message.edited_at}
+                  bubbleRadius={getBubbleRadius()}
+                  onImageClick={() => setViewingImage(message.media_url!)}
+                />
               ) : isVideo && message.media_url ? (
-                <div className="flex flex-col gap-1">
-                  <VideoPlayer
-                    src={message.media_url}
-                    isOwn={isOwn}
-                    onFullscreen={() => setViewingVideo(message.media_url!)}
-                  />
-                  {/* Show caption if content is not the default placeholder */}
-                  {message.content && !['🎥 Видео', '📷 Фото', '📎 Файл'].includes(message.content) && (
-                    <p className="text-[15px] leading-[1.35] text-white whitespace-pre-wrap px-1">{message.content}</p>
-                  )}
-                  <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
-                    {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
-                    <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
-                    {isOwn && (
-                      isRead 
-                        ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
-                        : <Check className="w-3.5 h-3.5 text-white/40" />
-                    )}
-                  </div>
-                </div>
+                <MediaMessageBubble
+                  mediaUrl={message.media_url}
+                  mediaType="video"
+                  content={message.content}
+                  time={formatMessageTime(message.created_at)}
+                  isOwn={isOwn}
+                  isRead={isRead}
+                  isEdited={!!message.edited_at}
+                  bubbleRadius={getBubbleRadius()}
+                  onVideoClick={() => setViewingVideo(message.media_url!)}
+                />
               ) : (
                 <div
                   className={`${getBubbleRadius()} px-3 py-1.5 select-none backdrop-blur-xl border border-white/10 ${

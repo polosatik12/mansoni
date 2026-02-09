@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { ArrowLeft, Send, Eye, Share2, ChevronDown, Image as ImageIcon } from "lucide-react";
 import { useChannelMessages, useJoinChannel, Channel } from "@/hooks/useChannels";
+import { MediaMessageBubble } from "./MediaMessageBubble";
 import { useChannelRole } from "@/hooks/useChannelMembers";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
@@ -17,10 +18,6 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-/** Default content placeholders that should be hidden when media is present */
-const MEDIA_PLACEHOLDER_CONTENTS = new Set([
-  "📷 Фото", "📎 Файл", "📷 Изображение", "🎥 Видео",
-]);
 
 interface ChannelConversationProps {
   channel: Channel;
@@ -313,27 +310,23 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                       <span className="text-[#6ab3f3] font-medium text-sm">{channel.name}</span>
                     </div>
 
-                    {/* Media */}
+                    {/* Media - adaptive Telegram style */}
                     {msg.media_url && (
-                      <div className="relative">
-                        {msg.media_type === "video" ? (
-                          <video
-                            src={msg.media_url}
-                            className="w-full max-h-80 object-cover"
-                            controls
-                          />
-                        ) : (
-                          <img
-                            src={msg.media_url}
-                            alt=""
-                            className="w-full max-h-80 object-cover"
-                          />
-                        )}
+                      <div className="px-3 pb-1">
+                        <MediaMessageBubble
+                          mediaUrl={msg.media_url}
+                          mediaType={(msg.media_type === "video" ? "video" : "image") as "image" | "video"}
+                          content={msg.content}
+                          time={formatTime(msg.created_at)}
+                          isOwn={false}
+                          viewCount={viewCount}
+                          bubbleRadius="rounded-xl"
+                        />
                       </div>
                     )}
 
-                    {/* Content */}
-                    {msg.content && !(msg.media_url && MEDIA_PLACEHOLDER_CONTENTS.has(msg.content)) && (
+                    {/* Text-only content (no media) */}
+                    {!msg.media_url && msg.content && (
                       <div className="px-3 py-2">
                         <p className="text-white text-[15px] leading-relaxed whitespace-pre-wrap">
                           {msg.content}
@@ -341,17 +334,28 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                       </div>
                     )}
 
-                    {/* Footer */}
-                    <div className="flex items-center justify-between px-3 pb-3 pt-1">
-                      <div className="flex items-center gap-1.5 text-white/30">
-                        <Eye className="w-4 h-4" />
-                        <span className="text-xs">{formatViews(viewCount)}</span>
-                        <span className="text-xs ml-1">{formatTime(msg.created_at)}</span>
+                    {/* Footer for text-only posts */}
+                    {!msg.media_url && (
+                      <div className="flex items-center justify-between px-3 pb-3 pt-1">
+                        <div className="flex items-center gap-1.5 text-white/30">
+                          <Eye className="w-4 h-4" />
+                          <span className="text-xs">{formatViews(viewCount)}</span>
+                          <span className="text-xs ml-1">{formatTime(msg.created_at)}</span>
+                        </div>
+                        <button className="text-white/30 hover:text-white/60 transition-colors">
+                          <Share2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button className="text-white/30 hover:text-white/60 transition-colors">
-                        <Share2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    )}
+
+                    {/* Share button for media posts */}
+                    {msg.media_url && (
+                      <div className="flex items-center justify-end px-3 pb-2">
+                        <button className="text-white/30 hover:text-white/60 transition-colors">
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                     </div>
                   </div>
                 );
