@@ -171,9 +171,14 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     })();
   }, [conversationId, user, isGroup, messages.length, markConversationRead, onRefetch]);
 
+  // Scroll to bottom on initial load and new messages
+  const prevMsgCountRef = useRef(0);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (messages.length === 0) return;
+    const isNewMessage = messages.length > prevMsgCountRef.current;
+    prevMsgCountRef.current = messages.length;
+    messagesEndRef.current?.scrollIntoView({ behavior: isNewMessage ? "smooth" : "auto" });
+  }, [messages.length]);
 
   useEffect(() => {
     if (isRecording) {
@@ -835,11 +840,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const isSelected = selectedMessages.includes(message.id);
 
           return (
-            <motion.div
+            <div
               key={message.id}
               data-message-id={message.id}
               className={topMargin}
-              animate={{ x: isSelectionMode ? 0 : 0 }}
               onClick={isSelectionMode ? () => toggleSelection(message.id) : undefined}
               style={isSelectionMode ? { cursor: "pointer" } : undefined}
             >
@@ -850,8 +854,8 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 animation: 'highlight-flash 1.5s ease-out',
               } : undefined}
             >
-              {/* Selection checkbox */}
-              <AnimatePresence>
+              {/* Selection checkbox — fixed width so layout doesn't jump */}
+              <div className={`flex-shrink-0 transition-all duration-200 overflow-hidden ${isSelectionMode ? "w-8" : "w-0"}`}>
                 {isSelectionMode && (
                   <SelectionCheckbox
                     checked={isSelected}
@@ -861,7 +865,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     }}
                   />
                 )}
-              </AnimatePresence>
+              </div>
 
               {/* Avatar for incoming messages - only on last in group */}
               {!isOwn && (
@@ -1061,7 +1065,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               )}
               </div>
               </div>
-            </motion.div>
+            </div>
           );
         })}
         </div>

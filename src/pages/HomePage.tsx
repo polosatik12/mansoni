@@ -3,10 +3,11 @@ import { FeedHeader } from "@/components/feed/FeedHeader";
 import { FeedFilters, ContentFilter } from "@/components/feed/FeedFilters";
 import { PostCard } from "@/components/feed/PostCard";
 import { PullToRefresh } from "@/components/feed/PullToRefresh";
+import { FeedSkeleton } from "@/components/feed/FeedSkeleton";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { usePosts } from "@/hooks/usePosts";
 import { usePresence } from "@/hooks/usePresence";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -55,9 +56,7 @@ export function HomePage() {
         />
         
         {loading && posts.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <FeedSkeleton count={4} />
         ) : filteredPosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
             <p className="text-muted-foreground text-lg">
@@ -76,25 +75,26 @@ export function HomePage() {
         ) : (
           <div className="space-y-0">
             {filteredPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                id={post.id}
-                authorId={post.author_id}
-                author={{
-                  name: post.author?.display_name || "Пользователь",
-                  username: post.author?.display_name || post.author_id.slice(0, 8),
-                  avatar: post.author?.avatar_url || `https://i.pravatar.cc/150?u=${post.author_id}`,
-                  verified: false,
-                }}
-                content={post.content || ""}
-                images={post.media?.map(m => m.media_url)}
-                likes={post.likes_count}
-                comments={post.comments_count}
-                shares={post.shares_count}
-                
-                timeAgo={formatTimeAgo(post.created_at)}
-                isLiked={post.is_liked}
-              />
+              <ErrorBoundary key={post.id}>
+                <PostCard
+                  id={post.id}
+                  authorId={post.author_id}
+                  author={{
+                    name: post.author?.display_name || "Пользователь",
+                    username: post.author?.display_name || post.author_id.slice(0, 8),
+                    avatar: post.author?.avatar_url || `https://i.pravatar.cc/150?u=${post.author_id}`,
+                    verified: false,
+                  }}
+                  content={post.content || ""}
+                  images={post.media?.map(m => m.media_url)}
+                  likes={post.likes_count}
+                  comments={post.comments_count}
+                  shares={post.shares_count}
+                  
+                  timeAgo={formatTimeAgo(post.created_at)}
+                  isLiked={post.is_liked}
+                />
+              </ErrorBoundary>
             ))}
           </div>
         )}

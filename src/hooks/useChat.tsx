@@ -271,73 +271,67 @@ export function useMessages(conversationId: string | null) {
     fetchMessages();
   }, [fetchMessages]);
 
-  // Subscribe to realtime messages
+  // Subscribe to realtime messages — deduplicated, immediate UI for DELETE
   useEffect(() => {
     if (!conversationId) return;
 
-    let channel: RealtimeChannel;
-
-    const setupSubscription = () => {
-      channel = supabase
-        .channel(`messages:${conversationId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "messages",
-            filter: `conversation_id=eq.${conversationId}`,
-          },
-          (payload) => {
-            const newMessage = payload.new as ChatMessage;
-            // Prevent duplicates by checking if message already exists
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === newMessage.id)) {
-                return prev;
-              }
-              return [...prev, newMessage];
-            });
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "messages",
-            filter: `conversation_id=eq.${conversationId}`,
-          },
-          (payload) => {
-            const updated = payload.new as ChatMessage;
-            setMessages((prev) =>
-              prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m))
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as ChatMessage;
+          setMessages((prev) => {
+            // Deduplicate — skip if already present (optimistic insert)
+            if (prev.some((m) => m.id === newMessage.id)) return prev;
+            // Insert in order by created_at
+            const next = [...prev, newMessage].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
             );
+            return next;
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const updated = payload.new as ChatMessage;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m))
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const deletedId = (payload.old as any)?.id;
+          if (deletedId) {
+            setMessages((prev) => prev.filter((m) => m.id !== deletedId));
           }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "DELETE",
-            schema: "public",
-            table: "messages",
-            filter: `conversation_id=eq.${conversationId}`,
-          },
-          (payload) => {
-            const deletedId = (payload.old as any)?.id;
-            if (deletedId) {
-              setMessages((prev) => prev.filter((m) => m.id !== deletedId));
-            }
-          }
-        )
-        .subscribe();
-    };
-
-    setupSubscription();
+        }
+      )
+      .subscribe();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
   }, [conversationId]);
 
