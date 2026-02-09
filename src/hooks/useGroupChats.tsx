@@ -23,6 +23,7 @@ export interface GroupMessage {
   media_url?: string | null;
   media_type?: string | null;
   created_at: string;
+  forwarded_from?: string | null;
   sender?: {
     display_name: string | null;
     avatar_url: string | null;

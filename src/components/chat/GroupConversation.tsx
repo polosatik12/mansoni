@@ -7,6 +7,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { GroupInfoSheet } from "./GroupInfoSheet";
 import { DateSeparator, shouldShowDateSeparator } from "./DateSeparator";
+import { MessageContextMenu } from "./MessageContextMenu";
+import { ForwardSheet } from "./ForwardSheet";
 import { useTypingIndicator, formatTypingText } from "@/hooks/useTypingIndicator";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -32,6 +34,21 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
   const [sending, setSending] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Context menu state
+  const [contextMenuMessage, setContextMenuMessage] = useState<{
+    id: string;
+    content: string;
+    isOwn: boolean;
+    position: { top: number; left: number; width: number };
+  } | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Forward sheet state
+  const [forwardData, setForwardData] = useState<{
+    content: string;
+    senderName: string;
+  } | null>(null);
 
   // Mark chat as open for hiding bottom nav
   useEffect(() => {
@@ -68,6 +85,40 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
 
   const handleGroupUpdated = (updated: Partial<GroupChat>) => {
     setGroup((prev) => ({ ...prev, ...updated }));
+  };
+
+  // Long-press for context menu
+  const handleMessageLongPressStart = (
+    msgId: string,
+    content: string,
+    isOwn: boolean,
+    e: React.TouchEvent | React.MouseEvent
+  ) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    longPressTimerRef.current = setTimeout(() => {
+      setContextMenuMessage({
+        id: msgId,
+        content,
+        isOwn,
+        position: { top: rect.top, left: rect.left, width: rect.width },
+      });
+    }, 500);
+  };
+
+  const handleMessageLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleMessageForward = (messageId: string) => {
+    const msg = messages.find((m) => m.id === messageId);
+    if (!msg) return;
+    const senderName = msg.forwarded_from
+      ? msg.forwarded_from
+      : msg.sender?.display_name || "Аноним";
+    setForwardData({ content: msg.content, senderName });
   };
 
   // Get member colors based on user id
@@ -198,12 +249,24 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                   )}
 
                   <div
-                    className={`max-w-[75%] rounded-2xl px-3 py-2 ${
+                    className={`max-w-[75%] rounded-2xl px-3 py-2 select-none ${
                       isOwn
                         ? "bg-[#2b5278] text-white rounded-br-sm"
                         : "bg-[#182533] text-white rounded-bl-sm"
                     }`}
+                    onMouseDown={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
+                    onMouseUp={handleMessageLongPressEnd}
+                    onMouseLeave={handleMessageLongPressEnd}
+                    onTouchStart={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
+                    onTouchEnd={handleMessageLongPressEnd}
                   >
+                    {/* Forwarded indicator */}
+                    {message.forwarded_from && (
+                      <p className="text-[11px] text-[#6ab3f3] italic mb-0.5">
+                        Переслано от {message.forwarded_from}
+                      </p>
+                    )}
+
                     {/* Sender name */}
                     {showSenderName && (
                       <p
@@ -268,6 +331,27 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
         onClose={() => setInfoOpen(false)}
         onLeave={onLeave}
         onGroupUpdated={handleGroupUpdated}
+      />
+
+      {/* Message Context Menu */}
+      {contextMenuMessage && (
+        <MessageContextMenu
+          isOpen={!!contextMenuMessage}
+          onClose={() => setContextMenuMessage(null)}
+          messageId={contextMenuMessage.id}
+          messageContent={contextMenuMessage.content}
+          isOwn={contextMenuMessage.isOwn}
+          position={contextMenuMessage.position}
+          onForward={handleMessageForward}
+        />
+      )}
+
+      {/* Forward Sheet */}
+      <ForwardSheet
+        open={!!forwardData}
+        onClose={() => setForwardData(null)}
+        messageContent={forwardData?.content || ""}
+        originalSenderName={forwardData?.senderName || ""}
       />
     </>
   );

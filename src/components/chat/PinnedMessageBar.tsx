@@ -23,17 +23,17 @@ export function PinnedMessageBar({
         transition={{ duration: 0.2 }}
         className="relative z-10 backdrop-blur-xl bg-black/30 border-b border-white/10"
       >
-        <button
-          onClick={onScrollTo}
-          className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/5 transition-colors text-left"
-        >
+        <div className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/5 transition-colors text-left">
           <Pin className="w-4 h-4 text-[#6ab3f3] shrink-0 rotate-45" />
-          <div className="flex-1 min-w-0">
+          <button
+            onClick={onScrollTo}
+            className="flex-1 min-w-0 text-left"
+          >
             <p className="text-xs font-medium text-[#6ab3f3]">
               {senderName}
             </p>
             <p className="text-xs text-white/60 truncate">{content}</p>
-          </div>
+          </button>
           {onUnpin && (
             <button
               onClick={(e) => {
@@ -46,7 +46,7 @@ export function PinnedMessageBar({
               <X className="w-3.5 h-3.5 text-white/40" />
             </button>
           )}
-        </button>
+        </div>
       </motion.div>
     </AnimatePresence>
   );
