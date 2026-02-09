@@ -10,10 +10,16 @@ import { ChannelInfoSheet } from "./ChannelInfoSheet";
 import { DateSeparator, shouldShowDateSeparator } from "./DateSeparator";
 import { PinnedMessageBar } from "./PinnedMessageBar";
 import { MessageContextMenu } from "./MessageContextMenu";
+import { MediaPreviewOverlay } from "./MediaPreviewOverlay";
 import { useChannelPinnedMessage } from "@/hooks/usePinnedMessage";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+
+/** Default content placeholders that should be hidden when media is present */
+const MEDIA_PLACEHOLDER_CONTENTS = new Set([
+  "📷 Фото", "📎 Файл", "📷 Изображение", "🎥 Видео",
+]);
 
 interface ChannelConversationProps {
   channel: Channel;
@@ -46,6 +52,12 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
   const [sending, setSending] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Staged media for Telegram-style preview before send
+  const [stagedMedia, setStagedMedia] = useState<{
+    file: File;
+    type: "image" | "video";
+  } | null>(null);
 
   // Context menu state for channel messages
   const [contextMenuMessage, setContextMenuMessage] = useState<{
@@ -107,10 +119,18 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
     }
   };
 
-  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Stage media for preview instead of uploading immediately
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
+    const type = file.type.startsWith("video") ? "video" as const : "image" as const;
+    setStagedMedia({ file, type });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
+  // Called from MediaPreviewOverlay when user confirms send
+  const handleStagedMediaSend = async (file: File, mediaType: "image" | "video", caption: string) => {
+    if (!user) return;
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "jpg";
@@ -126,15 +146,13 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
         .from("chat-media")
         .getPublicUrl(path);
 
-      const mediaType = file.type.startsWith("video") ? "video" : "image";
-      await sendMessage(inputText || "", urlData.publicUrl, mediaType);
-      setInputText("");
+      await sendMessage(caption || "", urlData.publicUrl, mediaType);
+      setStagedMedia(null);
       toast.success("Медиа отправлено");
     } catch {
       toast.error("Не удалось загрузить файл");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -307,7 +325,7 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                     )}
 
                     {/* Content */}
-                    {msg.content && !(msg.media_url && (msg.content === "📷 Фото" || msg.content === "📎 Файл")) && (
+                    {msg.content && !(msg.media_url && MEDIA_PLACEHOLDER_CONTENTS.has(msg.content)) && (
                       <div className="px-3 py-2">
                         <p className="text-white text-[15px] leading-relaxed whitespace-pre-wrap">
                           {msg.content}
@@ -367,7 +385,7 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                 type="file"
                 accept="image/*,video/*"
                 className="hidden"
-                onChange={handleMediaUpload}
+                onChange={handleMediaSelect}
               />
 
               {/* Text input */}
@@ -430,6 +448,16 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
           isOwn={contextMenuMessage.isOwn}
           position={contextMenuMessage.position}
           onPin={handleChannelMessagePin}
+        />
+      )}
+
+      {/* Media Preview Overlay (Telegram-style staging) */}
+      {stagedMedia && (
+        <MediaPreviewOverlay
+          file={stagedMedia.file}
+          mediaType={stagedMedia.type}
+          onSend={handleStagedMediaSend}
+          onCancel={() => setStagedMedia(null)}
         />
       )}
     </>
