@@ -66,6 +66,7 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
     id: string;
     content: string;
     isOwn: boolean;
+    touchPoint: { x: number; y: number };
     position: { top: number; left: number; width: number; height: number; bottom: number; right: number };
   } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -182,11 +183,23 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
   ) => {
     if (!isAdmin) return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    let clientX: number, clientY: number;
+    if ("touches" in e && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if ("clientX" in e) {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    } else {
+      clientX = rect.left + rect.width / 2;
+      clientY = rect.top + rect.height / 2;
+    }
     longPressTimerRef.current = setTimeout(() => {
       setContextMenuMessage({
         id: msgId,
         content,
         isOwn,
+        touchPoint: { x: clientX, y: clientY },
         position: { top: rect.top, left: rect.left, width: rect.width, height: rect.height, bottom: rect.bottom, right: rect.right },
       });
     }, 500);
@@ -612,6 +625,7 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
           messageId={contextMenuMessage.id}
           messageContent={contextMenuMessage.content}
           isOwn={contextMenuMessage.isOwn}
+          touchPoint={contextMenuMessage.touchPoint}
           position={contextMenuMessage.position}
           onPin={handleChannelMessagePin}
         />
