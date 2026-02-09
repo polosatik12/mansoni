@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { ArrowLeft, Send, Eye, Share2, ChevronDown, Image as ImageIcon } from "lucide-react";
 import { useChannelMessages, useJoinChannel, Channel } from "@/hooks/useChannels";
-import { MediaMessageBubble } from "./MediaMessageBubble";
+
 import { useChannelRole } from "@/hooks/useChannelMembers";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
@@ -283,80 +283,228 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                 const prevMsg = index > 0 ? messages[index - 1] : null;
                 const showDate = shouldShowDateSeparator(msg.created_at, prevMsg?.created_at);
 
+                // Determine if this is a media-only post (no meaningful text caption)
+                const MEDIA_PLACEHOLDERS = new Set(["📷 Фото", "📎 Файл", "📷 Изображение", "🎥 Видео"]);
+                const hasRealCaption = !!msg.content && !MEDIA_PLACEHOLDERS.has(msg.content);
+                const isMediaOnly = !!msg.media_url && !hasRealCaption;
+                const isMediaWithCaption = !!msg.media_url && hasRealCaption;
+                const isTextOnly = !msg.media_url && !!msg.content;
+
                 return (
                   <div key={msg.id} data-message-id={msg.id}>
                     {showDate && <DateSeparator date={msg.created_at} />}
-                    <div
-                      className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10"
-                      onTouchStart={(e) =>
-                        handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
-                      }
-                      onTouchEnd={handleMessageLongPressEnd}
-                      onMouseDown={(e) =>
-                        handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
-                      }
-                      onMouseUp={handleMessageLongPressEnd}
-                      onMouseLeave={handleMessageLongPressEnd}
-                    >
-                    {/* Post header */}
-                    <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-                      <GradientAvatar
-                        name={channel.name}
-                        seed={channel.id}
-                        avatarUrl={channel.avatar_url}
-                        size="sm"
-                        className="w-8 h-8"
-                      />
-                      <span className="text-[#6ab3f3] font-medium text-sm">{channel.name}</span>
-                    </div>
 
-                    {/* Media - adaptive Telegram style */}
-                    {msg.media_url && (
-                      <div className="px-3 pb-1">
-                        <MediaMessageBubble
-                          mediaUrl={msg.media_url}
-                          mediaType={(msg.media_type === "video" ? "video" : "image") as "image" | "video"}
-                          content={msg.content}
-                          time={formatTime(msg.created_at)}
-                          isOwn={false}
-                          viewCount={viewCount}
-                          bubbleRadius="rounded-xl"
-                        />
-                      </div>
-                    )}
-
-                    {/* Text-only content (no media) */}
-                    {!msg.media_url && msg.content && (
-                      <div className="px-3 py-2">
-                        <p className="text-white text-[15px] leading-relaxed whitespace-pre-wrap">
-                          {msg.content}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Footer for text-only posts */}
-                    {!msg.media_url && (
-                      <div className="flex items-center justify-between px-3 pb-3 pt-1">
-                        <div className="flex items-center gap-1.5 text-white/30">
-                          <Eye className="w-4 h-4" />
-                          <span className="text-xs">{formatViews(viewCount)}</span>
-                          <span className="text-xs ml-1">{formatTime(msg.created_at)}</span>
+                    {/* ===== MEDIA-ONLY: No glass container at all ===== */}
+                    {isMediaOnly && (
+                      <div
+                        onTouchStart={(e) =>
+                          handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                        }
+                        onTouchEnd={handleMessageLongPressEnd}
+                        onMouseDown={(e) =>
+                          handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                        }
+                        onMouseUp={handleMessageLongPressEnd}
+                        onMouseLeave={handleMessageLongPressEnd}
+                      >
+                        {/* Channel name label */}
+                        <div className="flex items-center gap-2 px-1 pb-1.5">
+                          <GradientAvatar
+                            name={channel.name}
+                            seed={channel.id}
+                            avatarUrl={channel.avatar_url}
+                            size="sm"
+                            className="w-7 h-7"
+                          />
+                          <span className="text-[#6ab3f3] font-medium text-sm">{channel.name}</span>
                         </div>
-                        <button className="text-white/30 hover:text-white/60 transition-colors">
-                          <Share2 className="w-4 h-4" />
-                        </button>
+
+                        {/* Image/video sits directly on the chat background */}
+                        <div className="relative w-fit" style={{ maxWidth: "85%" }}>
+                          {msg.media_type === "video" ? (
+                            <video
+                              src={msg.media_url!}
+                              className="w-auto h-auto max-w-full object-contain rounded-2xl"
+                              style={{ maxHeight: 400 }}
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
+                          ) : (
+                            <img
+                              src={msg.media_url!}
+                              alt=""
+                              className="w-auto h-auto max-w-full object-contain rounded-2xl"
+                              style={{ maxHeight: 400 }}
+                              draggable={false}
+                            />
+                          )}
+
+                          {/* Floating metadata pill on the image */}
+                          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-1.5 py-[3px] rounded-full bg-black/40 backdrop-blur-sm text-white/90">
+                            <Eye className="w-3 h-3" />
+                            <span className="text-[10px] leading-none">{formatViews(viewCount)}</span>
+                            <span className="text-[10px] leading-none">{formatTime(msg.created_at)}</span>
+                          </div>
+                        </div>
+
+                        {/* Share row */}
+                        <div className="flex items-center justify-end px-1 pt-1">
+                          <button className="text-white/30 hover:text-white/60 transition-colors">
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     )}
 
-                    {/* Share button for media posts */}
-                    {msg.media_url && (
-                      <div className="flex items-center justify-end px-3 pb-2">
-                        <button className="text-white/30 hover:text-white/60 transition-colors">
-                          <Share2 className="w-4 h-4" />
-                        </button>
+                    {/* ===== MEDIA + CAPTION: Glass wraps both, image flush top ===== */}
+                    {isMediaWithCaption && (
+                      <div
+                        className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10"
+                        onTouchStart={(e) =>
+                          handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                        }
+                        onTouchEnd={handleMessageLongPressEnd}
+                        onMouseDown={(e) =>
+                          handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                        }
+                        onMouseUp={handleMessageLongPressEnd}
+                        onMouseLeave={handleMessageLongPressEnd}
+                      >
+                        {/* Channel header inside glass */}
+                        <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                          <GradientAvatar
+                            name={channel.name}
+                            seed={channel.id}
+                            avatarUrl={channel.avatar_url}
+                            size="sm"
+                            className="w-8 h-8"
+                          />
+                          <span className="text-[#6ab3f3] font-medium text-sm">{channel.name}</span>
+                        </div>
+
+                        {/* Image flush with sides (no padding) */}
+                        <div className="relative">
+                          {msg.media_type === "video" ? (
+                            <video
+                              src={msg.media_url!}
+                              className="w-full h-auto object-contain"
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
+                          ) : (
+                            <img
+                              src={msg.media_url!}
+                              alt=""
+                              className="w-full h-auto object-contain"
+                              draggable={false}
+                            />
+                          )}
+                        </div>
+
+                        {/* Caption text */}
+                        <div className="px-3 py-2">
+                          <p className="text-white text-[15px] leading-relaxed whitespace-pre-wrap">
+                            {msg.content}
+                          </p>
+                        </div>
+
+                        {/* Footer with views + share */}
+                        <div className="flex items-center justify-between px-3 pb-3 pt-0.5">
+                          <div className="flex items-center gap-1.5 text-white/30">
+                            <Eye className="w-4 h-4" />
+                            <span className="text-xs">{formatViews(viewCount)}</span>
+                            <span className="text-xs ml-1">{formatTime(msg.created_at)}</span>
+                          </div>
+                          <button className="text-white/30 hover:text-white/60 transition-colors">
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     )}
-                    </div>
+
+                    {/* ===== TEXT-ONLY: Full glass card ===== */}
+                    {isTextOnly && (
+                      <div
+                        className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10"
+                        onTouchStart={(e) =>
+                          handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                        }
+                        onTouchEnd={handleMessageLongPressEnd}
+                        onMouseDown={(e) =>
+                          handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                        }
+                        onMouseUp={handleMessageLongPressEnd}
+                        onMouseLeave={handleMessageLongPressEnd}
+                      >
+                        {/* Post header */}
+                        <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                          <GradientAvatar
+                            name={channel.name}
+                            seed={channel.id}
+                            avatarUrl={channel.avatar_url}
+                            size="sm"
+                            className="w-8 h-8"
+                          />
+                          <span className="text-[#6ab3f3] font-medium text-sm">{channel.name}</span>
+                        </div>
+
+                        <div className="px-3 py-2">
+                          <p className="text-white text-[15px] leading-relaxed whitespace-pre-wrap">
+                            {msg.content}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between px-3 pb-3 pt-1">
+                          <div className="flex items-center gap-1.5 text-white/30">
+                            <Eye className="w-4 h-4" />
+                            <span className="text-xs">{formatViews(viewCount)}</span>
+                            <span className="text-xs ml-1">{formatTime(msg.created_at)}</span>
+                          </div>
+                          <button className="text-white/30 hover:text-white/60 transition-colors">
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback: no content and no media */}
+                    {!isMediaOnly && !isMediaWithCaption && !isTextOnly && (
+                      <div
+                        className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10"
+                        onTouchStart={(e) =>
+                          handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                        }
+                        onTouchEnd={handleMessageLongPressEnd}
+                        onMouseDown={(e) =>
+                          handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                        }
+                        onMouseUp={handleMessageLongPressEnd}
+                        onMouseLeave={handleMessageLongPressEnd}
+                      >
+                        <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                          <GradientAvatar
+                            name={channel.name}
+                            seed={channel.id}
+                            avatarUrl={channel.avatar_url}
+                            size="sm"
+                            className="w-8 h-8"
+                          />
+                          <span className="text-[#6ab3f3] font-medium text-sm">{channel.name}</span>
+                        </div>
+                        <div className="flex items-center justify-between px-3 pb-3 pt-1">
+                          <div className="flex items-center gap-1.5 text-white/30">
+                            <Eye className="w-4 h-4" />
+                            <span className="text-xs">{formatViews(viewCount)}</span>
+                            <span className="text-xs ml-1">{formatTime(msg.created_at)}</span>
+                          </div>
+                          <button className="text-white/30 hover:text-white/60 transition-colors">
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
