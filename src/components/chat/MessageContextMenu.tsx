@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Reply, Copy, Pin, Forward, Trash2, CheckSquare } from "lucide-react";
+import { Reply, Copy, Pin, Forward, Trash2, CheckSquare, Pencil } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MessageContextMenuProps {
@@ -14,6 +14,7 @@ interface MessageContextMenuProps {
   onReaction?: (messageId: string, emoji: string) => void;
   onReply?: (messageId: string) => void;
   onForward?: (messageId: string) => void;
+  onEdit?: (messageId: string) => void;
 }
 
 const QUICK_REACTIONS = ["❤️", "🔥", "👍", "😂", "😮", "🎉"];
@@ -30,6 +31,7 @@ export function MessageContextMenu({
   onReaction,
   onReply,
   onForward,
+  onEdit,
 }: MessageContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -64,6 +66,11 @@ export function MessageContextMenu({
 
   const handleForward = () => {
     onForward?.(messageId);
+    onClose();
+  };
+
+  const handleEdit = () => {
+    onEdit?.(messageId);
     onClose();
   };
 
@@ -190,10 +197,13 @@ export function MessageContextMenu({
             >
               <MenuItem icon={Reply} label="Ответить" onClick={handleReply} />
               <MenuItem icon={Copy} label="Скопировать" onClick={handleCopy} />
+              {isOwn && (
+                <MenuItem icon={Pencil} label="Редактировать" onClick={handleEdit} />
+              )}
               <MenuItem icon={Pin} label="Закрепить" onClick={handlePin} />
               <MenuItem icon={Forward} label="Переслать" onClick={handleForward} />
               {isOwn && (
-                <MenuItem icon={Trash2} label="Удалить" onClick={handleDelete} isDestructive />
+                <MenuItem icon={Trash2} label="Удалить для всех" onClick={handleDelete} isDestructive />
               )}
               <MenuItem icon={CheckSquare} label="Выбрать" onClick={onClose} isLast />
             </motion.div>

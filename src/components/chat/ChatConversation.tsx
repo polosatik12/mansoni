@@ -30,7 +30,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { usePinnedMessage } from "@/hooks/usePinnedMessage";
 import { PinnedMessageBar } from "./PinnedMessageBar";
 import { ForwardSheet } from "./ForwardSheet";
-import { ReplyPreview, QuotedReply } from "./ReplyPreview";
+import { ReplyPreview, EditPreview, QuotedReply } from "./ReplyPreview";
 import { AnimatePresence } from "framer-motion";
 
 interface ChatConversationProps {
@@ -50,7 +50,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useProfile();
-  const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
+  const { messages, loading, sendMessage, sendMediaMessage, deleteMessage, editMessage } = useMessages(conversationId);
   const { reactions, toggleReaction } = useMessageReactions(conversationId);
   const { markConversationRead } = useMarkConversationRead();
   const { startCall } = useVideoCallContext();
@@ -98,7 +98,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
   // Highlight animation for scrolled-to messages
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
-  
+
+  // Edit state
+  const [editingMessage, setEditingMessage] = useState<{
+    id: string;
+    content: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
@@ -192,9 +197,21 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     }
     try {
       stopTyping();
-      await sendMessage(inputText, replyTo?.id || null);
-      setInputText("");
-      setReplyTo(null);
+
+      // If editing, update the existing message
+      if (editingMessage) {
+        const result = await editMessage(editingMessage.id, inputText);
+        if (result.error) {
+          toast.error("Не удалось отредактировать сообщение");
+          return;
+        }
+        setEditingMessage(null);
+        setInputText("");
+      } else {
+        await sendMessage(inputText, replyTo?.id || null);
+        setInputText("");
+        setReplyTo(null);
+      }
       // Keep focus on input to prevent keyboard closing on mobile
       requestAnimationFrame(() => {
         inputRef.current?.focus();
@@ -461,13 +478,26 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const handleMessageForward = (messageId: string) => {
     const msg = messages.find((m) => m.id === messageId);
     if (!msg) return;
-    // Determine original sender name
     const senderName = msg.forwarded_from
       ? msg.forwarded_from
       : msg.sender_id === user?.id
         ? profile?.display_name || "Вы"
         : chatName;
     setForwardData({ content: msg.content, senderName });
+  };
+
+  const handleMessageEdit = (messageId: string) => {
+    const msg = messages.find((m) => m.id === messageId);
+    if (!msg || msg.sender_id !== user?.id) return;
+    setEditingMessage({ id: messageId, content: msg.content });
+    setInputText(msg.content);
+    setReplyTo(null);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const cancelEditing = () => {
+    setEditingMessage(null);
+    setInputText("");
   };
 
   return (
@@ -843,6 +873,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   
                   {/* Time and read status */}
                   <div className="flex items-center justify-end gap-1 mt-1">
+                    {message.edited_at && (
+                      <span className="text-[10px] text-white/30 italic">ред.</span>
+                    )}
                     <span className="text-[11px] text-white/40">{formatMessageTime(message.created_at)}</span>
                     {isOwn && (
                       isRead 
@@ -876,12 +909,18 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
         {/* Reply preview bar */}
         <AnimatePresence>
-          {replyTo && (
+          {replyTo && !editingMessage && (
             <ReplyPreview
               senderName={replyTo.senderName}
               content={replyTo.content}
               onClose={() => setReplyTo(null)}
               onScrollTo={() => scrollToMessage(replyTo.id)}
+            />
+          )}
+          {editingMessage && (
+            <EditPreview
+              content={editingMessage.content}
+              onClose={cancelEditing}
             />
           )}
         </AnimatePresence>
@@ -1058,6 +1097,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           onReaction={handleMessageReaction}
           onReply={handleMessageReply}
           onForward={handleMessageForward}
+          onEdit={handleMessageEdit}
         />
       )}
 
