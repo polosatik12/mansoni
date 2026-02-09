@@ -1,123 +1,95 @@
 
 
-# Полная доработка каналов (Telegram-style)
+# Typing Indicator via Supabase Realtime Presence
 
-## Проблемы
+## Overview
+Add a real-time "is typing..." indicator to DM chats (`ChatConversation.tsx`) and group chats (`GroupConversation.tsx`). The feature uses **Supabase Realtime Presence** (no database tables needed) and throttles broadcasts to avoid network spam.
 
-1. **Владелец не может писать** -- в ChannelConversation нет поля ввода сообщений и кнопки прикрепления фото. Интерфейс показывает только ленту постов без возможности публикации
-2. **Нет настроек канала** -- нажатие на название/фото канала ничего не делает. Нет экрана с информацией о канале, списком подписчиков, редактированием
-3. **Закрепленное сообщение -- заглушка** -- "Закреплённое сообщение" всегда показывает один и тот же текст-заглушку
+## How It Works
 
-## Что будет сделано
+1. When a user types in the input field, their typing state is broadcast via a Supabase Presence channel scoped to the conversation/group ID.
+2. Other participants subscribed to the same channel receive the presence state and display a typing indicator.
+3. Typing status auto-expires after ~3 seconds of inactivity (the sender tracks `{ typing: true }` then `{ typing: false }` after a timeout).
 
-### 1. Поле ввода для владельца/админа канала
+## Implementation Steps
 
-В `ChannelConversation.tsx` добавляется проверка роли: если пользователь -- владелец или админ канала, внизу отображается полноценная панель ввода (текст + кнопка прикрепления фото/медиа + кнопка отправки). Для обычных подписчиков остается текущий вид без поля ввода.
+### Step 1: Create `useTypingIndicator` hook
+**New file:** `src/hooks/useTypingIndicator.ts`
 
-- Определение роли через запрос к `channel_members` (role = 'owner' или 'admin')
-- Поле ввода текста с кнопкой Send
-- Кнопка прикрепления файлов (загрузка в storage bucket `chat-media`, отправка media_url)
-- Обновление `sendMessage` в `useChannels.tsx` для поддержки медиа
+- Accepts a `channelName` (e.g., `typing:conv:{id}` or `typing:group:{id}`) and the current user's `displayName`.
+- On mount, subscribes to a Supabase Presence channel.
+- Exposes:
+  - `sendTyping()` -- throttled function (max 1 call per 2 seconds) that calls `channel.track({ user_id, display_name, is_typing: true })`. Sets a 3-second timeout to automatically call `channel.track({ is_typing: false })`.
+  - `typingUsers: string[]` -- array of display names currently typing (excluding the current user), derived from Presence `sync` events.
+- On unmount, untracks and removes the channel.
 
-### 2. Экран настроек канала (ChannelInfoSheet)
+The throttling will reuse the existing `useThrottledCallback` from `src/hooks/useDebounce.ts`.
 
-Новый компонент `src/components/chat/ChannelInfoSheet.tsx`, аналогичный `GroupInfoSheet`:
+### Step 2: Integrate into `ChatConversation.tsx`
 
-- Аватар канала (большой, по центру)
-- Название и описание
-- Количество подписчиков
-- Кнопки действий: Уведомления, Поиск
-- Кнопка "Редактировать" (для owner/admin) -- открывает ChannelEditSheet
-- Список подписчиков с ролями (owner, admin, member)
-- Кнопка "Добавить подписчика" (для owner/admin)
-- Кнопка "Покинуть канал" (для не-владельцев)
-- Управление участниками: назначение админов, удаление (только owner)
+- Import and call `useTypingIndicator` with channel name `typing:conv:${conversationId}`.
+- Wire `sendTyping()` to the input's `onChange` handler (alongside `setInputText`).
+- In the header, replace the status line (`lastSeenStatus` / participant count) with "**печатает...**" when `typingUsers.length > 0`. When typing stops, revert to the original status.
+- The typing text will use a subtle animation (pulsing dots or italic style) and the same `text-emerald-400` color used for "online" status.
 
-### 3. Экран редактирования канала (ChannelEditSheet)
+### Step 3: Integrate into `GroupConversation.tsx`
 
-Новый компонент `src/components/chat/ChannelEditSheet.tsx`:
+- Import and call `useTypingIndicator` with channel name `typing:group:${group.id}`.
+- Wire `sendTyping()` to the input's `onChange` handler.
+- In the header subtitle, replace the member count with "**[Name] печатает...**" (or "**2 печатают...**" for multiple users) when `typingUsers.length > 0`.
 
-- Смена аватара (загрузка в bucket `chat-media`)
-- Редактирование названия
-- Редактирование описания
-- Кнопка "Готово" для сохранения
+### Step 4: Clear typing on message send
 
-### 4. Хук управления каналом (useChannelManagement)
+- In both components, after a message is sent successfully, explicitly call `channel.track({ is_typing: false })` (via a `stopTyping()` function exposed by the hook) so the indicator disappears immediately rather than waiting for the 3-second timeout.
 
-Новый хук `src/hooks/useChannelManagement.tsx`, аналогичный `useGroupManagement`:
+---
 
-- `updateChannel(channelId, { name, description, avatar_url })`
-- `addMember(channelId, userId)`
-- `removeMember(channelId, userId)`
-- `updateMemberRole(channelId, userId, role)`
-- `uploadChannelAvatar(channelId, file)`
-- `getChannelRole(channelId)` -- получить роль текущего пользователя
+## Technical Details
 
-### 5. Хук для участников канала (useChannelMembers)
-
-Добавление в `useChannels.tsx` функции `useChannelMembers(channelId)` для получения списка участников с профилями, аналогично `useGroupMembers`.
-
-### 6. Убрать заглушку закрепленного сообщения
-
-Заменить статичный текст "Закреплённое сообщение" на условное отображение: показывать только если есть реально закрепленное сообщение (пока скрыть, т.к. функция пиннинга -- отдельная фича).
-
-### 7. Интеграция в ChannelConversation
-
-- Сделать заголовок (аватар + название) кликабельным -- открывает ChannelInfoSheet
-- Добавить state для открытия ChannelInfoSheet
-- Передавать обновленные данные канала после редактирования
-
-## Технические детали
-
-### База данных (миграция)
-
-Нужно добавить UPDATE-политику для `channel_members`, чтобы владелец мог менять роли:
-
+### `useTypingIndicator` hook structure
 ```text
--- Allow channel owners to update member roles
-CREATE POLICY "cm_owner_update" ON public.channel_members
-FOR UPDATE USING (
-  is_channel_admin(channel_id, auth.uid())
-);
-
--- Allow admins to add new members  
-CREATE POLICY "cm_admin_insert" ON public.channel_members
-FOR INSERT WITH CHECK (
-  is_channel_admin(channel_id, auth.uid())
-);
-
--- Allow admins to remove members
-CREATE POLICY "cm_admin_delete" ON public.channel_members
-FOR DELETE USING (
-  is_channel_admin(channel_id, auth.uid())
-);
+function useTypingIndicator(channelName, userId, displayName)
+  |
+  |-- Creates Supabase channel with Presence config (key = userId)
+  |-- Listens to 'presence' sync events
+  |     |-- Collects all presences where is_typing === true
+  |     |-- Filters out current user
+  |     |-- Sets typingUsers state
+  |
+  |-- sendTyping() [throttled to 2s interval]
+  |     |-- channel.track({ is_typing: true, display_name })
+  |     |-- clearTimeout(prev timer)
+  |     |-- setTimeout(3s) -> channel.track({ is_typing: false })
+  |
+  |-- stopTyping()
+  |     |-- channel.track({ is_typing: false })
+  |     |-- clearTimeout
+  |
+  |-- Cleanup: untrack + remove channel on unmount
+  |
+  Returns { sendTyping, stopTyping, typingUsers }
 ```
 
-Также нужно добавить UPDATE-политику на `channel_messages` для владельца (для будущего редактирования) и DELETE-политику:
+### UI placement
+- **DM chats**: The status subtitle in the header (line ~448-452 of ChatConversation.tsx) switches between `lastSeenStatus` and "печатает..." based on `typingUsers`.
+- **Group chats**: The subtitle (line ~95-98 of GroupConversation.tsx) switches between member count and "[Name] печатает..." based on `typingUsers`.
 
-```text
-CREATE POLICY "cm_admin_delete_msg" ON public.channel_messages
-FOR DELETE USING (
-  is_channel_admin(channel_id, auth.uid())
-);
-```
+### Throttle strategy
+- `sendTyping()` is throttled to fire at most once every 2 seconds using `useThrottledCallback`.
+- A 3-second inactivity timeout automatically resets the typing flag.
+- On message send, `stopTyping()` is called immediately.
 
-### Новые файлы
+### Files to create
+| File | Purpose |
+|------|---------|
+| `src/hooks/useTypingIndicator.ts` | Presence-based typing state hook |
 
-- `src/hooks/useChannelManagement.tsx` -- хук для CRUD операций канала
-- `src/components/chat/ChannelInfoSheet.tsx` -- экран профиля канала
-- `src/components/chat/ChannelEditSheet.tsx` -- экран редактирования канала
+### Files to modify
+| File | Change |
+|------|--------|
+| `src/components/chat/ChatConversation.tsx` | Add hook, wire `onChange`, update header status |
+| `src/components/chat/GroupConversation.tsx` | Add hook, wire `onChange`, update header status |
 
-### Изменяемые файлы
-
-- `src/components/chat/ChannelConversation.tsx` -- полная переработка: добавление поля ввода для owner/admin, кликабельный заголовок, медиа-отправка, убрать заглушки
-- `src/hooks/useChannels.tsx` -- добавить `useChannelMembers`, расширить `sendMessage` для медиа, добавить функцию определения роли пользователя
-
-### Стилистика
-
-Все компоненты в стиле существующего дизайна:
-- BrandBackground с анимированными орбами
-- Glassmorphism (backdrop-blur-xl, bg-black/20, border-white/10)
-- Акцентный цвет: `#6ab3f3`
-- Full-screen overlay компоненты с z-index 210+
+### No database changes needed
+Supabase Presence is an in-memory, ephemeral feature -- no tables or migrations required.
 
