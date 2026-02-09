@@ -377,7 +377,7 @@ export function useMessages(conversationId: string | null) {
     }
   };
 
-  const sendMediaMessage = async (file: File, mediaType: 'voice' | 'video_circle' | 'image' | 'video', durationSeconds?: number) => {
+  const sendMediaMessage = async (file: File, mediaType: 'voice' | 'video_circle' | 'image' | 'video', durationSeconds?: number, caption?: string) => {
     if (!conversationId || !user) return { error: 'Not authenticated' };
 
     try {
@@ -396,13 +396,16 @@ export function useMessages(conversationId: string | null) {
         .from('chat-media')
         .getPublicUrl(fileName);
 
+      // Use caption if provided, otherwise fall back to default labels
+      const defaultContent = mediaType === 'voice' ? '🎤 Голосовое сообщение' : 
+                 mediaType === 'video_circle' ? '🎬 Видео-кружок' : 
+                 mediaType === 'video' ? '🎥 Видео' : '📷 Изображение';
+
       // Insert message with media
       const { error: msgError } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content: mediaType === 'voice' ? '🎤 Голосовое сообщение' : 
-                 mediaType === 'video_circle' ? '🎬 Видео-кружок' : 
-                 mediaType === 'video' ? '🎥 Видео' : '📷 Изображение',
+        content: caption || defaultContent,
         media_url: publicUrl,
         media_type: mediaType,
         duration_seconds: durationSeconds || null
