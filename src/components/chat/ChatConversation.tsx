@@ -15,6 +15,7 @@ import { BrandBackground } from "@/components/ui/brand-background";
 import { VideoCircleRecorder } from "./VideoCircleRecorder";
 import { VideoCircleMessage } from "./VideoCircleMessage";
 import { AttachmentSheet } from "./AttachmentSheet";
+import { MediaPreviewOverlay } from "./MediaPreviewOverlay";
 import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
 import { SharedPostCard } from "./SharedPostCard";
@@ -72,6 +73,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [viewingVideo, setViewingVideo] = useState<string | null>(null);
   const [recordMode, setRecordMode] = useState<'voice' | 'video'>('voice');
+  
+  // Media staging state (Telegram-style preview before send)
+  const [stagedMedia, setStagedMedia] = useState<{
+    file: File;
+    type: "image" | "video";
+  } | null>(null);
   const [lastSeenStatus, setLastSeenStatus] = useState<string>("был(а) недавно");
   
   // Context menu state
@@ -343,13 +350,15 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     setShowVideoRecorder(false);
   };
 
-  const handleAttachment = async (file: File, type: "image" | "video") => {
-    if (type === "image") {
-      await sendMediaMessage(file, 'image');
-    } else {
-      // For video files, we can add a 'video' type or reuse 'video_circle'
-      await sendMediaMessage(file, 'video' as any);
-    }
+  // Stage media for preview instead of uploading immediately
+  const handleAttachment = (file: File, type: "image" | "video") => {
+    setStagedMedia({ file, type });
+  };
+
+  // Called from MediaPreviewOverlay when user confirms send
+  const handleStagedMediaSend = async (file: File, mediaType: "image" | "video", caption: string) => {
+    await sendMediaMessage(file, mediaType, undefined, caption || undefined);
+    setStagedMedia(null);
   };
 
   const handleStartAudioCall = async () => {
@@ -808,14 +817,20 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     alt="Изображение" 
                     className="max-w-full h-auto"
                   />
-                  <div className="px-3 py-1.5 flex items-center justify-end gap-1">
-                    {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
-                    <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
-                    {isOwn && (
-                      isRead 
-                        ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
-                        : <Check className="w-3.5 h-3.5 text-white/40" />
+                  <div className="px-3 py-1.5">
+                    {/* Show caption if content is not the default placeholder */}
+                    {message.content && message.content !== '📷 Изображение' && (
+                      <p className="text-[15px] leading-[1.35] text-white whitespace-pre-wrap mb-1">{message.content}</p>
                     )}
+                    <div className="flex items-center justify-end gap-1">
+                      {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
+                      <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
+                      {isOwn && (
+                        isRead 
+                          ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
+                          : <Check className="w-3.5 h-3.5 text-white/40" />
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : isVideo && message.media_url ? (
@@ -825,6 +840,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     isOwn={isOwn}
                     onFullscreen={() => setViewingVideo(message.media_url!)}
                   />
+                  {/* Show caption if content is not the default placeholder */}
+                  {message.content && message.content !== '🎥 Видео' && (
+                    <p className="text-[15px] leading-[1.35] text-white whitespace-pre-wrap px-1">{message.content}</p>
+                  )}
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                     {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
@@ -1109,6 +1128,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         onOpenChange={setShowAttachmentSheet}
         onSelectFile={handleAttachment}
       />
+
+      {/* Media Preview Overlay (Telegram-style staging) */}
+      {stagedMedia && (
+        <MediaPreviewOverlay
+          file={stagedMedia.file}
+          mediaType={stagedMedia.type}
+          onSend={handleStagedMediaSend}
+          onCancel={() => setStagedMedia(null)}
+        />
+      )}
 
 
       {/* Image Viewer */}
