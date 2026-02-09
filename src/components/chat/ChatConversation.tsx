@@ -27,6 +27,8 @@ import { formatLastSeen } from "@/hooks/usePresence";
 import { useMessageReactions } from "@/hooks/useMessageReactions";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { useProfile } from "@/hooks/useProfile";
+import { usePinnedMessage } from "@/hooks/usePinnedMessage";
+import { PinnedMessageBar } from "./PinnedMessageBar";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -55,6 +57,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     user?.id,
     profile?.display_name || user?.email?.split("@")[0] || "User"
   );
+  const { pinnedMessage, pinMessage, unpinMessage } = usePinnedMessage(conversationId);
   
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -408,8 +411,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   const handleMessagePin = async (messageId: string) => {
-    // TODO: Implement pin functionality
-    toast.success("Сообщение закреплено");
+    await pinMessage(messageId);
   };
 
   const handleMessageReaction = async (messageId: string, emoji: string) => {
@@ -506,6 +508,19 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         )}
       </div>
 
+      {/* Pinned message bar */}
+      {pinnedMessage && (
+        <PinnedMessageBar
+          senderName={pinnedMessage.sender_name}
+          content={pinnedMessage.content}
+          onScrollTo={() => {
+            const el = document.querySelector(`[data-message-id="${pinnedMessage.id}"]`);
+            el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }}
+          onUnpin={unpinMessage}
+        />
+      )}
+
       {/* Messages - scrollable with animated brand background */}
       <div className="flex-1 overflow-y-auto native-scroll flex flex-col relative">
         {/* Brand background - fixed to cover full screen */}
@@ -585,7 +600,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const msgReactions = reactions[message.id] || [];
 
           return (
-            <div key={message.id}>
+            <div key={message.id} data-message-id={message.id}>
               {showDate && <DateSeparator date={message.created_at} />}
               <div
                 className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""}`}

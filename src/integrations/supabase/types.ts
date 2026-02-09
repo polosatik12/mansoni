@@ -244,6 +244,7 @@ export type Database = {
           member_count: number
           name: string
           owner_id: string
+          pinned_message_id: string | null
           updated_at: string
         }
         Insert: {
@@ -255,6 +256,7 @@ export type Database = {
           member_count?: number
           name: string
           owner_id: string
+          pinned_message_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -266,9 +268,18 @@ export type Database = {
           member_count?: number
           name?: string
           owner_id?: string
+          pinned_message_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "channels_pinned_message_id_fkey"
+            columns: ["pinned_message_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comment_likes: {
         Row: {
@@ -380,19 +391,30 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          pinned_message_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          pinned_message_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          pinned_message_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "conversations_pinned_message_id_fkey"
+            columns: ["pinned_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       followers: {
         Row: {
