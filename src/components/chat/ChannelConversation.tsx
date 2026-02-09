@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Send, Eye, Share2, ChevronDown, Paperclip, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Send, Eye, Share2, ChevronDown, Image as ImageIcon } from "lucide-react";
 import { useChannelMessages, useJoinChannel, Channel } from "@/hooks/useChannels";
 import { useChannelRole } from "@/hooks/useChannelMembers";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,9 @@ import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { BrandBackground } from "@/components/ui/brand-background";
 import { ChannelInfoSheet } from "./ChannelInfoSheet";
 import { DateSeparator, shouldShowDateSeparator } from "./DateSeparator";
+import { PinnedMessageBar } from "./PinnedMessageBar";
+import { MessageContextMenu } from "./MessageContextMenu";
+import { useChannelPinnedMessage } from "@/hooks/usePinnedMessage";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -36,12 +39,22 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
   const { messages, loading, sendMessage } = useChannelMessages(channel.id);
   const { joinChannel, leaveChannel } = useJoinChannel();
   const { isAdmin, role } = useChannelRole(channel.id);
+  const { pinnedMessage, pinMessage, unpinMessage } = useChannelPinnedMessage(channel.id);
 
   const [isMember, setIsMember] = useState(channel.is_member);
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Context menu state for channel messages
+  const [contextMenuMessage, setContextMenuMessage] = useState<{
+    id: string;
+    content: string;
+    isOwn: boolean;
+    position: { top: number; left: number; width: number };
+  } | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -137,6 +150,36 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
     setChannel((prev) => ({ ...prev, ...updated }));
   };
 
+  // Long-press for context menu (admin only)
+  const handleMessageLongPressStart = (
+    msgId: string,
+    content: string,
+    isOwn: boolean,
+    e: React.TouchEvent | React.MouseEvent
+  ) => {
+    if (!isAdmin) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    longPressTimerRef.current = setTimeout(() => {
+      setContextMenuMessage({
+        id: msgId,
+        content,
+        isOwn,
+        position: { top: rect.top, left: rect.left, width: rect.width },
+      });
+    }, 500);
+  };
+
+  const handleMessageLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleChannelMessagePin = async (messageId: string) => {
+    await pinMessage(messageId);
+  };
+
   return (
     <>
       <div className="fixed inset-0 flex flex-col z-[200]">
@@ -176,6 +219,19 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
           </div>
         </div>
 
+        {/* Pinned message bar */}
+        {pinnedMessage && (
+          <PinnedMessageBar
+            senderName={pinnedMessage.sender_name}
+            content={pinnedMessage.content}
+            onScrollTo={() => {
+              const el = document.querySelector(`[data-message-id="${pinnedMessage.id}"]`);
+              el?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}
+            onUnpin={isAdmin ? unpinMessage : undefined}
+          />
+        )}
+
         {/* Messages */}
         <div
           ref={scrollContainerRef}
@@ -205,9 +261,20 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                 const showDate = shouldShowDateSeparator(msg.created_at, prevMsg?.created_at);
 
                 return (
-                  <div key={msg.id}>
+                  <div key={msg.id} data-message-id={msg.id}>
                     {showDate && <DateSeparator date={msg.created_at} />}
-                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10">
+                    <div
+                      className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10"
+                      onTouchStart={(e) =>
+                        handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                      }
+                      onTouchEnd={handleMessageLongPressEnd}
+                      onMouseDown={(e) =>
+                        handleMessageLongPressStart(msg.id, msg.content, msg.sender_id === user?.id, e)
+                      }
+                      onMouseUp={handleMessageLongPressEnd}
+                      onMouseLeave={handleMessageLongPressEnd}
+                    >
                     {/* Post header */}
                     <div className="flex items-center gap-2 px-3 pt-3 pb-2">
                       <GradientAvatar
@@ -352,6 +419,19 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
         onLeave={onLeave}
         onChannelUpdated={handleChannelUpdated}
       />
+
+      {/* Message Context Menu (admin only) */}
+      {contextMenuMessage && (
+        <MessageContextMenu
+          isOpen={!!contextMenuMessage}
+          onClose={() => setContextMenuMessage(null)}
+          messageId={contextMenuMessage.id}
+          messageContent={contextMenuMessage.content}
+          isOwn={contextMenuMessage.isOwn}
+          position={contextMenuMessage.position}
+          onPin={handleChannelMessagePin}
+        />
+      )}
     </>
   );
 }
