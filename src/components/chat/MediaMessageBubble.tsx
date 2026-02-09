@@ -107,19 +107,19 @@ export function MediaMessageBubble({
     );
   }
 
-  // --- Image/Video only (no caption) → dark bg hugging the image, no glass bubble ---
+  // --- Image/Video only (no caption) → tight wrapper, no extra gaps ---
   if (!hasCaption) {
     return (
       <div
-        className="relative w-fit h-fit overflow-hidden bg-black/80"
+        className="relative overflow-hidden"
         style={{ maxWidth: 280, borderRadius: 12 }}
         onClick={mediaType === "video" ? onVideoClick : onImageClick}
       >
         {mediaType === "video" ? (
           <video
             src={mediaUrl}
-            className="block w-auto h-auto max-w-full object-contain cursor-pointer"
-            style={{ maxHeight: 400, maxWidth: 280 }}
+            className="block w-full h-auto object-cover cursor-pointer"
+            style={{ maxHeight: 400 }}
             muted
             playsInline
             preload="metadata"
@@ -128,19 +128,19 @@ export function MediaMessageBubble({
           <img
             src={mediaUrl}
             alt=""
-            className="block w-auto h-auto max-w-full object-contain cursor-pointer"
-            style={{ maxHeight: 400, maxWidth: 280 }}
+            className="block w-full h-auto object-cover cursor-pointer"
+            style={{ maxHeight: 400 }}
             onLoad={() => setImgLoaded(true)}
             draggable={false}
           />
         )}
 
-        {/* Compact metadata pill inside the dark image area */}
+        {/* Compact metadata pill */}
         <div
           className="absolute bottom-1.5 right-1.5 flex items-center gap-1 px-1.5 py-[3px] rounded-full"
           style={{ background: "rgba(0,0,0,0.45)" }}
         >
-          <span className="flex items-center gap-1" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
+          <span className="flex items-center gap-1 text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
             {timestampContent}
           </span>
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { ChatListSkeleton } from "@/components/chat/ChatListSkeleton";
 import { Search, Check, CheckCheck, LogIn, MessageCircle, Plus, Megaphone, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -367,11 +368,9 @@ export function ChatsPage() {
           ref={chatListRef}
           className="flex-1 overflow-y-auto overscroll-contain px-3 py-2"
         >
-          {/* Loading */}
+          {/* Loading — skeleton */}
           {(chatsLoading || channelsLoading || groupsLoading) && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/50" />
-            </div>
+            <ChatListSkeleton count={8} />
           )}
 
           {/* Error */}
