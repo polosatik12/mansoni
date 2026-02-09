@@ -1117,6 +1117,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           duration_seconds: number | null
+          edited_at: string | null
           forwarded_from: string | null
           id: string
           is_read: boolean | null
@@ -1132,6 +1133,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           duration_seconds?: number | null
+          edited_at?: string | null
           forwarded_from?: string | null
           id?: string
           is_read?: boolean | null
@@ -1147,6 +1149,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           duration_seconds?: number | null
+          edited_at?: string | null
           forwarded_from?: string | null
           id?: string
           is_read?: boolean | null
