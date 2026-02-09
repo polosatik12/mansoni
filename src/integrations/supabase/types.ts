@@ -1111,6 +1111,32 @@ export type Database = {
           },
         ]
       }
+      message_views: {
+        Row: {
+          message_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          message_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          message_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_views_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "channel_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
