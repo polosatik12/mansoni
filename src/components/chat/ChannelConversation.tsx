@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { ArrowLeft, Send, Eye, Share2, ChevronDown, Image as ImageIcon } from "lucide-react";
 import { useChannelMessages, useJoinChannel, Channel } from "@/hooks/useChannels";
 import { useChannelRole } from "@/hooks/useChannelMembers";
@@ -12,6 +12,7 @@ import { PinnedMessageBar } from "./PinnedMessageBar";
 import { MessageContextMenu } from "./MessageContextMenu";
 import { MediaPreviewOverlay } from "./MediaPreviewOverlay";
 import { useChannelPinnedMessage } from "@/hooks/usePinnedMessage";
+import { useMessageViews } from "@/hooks/useMessageViews";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -47,6 +48,10 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
   const { isAdmin, role } = useChannelRole(channel.id);
   const { pinnedMessage, pinMessage, unpinMessage } = useChannelPinnedMessage(channel.id);
 
+  // Real view tracking
+  const messageIds = useMemo(() => messages.map((m) => m.id), [messages]);
+  const { getViewCount, setupObserver } = useMessageViews(channel.id, messageIds);
+
   const [isMember, setIsMember] = useState(channel.is_member);
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
@@ -81,7 +86,10 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Re-setup observer when messages change so new elements are observed
+    const timer = setTimeout(() => setupObserver(scrollContainerRef.current), 100);
+    return () => clearTimeout(timer);
+  }, [messages, setupObserver]);
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
@@ -274,7 +282,7 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
               )}
 
               {messages.map((msg, index) => {
-                const viewCount = Math.floor(Math.random() * 200000) + 1000;
+                const viewCount = getViewCount(msg.id);
                 const prevMsg = index > 0 ? messages[index - 1] : null;
                 const showDate = shouldShowDateSeparator(msg.created_at, prevMsg?.created_at);
 
