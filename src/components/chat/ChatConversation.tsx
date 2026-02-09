@@ -87,7 +87,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     id: string;
     content: string;
     isOwn: boolean;
-    position: { top: number; left: number; width: number };
+    position: { top: number; left: number; width: number; height: number; bottom: number; right: number };
   } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -437,7 +437,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         position: {
           top: rect.top,
           left: rect.left,
-          width: rect.width
+          width: rect.width,
+          height: rect.height,
+          bottom: rect.bottom,
+          right: rect.right,
         }
       });
     }, 500);

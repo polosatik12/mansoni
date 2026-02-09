@@ -40,7 +40,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
     id: string;
     content: string;
     isOwn: boolean;
-    position: { top: number; left: number; width: number };
+    position: { top: number; left: number; width: number; height: number; bottom: number; right: number };
   } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -100,7 +100,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
         id: msgId,
         content,
         isOwn,
-        position: { top: rect.top, left: rect.left, width: rect.width },
+        position: { top: rect.top, left: rect.left, width: rect.width, height: rect.height, bottom: rect.bottom, right: rect.right },
       });
     }, 500);
   };

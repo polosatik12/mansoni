@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { Reply, Copy, Pin, Forward, Trash2, CheckSquare, Pencil } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -8,7 +8,8 @@ interface MessageContextMenuProps {
   messageId: string;
   messageContent: string;
   isOwn: boolean;
-  position?: { top: number; left: number; width: number };
+  /** Bounding rect of the message bubble that was long-pressed */
+  position?: { top: number; left: number; width: number; height: number; bottom: number; right: number };
   onDelete?: (messageId: string) => void;
   onPin?: (messageId: string) => void;
   onReaction?: (messageId: string, emoji: string) => void;
@@ -18,6 +19,17 @@ interface MessageContextMenuProps {
 }
 
 const QUICK_REACTIONS = ["❤️", "🔥", "👍", "😂", "😮", "🎉"];
+
+/** Trigger haptic feedback on supported devices */
+function triggerHaptic() {
+  try {
+    if (navigator.vibrate) {
+      navigator.vibrate(10);
+    }
+  } catch {
+    // silently ignore
+  }
+}
 
 export function MessageContextMenu({
   isOpen,
@@ -34,6 +46,7 @@ export function MessageContextMenu({
   onEdit,
 }: MessageContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState<React.CSSProperties>({});
 
   const handleReaction = (emoji: string) => {
     onReaction?.(messageId, emoji);
@@ -74,6 +87,13 @@ export function MessageContextMenu({
     onClose();
   };
 
+  // Haptic feedback when opening
+  useEffect(() => {
+    if (isOpen) {
+      triggerHaptic();
+    }
+  }, [isOpen]);
+
   // Prevent scroll when menu is open
   useEffect(() => {
     if (isOpen) {
@@ -86,44 +106,67 @@ export function MessageContextMenu({
     };
   }, [isOpen]);
 
-  // Calculate optimal position for the menu
-  const getMenuStyle = (): React.CSSProperties => {
-    if (!position) {
-      return {
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)'
-      };
-    }
+  // Calculate position after menu renders so we know its height
+  useLayoutEffect(() => {
+    if (!isOpen || !position || !menuRef.current) return;
 
-    const windowHeight = window.innerHeight;
-    const windowWidth = window.innerWidth;
-    const menuHeight = 320; // Approximate menu height
-    const reactionsHeight = 48;
-    const messageHeight = 60; // Approximate message preview height
-    const totalHeight = reactionsHeight + messageHeight + menuHeight + 24; // gaps
-    
-    // Calculate where to position the menu container
-    let top = position.top;
-    
-    // If message is in lower half, position menu so message appears at bottom of visible area
-    if (position.top > windowHeight / 2) {
-      top = Math.max(16, position.top - totalHeight + messageHeight + 60);
+    const menuRect = menuRef.current.getBoundingClientRect();
+    const menuWidth = menuRect.width || 280;
+    const menuHeight = menuRect.height || 300;
+    const viewW = window.innerWidth;
+    const viewH = window.innerHeight;
+    const pad = 12;
+
+    // --- Horizontal: align to the bubble side ---
+    let left: number;
+    if (isOwn) {
+      // Right-align: menu right edge aligns with bubble right edge
+      left = position.right - menuWidth;
     } else {
-      // Message is in upper half, position below it
-      top = Math.max(16, position.top - reactionsHeight - 8);
+      // Left-align: menu left edge aligns with bubble left edge
+      left = position.left;
     }
-    
-    // Ensure menu doesn't go off screen
-    top = Math.min(top, windowHeight - totalHeight - 16);
-    top = Math.max(16, top);
+    // Clamp horizontal
+    left = Math.max(pad, Math.min(left, viewW - menuWidth - pad));
 
-    return {
-      top,
-      left: isOwn ? 'auto' : 16,
-      right: isOwn ? 16 : 'auto',
+    // --- Vertical: prefer below the bubble, otherwise above ---
+    const spaceBelow = viewH - position.bottom;
+    const spaceAbove = position.top;
+    let top: number;
+
+    if (spaceBelow >= menuHeight + pad) {
+      // Position below the bubble
+      top = position.bottom + 6;
+    } else if (spaceAbove >= menuHeight + pad) {
+      // Position above the bubble
+      top = position.top - menuHeight - 6;
+    } else {
+      // Not enough space either way — center vertically and scroll
+      top = Math.max(pad, (viewH - menuHeight) / 2);
+    }
+    // Clamp vertical
+    top = Math.max(pad, Math.min(top, viewH - menuHeight - pad));
+
+    setMenuPos({ top, left });
+  }, [isOpen, position, isOwn]);
+
+  // Highlight the source message element
+  useEffect(() => {
+    if (!isOpen || !messageId) return;
+
+    const el = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (el) {
+      (el as HTMLElement).style.position = "relative";
+      (el as HTMLElement).style.zIndex = "301";
+    }
+
+    return () => {
+      if (el) {
+        (el as HTMLElement).style.position = "";
+        (el as HTMLElement).style.zIndex = "";
+      }
     };
-  };
+  }, [isOpen, messageId]);
 
   return (
     <AnimatePresence>
@@ -136,26 +179,29 @@ export function MessageContextMenu({
           className="fixed inset-0 z-[300]"
           onClick={onClose}
         >
-          {/* Dark backdrop with blur */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          {/* Dimming backdrop — the highlighted message sits above this via z-index */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
 
-          {/* Menu container */}
+          {/* Menu container — positioned precisely */}
           <motion.div
             ref={menuRef}
-            initial={{ scale: 0.95, opacity: 0 }}
+            initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 400 }}
-            className="absolute flex flex-col gap-2 w-[calc(100%-32px)] max-w-[320px]"
-            style={getMenuStyle()}
+            exit={{ scale: 0.92, opacity: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 420, mass: 0.8 }}
+            className="absolute flex flex-col gap-2"
+            style={{
+              ...menuPos,
+              width: "min(85vw, 280px)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Quick reactions bar */}
             <motion.div
-              initial={{ y: -8, opacity: 0 }}
+              initial={{ y: -6, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.03 }}
-              className={`flex items-center gap-0.5 bg-[#1e2c3a] rounded-full px-1.5 py-1 shadow-xl w-fit ${isOwn ? 'self-end' : 'self-start'}`}
+              transition={{ delay: 0.02, duration: 0.15 }}
+              className={`flex items-center gap-0.5 bg-[#1e2c3a] rounded-full px-1.5 py-1 shadow-xl w-fit ${isOwn ? "self-end" : "self-start"}`}
             >
               {QUICK_REACTIONS.map((emoji) => (
                 <button
@@ -168,31 +214,11 @@ export function MessageContextMenu({
               ))}
             </motion.div>
 
-            {/* Message preview - styled like actual message */}
-            <motion.div
-              initial={{ scale: 0.98, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.02 }}
-              className={`${isOwn ? "self-end" : "self-start"}`}
-            >
-              <div
-                className={`max-w-[280px] rounded-2xl px-3 py-2 shadow-lg ${
-                  isOwn
-                    ? "bg-[#2b5278] text-white rounded-br-sm"
-                    : "bg-[#182533] text-white rounded-bl-sm"
-                }`}
-              >
-                <p className="text-[15px] leading-[1.4] whitespace-pre-wrap line-clamp-4">
-                  {messageContent}
-                </p>
-              </div>
-            </motion.div>
-
             {/* Action menu */}
             <motion.div
-              initial={{ y: 8, opacity: 0 }}
+              initial={{ y: 6, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.05 }}
+              transition={{ delay: 0.04, duration: 0.15 }}
               className="bg-[#1e2c3a] rounded-xl overflow-hidden shadow-xl"
             >
               <MenuItem icon={Reply} label="Ответить" onClick={handleReply} />
