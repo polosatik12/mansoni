@@ -7,6 +7,7 @@ import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { BrandBackground } from "@/components/ui/brand-background";
 import { ChannelInfoSheet } from "./ChannelInfoSheet";
+import { DateSeparator, shouldShowDateSeparator } from "./DateSeparator";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -198,11 +199,15 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                 </div>
               )}
 
-              {messages.map((msg) => {
+              {messages.map((msg, index) => {
                 const viewCount = Math.floor(Math.random() * 200000) + 1000;
+                const prevMsg = index > 0 ? messages[index - 1] : null;
+                const showDate = shouldShowDateSeparator(msg.created_at, prevMsg?.created_at);
 
                 return (
-                  <div key={msg.id} className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10">
+                  <div key={msg.id}>
+                    {showDate && <DateSeparator date={msg.created_at} />}
+                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10">
                     {/* Post header */}
                     <div className="flex items-center gap-2 px-3 pt-3 pb-2">
                       <GradientAvatar
@@ -253,6 +258,7 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                       <button className="text-white/30 hover:text-white/60 transition-colors">
                         <Share2 className="w-4 h-4" />
                       </button>
+                    </div>
                     </div>
                   </div>
                 );

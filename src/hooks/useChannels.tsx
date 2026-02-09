@@ -191,7 +191,7 @@ export function useChannelMessages(channelId: string | null) {
             table: "channel_messages",
             filter: `channel_id=eq.${channelId}`,
           },
-          async (payload) => {
+           async (payload) => {
             const newMessage = payload.new as ChannelMessage;
             
             // Fetch sender profile
@@ -201,7 +201,11 @@ export function useChannelMessages(channelId: string | null) {
               .eq("user_id", newMessage.sender_id)
               .single();
             
-            setMessages((prev) => [...prev, { ...newMessage, sender: profile || undefined }]);
+            // Prevent duplicates
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === newMessage.id)) return prev;
+              return [...prev, { ...newMessage, sender: profile || undefined }];
+            });
           }
         )
         .subscribe();

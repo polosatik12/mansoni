@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Phone, Video, Send, Mic, X, Play, Pause, Check, CheckCheck, Smile } from "lucide-react";
 import { AttachmentIcon } from "./AttachmentIcon";
+import { DateSeparator, shouldShowDateSeparator } from "./DateSeparator";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useChat";
 import { useAuth } from "@/hooks/useAuth";
@@ -561,6 +562,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const prevMessage = index > 0 ? messages[index - 1] : null;
           const showAvatar = !isOwn && (!prevMessage || prevMessage.sender_id !== message.sender_id);
           const showSenderName = isGroup && !isOwn && showAvatar;
+          const showDate = shouldShowDateSeparator(message.created_at, prevMessage?.created_at);
 
           // Hide message if it's currently shown in context menu
           const isInContextMenu = contextMenuMessage?.id === message.id;
@@ -568,10 +570,11 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const msgReactions = reactions[message.id] || [];
 
           return (
-            <div
-              key={message.id}
-              className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""}`}
-            >
+            <div key={message.id}>
+              {showDate && <DateSeparator date={message.created_at} />}
+              <div
+                className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""}`}
+              >
               {/* Avatar for incoming messages */}
               {!isOwn && (
                 <div className="w-8 shrink-0">
@@ -750,6 +753,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   onToggle={(emoji) => toggleReaction(message.id, emoji)}
                 />
               )}
+              </div>
               </div>
             </div>
           );
