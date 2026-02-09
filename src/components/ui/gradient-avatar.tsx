@@ -20,7 +20,7 @@ interface GradientAvatarProps {
   name: string;
   seed?: string;
   avatarUrl?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
@@ -35,6 +35,7 @@ export function GradientAvatar({
     sm: "w-10 h-10 text-sm",
     md: "w-14 h-14 text-lg",
     lg: "w-20 h-20 text-2xl",
+    xl: "w-28 h-28 text-4xl",
   };
 
   const gradient = useMemo(() => {
