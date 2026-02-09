@@ -44,6 +44,11 @@ All colors MUST be HSL.
   50% { transform: scale(1.04); }
 }
 
+@keyframes highlight-flash {
+  0% { background-color: rgba(106, 179, 243, 0.25); }
+  100% { background-color: transparent; }
+}
+
 @layer base {
   :root {
     /* Clean white light theme */

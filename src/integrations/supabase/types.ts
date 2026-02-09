@@ -1122,6 +1122,7 @@ export type Database = {
           is_read: boolean | null
           media_type: string | null
           media_url: string | null
+          reply_to_message_id: string | null
           sender_id: string
           shared_post_id: string | null
           shared_reel_id: string | null
@@ -1136,6 +1137,7 @@ export type Database = {
           is_read?: boolean | null
           media_type?: string | null
           media_url?: string | null
+          reply_to_message_id?: string | null
           sender_id: string
           shared_post_id?: string | null
           shared_reel_id?: string | null
@@ -1150,6 +1152,7 @@ export type Database = {
           is_read?: boolean | null
           media_type?: string | null
           media_url?: string | null
+          reply_to_message_id?: string | null
           sender_id?: string
           shared_post_id?: string | null
           shared_reel_id?: string | null
@@ -1160,6 +1163,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {

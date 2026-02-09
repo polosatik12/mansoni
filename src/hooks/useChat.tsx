@@ -35,6 +35,7 @@ export interface ChatMessage {
   shared_post_id?: string | null;
   shared_reel_id?: string | null;
   forwarded_from?: string | null;
+  reply_to_message_id?: string | null;
 }
 
 export interface Conversation {
@@ -324,8 +325,8 @@ export function useMessages(conversationId: string | null) {
     };
   }, [conversationId]);
 
-  const sendMessage = async (content: string) => {
-    console.log("[sendMessage] called with:", { conversationId, userId: user?.id, content });
+  const sendMessage = async (content: string, replyToMessageId?: string | null) => {
+    console.log("[sendMessage] called with:", { conversationId, userId: user?.id, content, replyToMessageId });
     
     if (!conversationId || !user || !content.trim()) {
       console.log("[sendMessage] validation failed:", { conversationId, hasUser: !!user, trimmedContent: content.trim() });
@@ -334,11 +335,13 @@ export function useMessages(conversationId: string | null) {
 
     try {
       console.log("[sendMessage] inserting message...");
-      const { data, error } = await supabase.from("messages").insert({
+      const insertData = {
         conversation_id: conversationId,
         sender_id: user.id,
         content: content.trim(),
-      }).select();
+        ...(replyToMessageId ? { reply_to_message_id: replyToMessageId } : {}),
+      };
+      const { data, error } = await supabase.from("messages").insert(insertData).select();
 
       if (error) {
         console.error("[sendMessage] insert error:", error);

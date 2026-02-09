@@ -30,6 +30,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { usePinnedMessage } from "@/hooks/usePinnedMessage";
 import { PinnedMessageBar } from "./PinnedMessageBar";
 import { ForwardSheet } from "./ForwardSheet";
+import { ReplyPreview, QuotedReply } from "./ReplyPreview";
+import { AnimatePresence } from "framer-motion";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -86,6 +88,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     content: string;
     senderName: string;
   } | null>(null);
+
+  // Reply state
+  const [replyTo, setReplyTo] = useState<{
+    id: string;
+    content: string;
+    senderName: string;
+  } | null>(null);
+
+  // Highlight animation for scrolled-to messages
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -180,8 +192,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     }
     try {
       stopTyping();
-      await sendMessage(inputText);
+      await sendMessage(inputText, replyTo?.id || null);
       setInputText("");
+      setReplyTo(null);
       // Keep focus on input to prevent keyboard closing on mobile
       requestAnimationFrame(() => {
         inputRef.current?.focus();
@@ -426,8 +439,23 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   const handleMessageReply = (messageId: string) => {
-    // TODO: Implement reply functionality
-    toast.info("Функция ответа в разработке");
+    const msg = messages.find((m) => m.id === messageId);
+    if (!msg) return;
+    const senderName = msg.sender_id === user?.id
+      ? profile?.display_name || "Вы"
+      : chatName;
+    setReplyTo({ id: messageId, content: msg.content, senderName });
+    // Focus input after selecting reply
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    const el = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedMessageId(messageId);
+      setTimeout(() => setHighlightedMessageId(null), 1500);
+    }
   };
 
   const handleMessageForward = (messageId: string) => {
@@ -617,8 +645,11 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             <div key={message.id} data-message-id={message.id}>
               {showDate && <DateSeparator date={message.created_at} />}
               <div
-                className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""}`}
-              >
+              className={`flex items-end gap-2 ${isOwn ? "justify-end" : "justify-start"} ${isInContextMenu ? "opacity-0" : ""} ${highlightedMessageId === message.id ? "animate-highlight-message" : ""}`}
+              style={highlightedMessageId === message.id ? { 
+                animation: 'highlight-flash 1.5s ease-out',
+              } : undefined}
+            >
               {/* Avatar for incoming messages */}
               {!isOwn && (
                 <div className="w-8 shrink-0">
@@ -748,6 +779,22 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   onTouchStart={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
                   onTouchEnd={handleMessageLongPressEnd}
                 >
+                  {/* Quoted reply block */}
+                  {message.reply_to_message_id && (() => {
+                    const repliedMsg = messages.find((m) => m.id === message.reply_to_message_id);
+                    if (!repliedMsg) return null;
+                    const repliedSender = repliedMsg.sender_id === user?.id
+                      ? profile?.display_name || "Вы"
+                      : chatName;
+                    return (
+                      <QuotedReply
+                        senderName={repliedSender}
+                        content={repliedMsg.content}
+                        onClick={() => scrollToMessage(repliedMsg.id)}
+                      />
+                    );
+                  })()}
+
                   {/* Forwarded indicator */}
                   {message.forwarded_from && (
                     <p className="text-[11px] text-[#6ab3f3] italic mb-0.5">
@@ -826,6 +873,18 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
       {/* Input area - Fully transparent like Telegram */}
       <div className="flex-shrink-0 relative z-10">
+
+        {/* Reply preview bar */}
+        <AnimatePresence>
+          {replyTo && (
+            <ReplyPreview
+              senderName={replyTo.senderName}
+              content={replyTo.content}
+              onClose={() => setReplyTo(null)}
+              onScrollTo={() => scrollToMessage(replyTo.id)}
+            />
+          )}
+        </AnimatePresence>
         
         {/* Input controls */}
         <div className="px-3 py-3">
