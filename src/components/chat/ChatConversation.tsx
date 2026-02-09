@@ -24,6 +24,9 @@ import { SharedReelCard } from "./SharedReelCard";
 import { EmojiStickerPicker } from "./EmojiStickerPicker";
 import { MessageContextMenu } from "./MessageContextMenu";
 import { MessageReactions } from "./MessageReactions";
+import { SelectionHeader } from "./SelectionHeader";
+import { SelectionCheckbox } from "./SelectionCheckbox";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatLastSeen } from "@/hooks/usePresence";
 import { useMessageReactions } from "@/hooks/useMessageReactions";
@@ -33,7 +36,7 @@ import { usePinnedMessage } from "@/hooks/usePinnedMessage";
 import { PinnedMessageBar } from "./PinnedMessageBar";
 import { ForwardSheet } from "./ForwardSheet";
 import { ReplyPreview, EditPreview, QuotedReply } from "./ReplyPreview";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -113,6 +116,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     id: string;
     content: string;
   } | null>(null);
+
+  // Selection mode state
+  const [selectedMessages, setSelectedMessages] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isSelectionMode = selectedMessages.length > 0;
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
@@ -528,8 +537,89 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     setInputText("");
   };
 
+  // Selection mode handlers
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedMessages((prev) =>
+      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
+    );
+  }, []);
+
+  const cancelSelection = useCallback(() => {
+    setSelectedMessages([]);
+  }, []);
+
+  const handleSelectFromContext = useCallback((messageId: string) => {
+    setSelectedMessages([messageId]);
+  }, []);
+
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedMessages.length === 0) return;
+    for (const msgId of selectedMessages) {
+      await deleteMessage(msgId);
+    }
+    setSelectedMessages([]);
+    setShowDeleteConfirm(false);
+  }, [selectedMessages, deleteMessage]);
+
+  const handleBatchForward = useCallback(() => {
+    const msgs = selectedMessages
+      .map((id) => messages.find((m) => m.id === id))
+      .filter(Boolean)
+      .map((msg) => ({
+        content: msg!.content,
+        senderName: msg!.forwarded_from
+          ? msg!.forwarded_from
+          : msg!.sender_id === user?.id
+            ? profile?.display_name || "Вы"
+            : chatName,
+      }));
+    if (msgs.length > 0) {
+      setForwardData({ content: msgs[0].content, senderName: msgs[0].senderName });
+    }
+  }, [selectedMessages, messages, user?.id, profile?.display_name, chatName]);
+
+  // Check if all selected messages are own (for delete permission)
+  const canDeleteSelected = useMemo(() => {
+    return selectedMessages.every((id) => {
+      const msg = messages.find((m) => m.id === id);
+      return msg && msg.sender_id === user?.id;
+    });
+  }, [selectedMessages, messages, user?.id]);
+
+  // Batch messages for forward sheet
+  const batchForwardMessages = useMemo(() => {
+    if (!isSelectionMode || !forwardData) return undefined;
+    return selectedMessages
+      .map((id) => messages.find((m) => m.id === id))
+      .filter(Boolean)
+      .map((msg) => ({
+        content: msg!.content,
+        senderName: msg!.forwarded_from
+          ? msg!.forwarded_from
+          : msg!.sender_id === user?.id
+            ? profile?.display_name || "Вы"
+            : chatName,
+      }));
+  }, [isSelectionMode, forwardData, selectedMessages, messages, user?.id, profile?.display_name, chatName]);
+
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-[200]">
+      {/* Header - Selection mode or standard */}
+      <AnimatePresence mode="wait">
+        {isSelectionMode ? (
+          <SelectionHeader
+            key="selection-header"
+            count={selectedMessages.length}
+            onCancel={cancelSelection}
+            onForward={handleBatchForward}
+            onDelete={() => setShowDeleteConfirm(true)}
+            canDelete={canDeleteSelected}
+          />
+        ) : (
+          <motion.div
+            key="standard-header"
+            initial={false}
+          >
       {/* Header - transparent with glass effect */}
       <div className="flex-shrink-0 safe-area-top relative z-10 backdrop-blur-xl bg-black/20 border-b border-white/10">
         <div className="flex items-center px-2 py-2">
@@ -607,6 +697,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           </button>
         )}
       </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Pinned message bar */}
       {pinnedMessage && (
@@ -739,8 +832,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             }
           };
 
+          const isSelected = selectedMessages.includes(message.id);
+
           return (
-            <div key={message.id} data-message-id={message.id} className={topMargin}>
+            <motion.div
+              key={message.id}
+              data-message-id={message.id}
+              className={topMargin}
+              animate={{ x: isSelectionMode ? 0 : 0 }}
+              onClick={isSelectionMode ? () => toggleSelection(message.id) : undefined}
+              style={isSelectionMode ? { cursor: "pointer" } : undefined}
+            >
               {showDate && <DateSeparator date={message.created_at} />}
               <div
               className={`flex items-end gap-1.5 ${isOwn ? "justify-end" : "justify-start"} ${highlightedMessageId === message.id ? "animate-highlight-message" : ""}`}
@@ -748,6 +850,19 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                 animation: 'highlight-flash 1.5s ease-out',
               } : undefined}
             >
+              {/* Selection checkbox */}
+              <AnimatePresence>
+                {isSelectionMode && (
+                  <SelectionCheckbox
+                    checked={isSelected}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelection(message.id);
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+
               {/* Avatar for incoming messages - only on last in group */}
               {!isOwn && (
                 <div className="w-7 shrink-0">
@@ -847,17 +962,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     isOwn
                       ? "bg-white/10 text-white"
                       : "bg-white/5 text-white"
-                  }`}
+                  } ${isSelected ? "ring-2 ring-[#3390ec]/50" : ""}`}
                   style={{
                     boxShadow: isOwn 
                       ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.2)'
                       : 'inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.15)'
                   }}
-                  onMouseDown={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
-                  onMouseUp={handleMessageLongPressEnd}
-                  onMouseLeave={handleMessageLongPressEnd}
-                  onTouchStart={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
-                  onTouchEnd={handleMessageLongPressEnd}
+                  onMouseDown={isSelectionMode ? undefined : (e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
+                  onMouseUp={isSelectionMode ? undefined : handleMessageLongPressEnd}
+                  onMouseLeave={isSelectionMode ? undefined : handleMessageLongPressEnd}
+                  onTouchStart={isSelectionMode ? undefined : (e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
+                  onTouchEnd={isSelectionMode ? undefined : handleMessageLongPressEnd}
                 >
                   {/* Quoted reply block */}
                   {message.reply_to_message_id && (() => {
@@ -946,7 +1061,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               )}
               </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
         </div>
@@ -1159,15 +1274,28 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           onReply={handleMessageReply}
           onForward={handleMessageForward}
           onEdit={handleMessageEdit}
+          onSelect={handleSelectFromContext}
         />
       )}
 
       {/* Forward Sheet */}
       <ForwardSheet
         open={!!forwardData}
-        onClose={() => setForwardData(null)}
+        onClose={() => {
+          setForwardData(null);
+          if (isSelectionMode) cancelSelection();
+        }}
         messageContent={forwardData?.content || ""}
         originalSenderName={forwardData?.senderName || ""}
+        batchMessages={batchForwardMessages}
+      />
+
+      {/* Delete Confirm Dialog */}
+      <DeleteConfirmDialog
+        open={showDeleteConfirm}
+        count={selectedMessages.length}
+        onConfirm={handleBatchDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
       />
 
     </div>

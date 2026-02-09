@@ -13,6 +13,8 @@ interface ForwardSheetProps {
   onClose: () => void;
   messageContent: string;
   originalSenderName: string;
+  /** For batch forwarding multiple messages */
+  batchMessages?: { content: string; senderName: string }[];
 }
 
 interface ChatItem {
@@ -28,6 +30,7 @@ export function ForwardSheet({
   onClose,
   messageContent,
   originalSenderName,
+  batchMessages,
 }: ForwardSheetProps) {
   const { user } = useAuth();
   const { conversations } = useConversations();
@@ -105,9 +108,19 @@ export function ForwardSheet({
         break;
     }
 
-    const success = await forwardMessage(messageContent, originalSenderName, target);
+    // Batch forward multiple messages
+    const msgs = batchMessages && batchMessages.length > 0
+      ? batchMessages
+      : [{ content: messageContent, senderName: originalSenderName }];
+    
+    let allSuccess = true;
+    for (const msg of msgs) {
+      const success = await forwardMessage(msg.content, msg.senderName, target);
+      if (!success) allSuccess = false;
+    }
+
     setSending(false);
-    if (success) onClose();
+    if (allSuccess) onClose();
   };
 
   const getTypeIcon = (type: "dm" | "group" | "channel") => {
@@ -173,10 +186,18 @@ export function ForwardSheet({
             {/* Message preview */}
             <div className="px-4 py-2">
               <div className="bg-white/5 rounded-xl px-3 py-2 border border-white/5">
-                <p className="text-[11px] text-[#6ab3f3] font-medium">
-                  Переслано от {originalSenderName}
-                </p>
-                <p className="text-xs text-white/60 truncate">{messageContent}</p>
+                {batchMessages && batchMessages.length > 1 ? (
+                  <p className="text-xs text-white/60">
+                    {batchMessages.length} {batchMessages.length < 5 ? "сообщения" : "сообщений"}
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-[11px] text-[#6ab3f3] font-medium">
+                      Переслано от {originalSenderName}
+                    </p>
+                    <p className="text-xs text-white/60 truncate">{messageContent}</p>
+                  </>
+                )}
               </div>
             </div>
 

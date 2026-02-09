@@ -17,6 +17,7 @@ interface MessageContextMenuProps {
   onReply?: (messageId: string) => void;
   onForward?: (messageId: string) => void;
   onEdit?: (messageId: string) => void;
+  onSelect?: (messageId: string) => void;
 }
 
 const QUICK_REACTIONS = ["❤️", "🔥", "👍", "😂", "😮", "🎉"];
@@ -47,6 +48,7 @@ export function MessageContextMenu({
   onReply,
   onForward,
   onEdit,
+  onSelect,
 }: MessageContextMenuProps) {
   const [menuPos, setMenuPos] = useState<{ top: number; left: number; openUp: boolean } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -234,7 +236,7 @@ export function MessageContextMenu({
               {isOwn && (
                 <MenuItem icon={Trash2} label="Удалить" onClick={() => handleAction(() => onDelete?.(messageId))} isDestructive />
               )}
-              <MenuItem icon={CheckSquare} label="Выбрать" onClick={() => handleAction(() => {})} isLast />
+              <MenuItem icon={CheckSquare} label="Выбрать" onClick={() => handleAction(() => onSelect?.(messageId))} isLast />
             </motion.div>
           </motion.div>
         </motion.div>
