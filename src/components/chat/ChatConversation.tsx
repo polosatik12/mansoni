@@ -25,6 +25,8 @@ import { MessageReactions } from "./MessageReactions";
 import { supabase } from "@/integrations/supabase/client";
 import { formatLastSeen } from "@/hooks/usePresence";
 import { useMessageReactions } from "@/hooks/useMessageReactions";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { useProfile } from "@/hooks/useProfile";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -42,11 +44,17 @@ interface ChatConversationProps {
 export function ChatConversation({ conversationId, chatName, chatAvatar, otherUserId, onBack, participantCount, isGroup, totalUnreadCount, onRefetch }: ChatConversationProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { messages, loading, sendMessage, sendMediaMessage, deleteMessage } = useMessages(conversationId);
   const { reactions, toggleReaction } = useMessageReactions(conversationId);
   const { markConversationRead } = useMarkConversationRead();
   const { startCall } = useVideoCallContext();
   const { setIsChatOpen } = useChatOpen();
+  const { sendTyping, stopTyping, typingUsers } = useTypingIndicator(
+    `typing:conv:${conversationId}`,
+    user?.id,
+    profile?.display_name || user?.email?.split("@")[0] || "User"
+  );
   
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -161,6 +169,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       return;
     }
     try {
+      stopTyping();
       await sendMessage(inputText);
       setInputText("");
       // Keep focus on input to prevent keyboard closing on mobile
@@ -445,10 +454,16 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
             />
             <div className="flex flex-col items-start min-w-0">
               <h2 className="font-semibold text-white text-base truncate max-w-[180px]">{chatName}</h2>
-              <p className={`text-xs ${lastSeenStatus === 'онлайн' ? 'text-emerald-400' : 'text-[#6ab3f3]'}`}>
-                {isGroup 
-                  ? `${participantCount || 0} участник${participantCount === 1 ? '' : participantCount && participantCount < 5 ? 'а' : 'ов'}`
-                  : lastSeenStatus
+              <p className={`text-xs ${
+                typingUsers.length > 0
+                  ? 'text-emerald-400 italic'
+                  : lastSeenStatus === 'онлайн' ? 'text-emerald-400' : 'text-[#6ab3f3]'
+              }`}>
+                {typingUsers.length > 0
+                  ? 'печатает...'
+                  : isGroup 
+                    ? `${participantCount || 0} участник${participantCount === 1 ? '' : participantCount && participantCount < 5 ? 'а' : 'ов'}`
+                    : lastSeenStatus
                 }
               </p>
             </div>
@@ -824,7 +839,10 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   type="text"
                   placeholder="Сообщение"
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
+                  onChange={(e) => {
+                    setInputText(e.target.value);
+                    sendTyping();
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   onFocus={() => setShowEmojiPicker(false)}
                   className="w-full h-11 px-5 pr-20 rounded-full text-white placeholder:text-white/50 outline-none bg-black/40 border-0 transition-all"
