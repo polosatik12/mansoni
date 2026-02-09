@@ -819,7 +819,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   />
                   <div className="px-3 py-1.5">
                     {/* Show caption if content is not the default placeholder */}
-                    {message.content && message.content !== '📷 Изображение' && (
+                    {message.content && !['📷 Изображение', '📷 Фото', '📎 Файл'].includes(message.content) && (
                       <p className="text-[15px] leading-[1.35] text-white whitespace-pre-wrap mb-1">{message.content}</p>
                     )}
                     <div className="flex items-center justify-end gap-1">
@@ -841,7 +841,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                     onFullscreen={() => setViewingVideo(message.media_url!)}
                   />
                   {/* Show caption if content is not the default placeholder */}
-                  {message.content && message.content !== '🎥 Видео' && (
+                  {message.content && !['🎥 Видео', '📷 Фото', '📎 Файл'].includes(message.content) && (
                     <p className="text-[15px] leading-[1.35] text-white whitespace-pre-wrap px-1">{message.content}</p>
                   )}
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
