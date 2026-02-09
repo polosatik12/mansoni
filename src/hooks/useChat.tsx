@@ -36,6 +36,7 @@ export interface ChatMessage {
   shared_reel_id?: string | null;
   forwarded_from?: string | null;
   reply_to_message_id?: string | null;
+  edited_at?: string | null;
 }
 
 export interface Conversation {
@@ -309,8 +310,23 @@ export function useMessages(conversationId: string | null) {
           (payload) => {
             const updated = payload.new as ChatMessage;
             setMessages((prev) =>
-              prev.map((m) => (m.id === updated.id ? { ...m, is_read: updated.is_read } : m))
+              prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m))
             );
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "DELETE",
+            schema: "public",
+            table: "messages",
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload) => {
+            const deletedId = (payload.old as any)?.id;
+            if (deletedId) {
+              setMessages((prev) => prev.filter((m) => m.id !== deletedId));
+            }
           }
         )
         .subscribe();
@@ -415,11 +431,11 @@ export function useMessages(conversationId: string | null) {
         .from("messages")
         .delete()
         .eq("id", messageId)
-        .eq("sender_id", user.id); // Only allow deleting own messages
+        .eq("sender_id", user.id);
 
       if (error) throw error;
 
-      // Remove from local state
+      // Remove from local state immediately
       setMessages((prev) => prev.filter((m) => m.id !== messageId));
 
       return { error: null };
@@ -429,7 +445,35 @@ export function useMessages(conversationId: string | null) {
     }
   };
 
-  return { messages, loading, sendMessage, sendMediaMessage, deleteMessage, refetch: fetchMessages };
+  const editMessage = async (messageId: string, newContent: string) => {
+    if (!user || !newContent.trim()) return { error: 'Invalid input' };
+
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .update({ content: newContent.trim(), edited_at: new Date().toISOString() })
+        .eq("id", messageId)
+        .eq("sender_id", user.id);
+
+      if (error) throw error;
+
+      // Update local state immediately
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, content: newContent.trim(), edited_at: new Date().toISOString() }
+            : m
+        )
+      );
+
+      return { error: null };
+    } catch (error) {
+      console.error("Error editing message:", error);
+      return { error: error instanceof Error ? error.message : 'Failed to edit message' };
+    }
+  };
+
+  return { messages, loading, sendMessage, sendMediaMessage, deleteMessage, editMessage, refetch: fetchMessages };
 }
 
 export function useCreateConversation() {
