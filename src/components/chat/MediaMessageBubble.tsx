@@ -107,19 +107,19 @@ export function MediaMessageBubble({
     );
   }
 
-  // --- Image/Video only (no caption) → no glass bubble, image sits directly on chat bg ---
+  // --- Image/Video only (no caption) → dark bg hugging the image, no glass bubble ---
   if (!hasCaption) {
     return (
       <div
-        className="relative w-fit cursor-pointer"
-        style={{ maxWidth: "85%" }}
+        className="relative w-fit h-fit overflow-hidden bg-black/80"
+        style={{ maxWidth: 280, borderRadius: 12 }}
         onClick={mediaType === "video" ? onVideoClick : onImageClick}
       >
         {mediaType === "video" ? (
           <video
             src={mediaUrl}
-            className={`w-auto h-auto max-w-full object-contain ${bubbleRadius}`}
-            style={{ maxHeight: 400 }}
+            className="block w-auto h-auto max-w-full object-contain cursor-pointer"
+            style={{ maxHeight: 400, maxWidth: 280 }}
             muted
             playsInline
             preload="metadata"
@@ -128,16 +128,21 @@ export function MediaMessageBubble({
           <img
             src={mediaUrl}
             alt=""
-            className={`w-auto h-auto max-w-full object-contain ${bubbleRadius}`}
-            style={{ maxHeight: 400 }}
+            className="block w-auto h-auto max-w-full object-contain cursor-pointer"
+            style={{ maxHeight: 400, maxWidth: 280 }}
             onLoad={() => setImgLoaded(true)}
             draggable={false}
           />
         )}
 
-        {/* Compact glass pill overlaid on the media — bottom right */}
-        <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 px-1.5 py-[3px] rounded-full bg-black/50 backdrop-blur-md text-white/90">
-          {timestampContent}
+        {/* Compact metadata pill inside the dark image area */}
+        <div
+          className="absolute bottom-1.5 right-1.5 flex items-center gap-1 px-1.5 py-[3px] rounded-full"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+        >
+          <span className="flex items-center gap-1" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
+            {timestampContent}
+          </span>
         </div>
       </div>
     );

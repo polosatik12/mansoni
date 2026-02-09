@@ -319,13 +319,16 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                           <span className="text-[#6ab3f3] font-medium text-sm">{channel.name}</span>
                         </div>
 
-                        {/* Image/video sits directly on the chat background */}
-                        <div className="relative w-fit" style={{ maxWidth: "85%" }}>
+                        {/* Image/video with dark bg hugging the content */}
+                        <div
+                          className="relative w-fit h-fit rounded-xl overflow-hidden bg-black/80"
+                          style={{ maxWidth: 280 }}
+                        >
                           {msg.media_type === "video" ? (
                             <video
                               src={msg.media_url!}
-                              className="w-auto h-auto max-w-full object-contain rounded-2xl"
-                              style={{ maxHeight: 400 }}
+                              className="block w-auto h-auto max-w-full object-contain"
+                              style={{ maxHeight: 400, maxWidth: 280 }}
                               muted
                               playsInline
                               preload="metadata"
@@ -334,17 +337,20 @@ export function ChannelConversation({ channel: initialChannel, onBack, onLeave }
                             <img
                               src={msg.media_url!}
                               alt=""
-                              className="w-auto h-auto max-w-full object-contain rounded-2xl"
-                              style={{ maxHeight: 400 }}
+                              className="block w-auto h-auto max-w-full object-contain"
+                              style={{ maxHeight: 400, maxWidth: 280 }}
                               draggable={false}
                             />
                           )}
 
-                          {/* Floating metadata pill on the image */}
-                          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-1.5 py-[3px] rounded-full bg-black/40 backdrop-blur-sm text-white/90">
-                            <Eye className="w-3 h-3" />
-                            <span className="text-[10px] leading-none">{formatViews(viewCount)}</span>
-                            <span className="text-[10px] leading-none">{formatTime(msg.created_at)}</span>
+                          {/* Metadata inside the dark image area */}
+                          <div
+                            className="absolute bottom-1.5 right-1.5 flex items-center gap-1 px-1.5 py-[3px] rounded-full"
+                            style={{ background: "rgba(0,0,0,0.45)" }}
+                          >
+                            <Eye className="w-3 h-3 text-white/90" />
+                            <span className="text-[10px] leading-none text-white/90" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>{formatViews(viewCount)}</span>
+                            <span className="text-[10px] leading-none text-white/90" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>{formatTime(msg.created_at)}</span>
                           </div>
                         </div>
 
