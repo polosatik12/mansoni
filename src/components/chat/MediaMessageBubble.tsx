@@ -67,28 +67,28 @@ export function MediaMessageBubble({
   const isSticker =
     mediaType === "image" && isPngUrl(mediaUrl) && !hasCaption;
 
-  // --- Timestamp / status pill (reused in both overlay and footer) ---
+  // --- Compact timestamp / status pill content ---
   const timestampContent = (
     <>
       {viewCount !== undefined && (
         <>
-          <Eye className="w-3.5 h-3.5" />
-          <span className="text-[11px]">{formatViews(viewCount)}</span>
+          <Eye className="w-3 h-3" />
+          <span className="text-[10px] leading-none">{formatViews(viewCount)}</span>
         </>
       )}
-      {isEdited && <span className="text-[10px] italic">ред.</span>}
-      <span className="text-[11px]">{time}</span>
+      {isEdited && <span className="text-[10px] leading-none italic">ред.</span>}
+      <span className="text-[10px] leading-none">{time}</span>
       {isOwn && viewCount === undefined && (
         isRead ? (
-          <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
+          <CheckCheck className="w-3 h-3 text-[#6ab3f3]" />
         ) : (
-          <Check className="w-3.5 h-3.5" />
+          <Check className="w-3 h-3" />
         )
       )}
     </>
   );
 
-  // --- Sticker mode: no bubble at all ---
+  // --- Sticker mode: no bubble, no rounding, no shadow ---
   if (isSticker) {
     return (
       <div className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}>
@@ -107,27 +107,19 @@ export function MediaMessageBubble({
     );
   }
 
-  // --- Standard media bubble ---
-  return (
-    <div
-      className={`${bubbleRadius} overflow-hidden max-w-[300px] cursor-pointer backdrop-blur-xl ${
-        isOwn
-          ? "bg-white/10 border border-white/10"
-          : "bg-white/5 border border-white/10"
-      }`}
-      style={{
-        boxShadow: isOwn
-          ? "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.2)"
-          : "inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.15)",
-      }}
-      onClick={mediaType === "video" ? onVideoClick : onImageClick}
-    >
-      {/* Media */}
-      <div className="relative">
+  // --- Image/Video only (no caption) → no glass bubble, image sits directly on chat bg ---
+  if (!hasCaption) {
+    return (
+      <div
+        className="relative w-fit cursor-pointer"
+        style={{ maxWidth: "85%" }}
+        onClick={mediaType === "video" ? onVideoClick : onImageClick}
+      >
         {mediaType === "video" ? (
           <video
             src={mediaUrl}
-            className="w-full h-auto object-contain"
+            className={`w-auto h-auto max-w-full object-contain ${bubbleRadius}`}
+            style={{ maxHeight: 400 }}
             muted
             playsInline
             preload="metadata"
@@ -136,31 +128,64 @@ export function MediaMessageBubble({
           <img
             src={mediaUrl}
             alt=""
-            className="w-full h-auto object-contain"
+            className={`w-auto h-auto max-w-full object-contain ${bubbleRadius}`}
+            style={{ maxHeight: 400 }}
             onLoad={() => setImgLoaded(true)}
             draggable={false}
           />
         )}
 
-        {/* Overlay timestamp pill (image-only, no caption) */}
-        {!hasCaption && (
-          <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white/80">
-            {timestampContent}
-          </div>
-        )}
-      </div>
-
-      {/* Caption + footer (only when caption exists) */}
-      {hasCaption && (
-        <div className="px-3 py-1.5">
-          <p className="text-[15px] leading-[1.35] text-white whitespace-pre-wrap">
-            {content}
-          </p>
-          <div className="flex items-center justify-end gap-1 mt-0.5 text-white/40">
-            {timestampContent}
-          </div>
+        {/* Compact glass pill overlaid on the media — bottom right */}
+        <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 px-1.5 py-[3px] rounded-full bg-black/50 backdrop-blur-md text-white/90">
+          {timestampContent}
         </div>
+      </div>
+    );
+  }
+
+  // --- Image/Video + Caption → glass bubble wraps both; image flush top/sides ---
+  return (
+    <div
+      className={`${bubbleRadius} overflow-hidden cursor-pointer backdrop-blur-xl border border-white/10 ${
+        isOwn ? "bg-white/10" : "bg-white/5"
+      }`}
+      style={{
+        maxWidth: "85%",
+        width: "fit-content",
+        boxShadow: isOwn
+          ? "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.2)"
+          : "inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.15)",
+      }}
+      onClick={mediaType === "video" ? onVideoClick : onImageClick}
+    >
+      {/* Media — flush with top and sides (zero padding) */}
+      {mediaType === "video" ? (
+        <video
+          src={mediaUrl}
+          className="w-full h-auto object-contain"
+          muted
+          playsInline
+          preload="metadata"
+        />
+      ) : (
+        <img
+          src={mediaUrl}
+          alt=""
+          className="w-full h-auto object-contain"
+          onLoad={() => setImgLoaded(true)}
+          draggable={false}
+        />
       )}
+
+      {/* Caption + timestamp below the image with standard padding */}
+      <div className="px-3 py-1.5">
+        <p className="text-[15px] leading-[1.35] text-white whitespace-pre-wrap">
+          {content}
+        </p>
+        <div className="flex items-center justify-end gap-1 mt-0.5 text-white/40">
+          {timestampContent}
+        </div>
+      </div>
     </div>
   );
 }
