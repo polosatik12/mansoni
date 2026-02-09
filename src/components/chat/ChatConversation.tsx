@@ -29,6 +29,7 @@ import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { useProfile } from "@/hooks/useProfile";
 import { usePinnedMessage } from "@/hooks/usePinnedMessage";
 import { PinnedMessageBar } from "./PinnedMessageBar";
+import { ForwardSheet } from "./ForwardSheet";
 
 interface ChatConversationProps {
   conversationId: string;
@@ -79,6 +80,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     position: { top: number; left: number; width: number };
   } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Forward sheet state
+  const [forwardData, setForwardData] = useState<{
+    content: string;
+    senderName: string;
+  } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -424,8 +431,15 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   };
 
   const handleMessageForward = (messageId: string) => {
-    // TODO: Implement forward functionality
-    toast.info("Функция пересылки в разработке");
+    const msg = messages.find((m) => m.id === messageId);
+    if (!msg) return;
+    // Determine original sender name
+    const senderName = msg.forwarded_from
+      ? msg.forwarded_from
+      : msg.sender_id === user?.id
+        ? profile?.display_name || "Вы"
+        : chatName;
+    setForwardData({ content: msg.content, senderName });
   };
 
   return (
@@ -734,6 +748,13 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   onTouchStart={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
                   onTouchEnd={handleMessageLongPressEnd}
                 >
+                  {/* Forwarded indicator */}
+                  {message.forwarded_from && (
+                    <p className="text-[11px] text-[#6ab3f3] italic mb-0.5">
+                      Переслано от {message.forwarded_from}
+                    </p>
+                  )}
+
                   {/* Sender name for group chats */}
                   {showSenderName && (
                     <p className="text-[13px] font-medium text-[#6ab3f3] mb-0.5">Эдгар</p>
@@ -980,6 +1001,14 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           onForward={handleMessageForward}
         />
       )}
+
+      {/* Forward Sheet */}
+      <ForwardSheet
+        open={!!forwardData}
+        onClose={() => setForwardData(null)}
+        messageContent={forwardData?.content || ""}
+        originalSenderName={forwardData?.senderName || ""}
+      />
 
     </div>
   );

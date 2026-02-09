@@ -181,6 +181,7 @@ export type Database = {
           channel_id: string
           content: string
           created_at: string
+          forwarded_from: string | null
           id: string
           media_type: string | null
           media_url: string | null
@@ -192,6 +193,7 @@ export type Database = {
           channel_id: string
           content: string
           created_at?: string
+          forwarded_from?: string | null
           id?: string
           media_type?: string | null
           media_url?: string | null
@@ -203,6 +205,7 @@ export type Database = {
           channel_id?: string
           content?: string
           created_at?: string
+          forwarded_from?: string | null
           id?: string
           media_type?: string | null
           media_url?: string | null
@@ -473,6 +476,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
+          forwarded_from: string | null
           group_id: string
           id: string
           media_type: string | null
@@ -484,6 +488,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string | null
+          forwarded_from?: string | null
           group_id: string
           id?: string
           media_type?: string | null
@@ -495,6 +500,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string | null
+          forwarded_from?: string | null
           group_id?: string
           id?: string
           media_type?: string | null
@@ -1111,6 +1117,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           duration_seconds: number | null
+          forwarded_from: string | null
           id: string
           is_read: boolean | null
           media_type: string | null
@@ -1124,6 +1131,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           duration_seconds?: number | null
+          forwarded_from?: string | null
           id?: string
           is_read?: boolean | null
           media_type?: string | null
@@ -1137,6 +1145,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           duration_seconds?: number | null
+          forwarded_from?: string | null
           id?: string
           is_read?: boolean | null
           media_type?: string | null

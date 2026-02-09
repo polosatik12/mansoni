@@ -34,6 +34,7 @@ export interface ChatMessage {
   duration_seconds?: number | null;
   shared_post_id?: string | null;
   shared_reel_id?: string | null;
+  forwarded_from?: string | null;
 }
 
 export interface Conversation {
