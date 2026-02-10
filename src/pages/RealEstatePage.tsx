@@ -43,6 +43,7 @@ export function RealEstatePage() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [visibleCount, setVisibleCount] = useState(6);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Filter states from RealEstateFilters
   const [filters, setFilters] = useState({
@@ -98,6 +99,18 @@ export function RealEstatePage() {
   // Apply filters
   useEffect(() => {
     let result = [...properties];
+
+    // Search by text query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        (p.address && p.address.toLowerCase().includes(q)) ||
+        (p.district && p.district.toLowerCase().includes(q)) ||
+        (p.metro_station && p.metro_station.toLowerCase().includes(q)) ||
+        p.city.toLowerCase().includes(q)
+      );
+    }
 
     // Filter by deal type
     if (filters.dealType) {
@@ -172,7 +185,7 @@ export function RealEstatePage() {
     }
 
     setFilteredProperties(result);
-  }, [properties, filters, selectedCity, selectedRooms, filterOptions]);
+  }, [properties, filters, selectedCity, selectedRooms, filterOptions, searchQuery]);
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -243,6 +256,8 @@ export function RealEstatePage() {
       <RealEstateFilters 
         onShowResults={handleShowMore}
         resultsCount={filteredProperties.length}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         onFiltersChange={setFilters}
       />
 
