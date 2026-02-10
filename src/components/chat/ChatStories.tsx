@@ -37,8 +37,12 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
     
     // In row mode, handle story interaction
     if (user.isOwn) {
-      // Own avatar always opens file picker to add new story
-      fileInputRef.current?.click();
+      if (user.stories.length > 0) {
+        setSelectedUserIndex(index);
+        setViewerOpen(true);
+      } else {
+        fileInputRef.current?.click();
+      }
     } else if (user.stories.length > 0) {
       setSelectedUserIndex(index);
       setViewerOpen(true);
@@ -199,7 +203,7 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
           if (!styles) return null;
           
           const hasStories = user.stories.length > 0;
-          const showPlusIcon = user.isOwn && !hasStories && expandProgress > 0.5;
+          const showPlusIcon = user.isOwn && expandProgress > 0.5;
 
           return (
             <button
@@ -253,7 +257,11 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
                 {/* Plus icon for own story with existing stories */}
                 {showPlusIcon && hasStories && (
                   <div 
-                    className="story-avatar absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center"
+                    className="story-avatar absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center cursor-pointer z-20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
                   >
                     <Plus className="w-3 h-3 text-primary-foreground" />
                   </div>

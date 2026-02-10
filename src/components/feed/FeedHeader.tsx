@@ -41,8 +41,14 @@ export function FeedHeader() {
         behavior: 'smooth'
       });
     } else if (user.isOwn) {
-      // Own avatar always opens editor to add new story
-      setStoryEditorOpen(true);
+      if (user.stories.length > 0) {
+        // Has stories — open viewer
+        setSelectedStoryIndex(index);
+        setStoryViewerOpen(true);
+      } else {
+        // No stories — open editor
+        setStoryEditorOpen(true);
+      }
     } else if (user.stories.length > 0) {
       setSelectedStoryIndex(index);
       setStoryViewerOpen(true);
@@ -174,9 +180,13 @@ export function FeedHeader() {
               {/* Plus icon - use CSS class for transition */}
               {showPlusIcon && (
                 <div 
-                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center story-avatar"
+                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center story-avatar cursor-pointer z-20"
                   style={{ 
                     opacity: collapseProgress < 0.5 ? 1 : 0,
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setStoryEditorOpen(true);
                   }}
                 >
                   <Plus className="w-3 h-3 text-primary-foreground" />
