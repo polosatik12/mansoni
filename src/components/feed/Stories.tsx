@@ -53,8 +53,12 @@ export function Stories({ onOpenStory }: StoriesProps) {
 
   const handleStoryClick = (index: number, user: UserWithStories) => {
     if (user.isOwn) {
-      // Own avatar: always open editor to create new story
-      setStoryEditorOpen(true);
+      if (user.stories.length > 0) {
+        setSelectedUserIndex(index);
+        setViewerOpen(true);
+      } else {
+        setStoryEditorOpen(true);
+      }
       return;
     }
     if (user.stories.length > 0) {
@@ -144,7 +148,13 @@ export function Stories({ onOpenStory }: StoriesProps) {
                       </div>
                     )}
                     {user.isOwn && (
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-card z-20 pointer-events-none">
+                      <div 
+                        className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-card z-20 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStoryEditorOpen(true);
+                        }}
+                      >
                         <Plus className="text-primary-foreground w-3.5 h-3.5" />
                       </div>
                     )}
