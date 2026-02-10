@@ -217,24 +217,37 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
     setSendingReply(true);
     setIsPaused(true);
     try {
-      // Get or create DM conversation
       const { data: convData, error: convError } = await supabase
         .rpc('get_or_create_dm', { target_user_id: currentUser.user_id });
 
-      if (convError) throw convError;
+      if (convError) {
+        console.error("[StoryReply] RPC error:", convError);
+        throw convError;
+      }
 
       const conversationId = convData;
-
       const activeStory = currentUserStories[currentStoryInUser];
 
-      const { error: msgError } = await supabase.from("messages").insert({
+      const insertPayload = {
         conversation_id: conversationId,
         sender_id: user.id,
         content: replyText.trim(),
         shared_story_id: activeStory?.id || null,
-      } as any);
+      };
 
-      if (msgError) throw msgError;
+      console.log("[StoryReply] Inserting:", JSON.stringify(insertPayload));
+
+      const { data: insertedData, error: msgError } = await supabase
+        .from("messages")
+        .insert(insertPayload as any)
+        .select() as any;
+
+      if (msgError) {
+        console.error("[StoryReply] Insert error:", msgError);
+        throw msgError;
+      }
+
+      console.log("[StoryReply] Inserted:", insertedData);
 
       await supabase
         .from("conversations")
@@ -242,10 +255,10 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
         .eq("id", conversationId);
 
       setReplyText("");
-      toast.success("Сообщение отправлено");
-    } catch (err) {
-      console.error("Error sending story reply:", err);
-      toast.error("Не удалось отправить сообщение");
+      toast.success(`Отправлено в чат с ${currentUser.display_name}`);
+    } catch (err: any) {
+      console.error("[StoryReply] Error:", err);
+      toast.error(`Ошибка: ${err?.message || 'Неизвестная ошибка'}`);
     } finally {
       setSendingReply(false);
       setIsPaused(false);
