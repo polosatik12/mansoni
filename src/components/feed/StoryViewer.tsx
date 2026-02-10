@@ -226,13 +226,13 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
       const conversationId = convData;
 
       const activeStory = currentUserStories[currentStoryInUser];
-      const storyCaption = activeStory?.caption ? `: "${activeStory.caption}"` : '';
-      const messageContent = `💬 Ответ на историю${storyCaption}\n\n${replyText.trim()}`;
 
       const { error: msgError } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content: messageContent,
+        content: replyText.trim(),
+        media_url: activeStory?.media_url || null,
+        media_type: activeStory?.media_type === 'video' ? 'video' : 'image',
       } as any);
 
       if (msgError) throw msgError;
