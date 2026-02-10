@@ -1,4 +1,5 @@
 import { Settings, Grid3X3, Bookmark, Play, Plus, AtSign, Share2, Eye, User, Loader2, Edit3, QrCode } from "lucide-react";
+import { ProfileReelsGrid } from "@/components/profile/ProfileReelsGrid";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -320,13 +321,7 @@ export function ProfilePage() {
           )}
 
           {activeTab === "reels" && (
-            <div className="py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
-                <Play className="w-8 h-8 text-white/60" />
-              </div>
-              <h3 className="font-semibold text-white mb-1">Reels</h3>
-              <p className="text-sm text-white/60">Ваши видео Reels</p>
-            </div>
+            <ProfileReelsGrid userId={user.id} />
           )}
 
           {activeTab === "tagged" && (
