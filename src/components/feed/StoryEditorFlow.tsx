@@ -38,6 +38,29 @@ interface TextOverlay {
   fontSize: number;
 }
 
+interface StickerOverlay {
+  id: string;
+  emoji: string;
+  x: number;
+  y: number;
+  size: number;
+}
+
+const STICKER_CATEGORIES = [
+  {
+    label: "Популярные",
+    stickers: ["❤️", "🔥", "😂", "😍", "🥺", "✨", "💀", "🤩", "🥳", "😎", "🤯", "💯", "👀", "🙌", "💪", "🎉", "🌟", "💕", "😈", "🦋"],
+  },
+  {
+    label: "Эмоции",
+    stickers: ["😊", "😭", "🤣", "😡", "🥰", "😱", "🤗", "😴", "🤔", "😏", "🙄", "😤", "🥲", "😇", "🤤", "😵‍💫", "🫠", "🫣", "🫡", "🤭"],
+  },
+  {
+    label: "Жесты",
+    stickers: ["👍", "👎", "✌️", "🤞", "🤟", "🤘", "👌", "🤙", "👋", "✋", "🖐️", "🫶", "❤️‍🔥", "💋", "👑", "🎯", "⚡", "🌈", "🍀", "🧿"],
+  },
+];
+
 interface DrawPoint {
   x: number;
   y: number;
@@ -84,6 +107,10 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
   const [isAddingText, setIsAddingText] = useState(false);
   const [newText, setNewText] = useState("");
   const textInputRef = useRef<HTMLInputElement>(null);
+
+  // Sticker state
+  const [stickerOverlays, setStickerOverlays] = useState<StickerOverlay[]>([]);
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
 
   // Hide bottom nav
   useEffect(() => {
@@ -280,6 +307,20 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     setIsAddingText(false);
   };
 
+  // --- Sticker selection ---
+  const addSticker = (emoji: string) => {
+    setStickerOverlays(prev => [
+      ...prev,
+      {
+        id: `sticker-${Date.now()}`,
+        emoji,
+        x: 30 + Math.random() * 40,
+        y: 30 + Math.random() * 40,
+        size: 48,
+      },
+    ]);
+  };
+
   // --- Composite and publish ---
   const compositeImage = async (): Promise<Blob | null> => {
     if (!selectedImage) return null;
@@ -330,6 +371,16 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
           ctx.shadowBlur = 0;
         });
 
+        // Draw sticker overlays
+        stickerOverlays.forEach(s => {
+          const scale = img.width / (canvasRef.current?.width || img.width);
+          const fontSize = s.size * scale;
+          ctx.font = `${fontSize}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(s.emoji, (s.x / 100) * img.width, (s.y / 100) * img.height);
+        });
+
         canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
       };
       img.onerror = () => resolve(null);
@@ -346,8 +397,8 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     try {
       let mediaToUpload: Blob | null = editedBlob;
 
-      // If we have drawings or text, composite them
-      if (!mediaToUpload && (drawLines.length > 0 || textOverlays.length > 0)) {
+      // If we have drawings, text, or stickers, composite them
+      if (!mediaToUpload && (drawLines.length > 0 || textOverlays.length > 0 || stickerOverlays.length > 0)) {
         mediaToUpload = await compositeImage();
       }
 
@@ -410,6 +461,8 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     setTextOverlays([]);
     setActiveTool(null);
     setIsAddingText(false);
+    setStickerOverlays([]);
+    setShowStickerPicker(false);
     stopCamera();
     deviceImages.forEach(img => URL.revokeObjectURL(img.src));
     setDeviceImages([]);
@@ -650,6 +703,73 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               </div>
             ))}
 
+            {/* Sticker overlays - draggable */}
+            {stickerOverlays.map((s) => (
+              <div
+                key={s.id}
+                className="absolute select-none cursor-move z-15"
+                style={{
+                  left: `${s.x}%`,
+                  top: `${s.y}%`,
+                  transform: "translate(-50%, -50%)",
+                  fontSize: `${s.size}px`,
+                  lineHeight: 1,
+                  touchAction: "none",
+                  pointerEvents: activeTool === "draw" ? "none" : "auto",
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  const touch = e.touches[0];
+                  const startX = touch.clientX;
+                  const startY = touch.clientY;
+                  const startPctX = s.x;
+                  const startPctY = s.y;
+                  const container = e.currentTarget.parentElement;
+                  if (!container) return;
+                  const rect = container.getBoundingClientRect();
+                  const onMove = (ev: TouchEvent) => {
+                    ev.preventDefault();
+                    const dx = ev.touches[0].clientX - startX;
+                    const dy = ev.touches[0].clientY - startY;
+                    const newX = Math.max(5, Math.min(95, startPctX + (dx / rect.width) * 100));
+                    const newY = Math.max(5, Math.min(95, startPctY + (dy / rect.height) * 100));
+                    setStickerOverlays(prev => prev.map(o => o.id === s.id ? { ...o, x: newX, y: newY } : o));
+                  };
+                  const onEnd = () => {
+                    document.removeEventListener("touchmove", onMove);
+                    document.removeEventListener("touchend", onEnd);
+                  };
+                  document.addEventListener("touchmove", onMove, { passive: false });
+                  document.addEventListener("touchend", onEnd);
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const startPctX = s.x;
+                  const startPctY = s.y;
+                  const container = e.currentTarget.parentElement;
+                  if (!container) return;
+                  const rect = container.getBoundingClientRect();
+                  const onMove = (ev: MouseEvent) => {
+                    const dx = ev.clientX - startX;
+                    const dy = ev.clientY - startY;
+                    const newX = Math.max(5, Math.min(95, startPctX + (dx / rect.width) * 100));
+                    const newY = Math.max(5, Math.min(95, startPctY + (dy / rect.height) * 100));
+                    setStickerOverlays(prev => prev.map(o => o.id === s.id ? { ...o, x: newX, y: newY } : o));
+                  };
+                  const onEnd = () => {
+                    document.removeEventListener("mousemove", onMove);
+                    document.removeEventListener("mouseup", onEnd);
+                  };
+                  document.addEventListener("mousemove", onMove);
+                  document.addEventListener("mouseup", onEnd);
+                }}
+              >
+                {s.emoji}
+              </div>
+            ))}
+
             {/* Text input overlay */}
             {isAddingText && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20" onClick={() => addTextOverlay()}>
@@ -676,7 +796,9 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                   setSelectedImage(null);
                   setDrawLines([]);
                   setTextOverlays([]);
+                  setStickerOverlays([]);
                   setActiveTool(null);
+                  setShowStickerPicker(false);
                 }}
                 className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center"
               >
@@ -724,8 +846,13 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               >
                 <Type className="w-5 h-5" strokeWidth={1.5} />
               </button>
-              <button className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-                <Smile className="w-5 h-5 text-white" strokeWidth={1.5} />
+              <button
+                onClick={() => setShowStickerPicker(!showStickerPicker)}
+                className={`w-11 h-11 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors ${
+                  showStickerPicker ? "bg-white text-black" : "bg-black/30 text-white"
+                }`}
+              >
+                <Smile className="w-5 h-5" strokeWidth={1.5} />
               </button>
               <button className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
                 <Music className="w-5 h-5 text-white" strokeWidth={1.5} />
@@ -753,6 +880,42 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               </div>
             )}
 
+            {/* Sticker picker panel */}
+            {showStickerPicker && (
+              <div className="absolute bottom-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-xl rounded-t-2xl border-t border-white/10 max-h-[45%] flex flex-col">
+                {/* Drag handle */}
+                <div className="flex justify-center py-2">
+                  <div className="w-10 h-1 rounded-full bg-white/30" />
+                </div>
+                {/* Close */}
+                <div className="flex items-center justify-between px-4 pb-2">
+                  <span className="text-white font-medium text-sm">Стикеры</span>
+                  <button onClick={() => setShowStickerPicker(false)} className="text-white/60 text-sm">
+                    Готово
+                  </button>
+                </div>
+                {/* Sticker categories */}
+                <div className="flex-1 overflow-y-auto px-2 pb-safe">
+                  {STICKER_CATEGORIES.map((cat) => (
+                    <div key={cat.label} className="mb-3">
+                      <p className="text-white/40 text-xs font-medium px-2 mb-1.5">{cat.label}</p>
+                      <div className="grid grid-cols-8 gap-1">
+                        {cat.stickers.map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => addSticker(emoji)}
+                            className="aspect-square flex items-center justify-center text-2xl rounded-lg active:bg-white/10 transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Edited badge */}
             {editedBlob && (
               <div className="absolute top-4 right-16 px-3 py-1 bg-primary/90 rounded-full text-xs text-primary-foreground font-medium pt-safe z-10">
@@ -762,7 +925,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
           </div>
 
           {/* Bottom publish actions */}
-          {!isAddingText && (
+          {!isAddingText && !showStickerPicker && (
             <div className="absolute bottom-0 left-0 right-0 px-4 py-6 bg-gradient-to-t from-black/60 to-transparent pb-safe z-10">
               {/* Caption input */}
               <input
