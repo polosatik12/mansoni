@@ -348,54 +348,73 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = async () => {
+        // Use the display container dimensions for the composite to match what the user sees
+        const containerWidth = canvasRef.current?.width || 1080;
+        const containerHeight = canvasRef.current?.height || 1920;
+        
+        // Create canvas matching the 9:16 story aspect ratio at high resolution
+        const outputScale = Math.max(1, img.width / containerWidth, img.height / containerHeight);
         const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = Math.round(containerWidth * outputScale);
+        canvas.height = Math.round(containerHeight * outputScale);
         const ctx = canvas.getContext("2d");
         if (!ctx) { resolve(null); return; }
 
-        // Draw base image
-        ctx.drawImage(img, 0, 0);
+        // Draw base image with object-cover behavior to match viewer display
+        const imgAspect = img.width / img.height;
+        const canvasAspect = canvas.width / canvas.height;
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        if (imgAspect > canvasAspect) {
+          // Image is wider — crop sides
+          sw = img.height * canvasAspect;
+          sx = (img.width - sw) / 2;
+        } else {
+          // Image is taller — crop top/bottom
+          sh = img.width / canvasAspect;
+          sy = (img.height - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+        // Scale factor from display container to output canvas
+        const scaleX = canvas.width / containerWidth;
+        const scaleY = canvas.height / containerHeight;
 
         // Draw lines
         drawLines.forEach(line => {
           if (!line || !line.points || line.points.length < 2) return;
           ctx.beginPath();
           ctx.strokeStyle = line.color;
-          ctx.lineWidth = line.width * (img.width / (canvasRef.current?.width || img.width));
+          ctx.lineWidth = line.width * scaleX;
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
           ctx.moveTo(
-            (line.points[0].x / (canvasRef.current?.width || img.width)) * img.width,
-            (line.points[0].y / (canvasRef.current?.height || img.height)) * img.height
+            (line.points[0].x / containerWidth) * canvas.width,
+            (line.points[0].y / containerHeight) * canvas.height
           );
           for (let i = 1; i < line.points.length; i++) {
             ctx.lineTo(
-              (line.points[i].x / (canvasRef.current?.width || img.width)) * img.width,
-              (line.points[i].y / (canvasRef.current?.height || img.height)) * img.height
+              (line.points[i].x / containerWidth) * canvas.width,
+              (line.points[i].y / containerHeight) * canvas.height
             );
           }
           ctx.stroke();
         });
 
-        // Draw text overlays
+        // Draw text overlays (x/y are percentages 0-100)
         textOverlays.forEach(t => {
-          const scale = img.width / (canvasRef.current?.width || img.width);
-          ctx.font = `bold ${t.fontSize * scale}px sans-serif`;
+          ctx.font = `bold ${t.fontSize * scaleX}px sans-serif`;
           ctx.fillStyle = t.color;
           ctx.textAlign = "center";
           ctx.shadowColor = "rgba(0,0,0,0.5)";
-          ctx.shadowBlur = 4 * scale;
-          ctx.fillText(t.text, (t.x / 100) * img.width, (t.y / 100) * img.height);
+          ctx.shadowBlur = 4 * scaleX;
+          ctx.fillText(t.text, (t.x / 100) * canvas.width, (t.y / 100) * canvas.height);
           ctx.shadowBlur = 0;
         });
 
-        // Draw sticker overlays by rendering emoji to an offscreen canvas first
+        // Draw sticker overlays (x/y are percentages 0-100)
         for (const s of stickerOverlays) {
-          const scale = img.width / (canvasRef.current?.width || img.width);
-          const stickerSize = Math.round(s.size * scale);
+          const stickerSize = Math.round(s.size * scaleX);
           
-          // Render emoji to offscreen canvas to get a clean image
           const offscreen = document.createElement("canvas");
           offscreen.width = stickerSize;
           offscreen.height = stickerSize;
@@ -406,11 +425,10 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
             offCtx.textBaseline = "middle";
             offCtx.fillText(s.emoji, stickerSize / 2, stickerSize / 2);
             
-            // Draw the offscreen canvas onto the main canvas
             ctx.drawImage(
               offscreen,
-              (s.x / 100) * img.width - stickerSize / 2,
-              (s.y / 100) * img.height - stickerSize / 2,
+              (s.x / 100) * canvas.width - stickerSize / 2,
+              (s.y / 100) * canvas.height - stickerSize / 2,
               stickerSize,
               stickerSize
             );
