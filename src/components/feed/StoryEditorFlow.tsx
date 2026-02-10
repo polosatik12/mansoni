@@ -352,11 +352,12 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
         const containerWidth = canvasRef.current?.width || 1080;
         const containerHeight = canvasRef.current?.height || 1920;
         
-        // Create canvas matching the 9:16 story aspect ratio at high resolution
-        const outputScale = Math.max(1, img.width / containerWidth, img.height / containerHeight);
+        // Create canvas matching the 16:9 story aspect ratio at high resolution
+        const targetWidth = 1920;
+        const targetHeight = 1080;
         const canvas = document.createElement("canvas");
-        canvas.width = Math.round(containerWidth * outputScale);
-        canvas.height = Math.round(containerHeight * outputScale);
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         const ctx = canvas.getContext("2d");
         if (!ctx) { resolve(null); return; }
 
