@@ -352,9 +352,9 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
         const containerWidth = canvasRef.current?.width || 1080;
         const containerHeight = canvasRef.current?.height || 1920;
         
-        // Create canvas matching the 16:9 story aspect ratio at high resolution
-        const targetWidth = 1920;
-        const targetHeight = 1080;
+        // Create canvas matching Instagram 9:16 story aspect ratio (1080x1920)
+        const targetWidth = 1080;
+        const targetHeight = 1920;
         const canvas = document.createElement("canvas");
         canvas.width = targetWidth;
         canvas.height = targetHeight;
