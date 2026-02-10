@@ -16,7 +16,7 @@ const filters: { id: ContentFilter; label: string }[] = [
 
 export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
   return (
-    <div className="flex items-center gap-4 px-4 py-2 overflow-x-auto scrollbar-hide bg-white/50 dark:bg-transparent backdrop-blur-md">
+    <div className="flex items-center gap-4 px-4 py-2 overflow-x-auto scrollbar-hide bg-black/10 backdrop-blur-md">
       {filters.map((f) => (
         <button
           key={f.id}
@@ -24,8 +24,8 @@ export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
           className={cn(
             "relative py-1 text-sm font-medium whitespace-nowrap transition-all duration-200",
             filter === f.id
-              ? "text-foreground/70"
-              : "text-foreground/40 hover:text-foreground/55"
+              ? "text-white/80"
+              : "text-white/40 hover:text-white/60"
           )}
         >
           {f.label}
@@ -35,7 +35,7 @@ export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
       {filter !== 'all' && (
         <button
           onClick={() => onFilterChange('all')}
-          className="p-1.5 rounded-full text-foreground/30 hover:text-foreground/50 transition-colors ml-auto"
+          className="p-1.5 rounded-full text-white/30 hover:text-white/50 transition-colors ml-auto"
           aria-label="Сбросить фильтр"
         >
           <X className="w-4 h-4" />

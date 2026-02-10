@@ -83,7 +83,7 @@ export function FeedHeader() {
 
   return (
     <div 
-      className="sticky top-0 z-30 bg-white/50 dark:bg-card backdrop-blur-md overflow-hidden will-change-auto"
+      className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl overflow-hidden will-change-auto border-b border-white/10"
       style={{ height: `${containerHeight}px` }}
     >
       {/* Header row with menu */}
@@ -178,7 +178,7 @@ export function FeedHeader() {
 
             {/* Name - CSS handles transition */}
             <span
-              className="story-name text-xs text-foreground font-medium max-w-16 truncate overflow-hidden"
+              className="story-name text-xs text-white font-medium max-w-16 truncate overflow-hidden"
               style={{
                 opacity: styles.nameOpacity,
                 height: styles.nameOpacity > 0.1 ? '20px' : '0px',

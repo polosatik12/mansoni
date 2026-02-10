@@ -5,6 +5,7 @@ import { PostCard } from "@/components/feed/PostCard";
 import { PullToRefresh } from "@/components/feed/PullToRefresh";
 import { FeedSkeleton } from "@/components/feed/FeedSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BrandBackground } from "@/components/ui/brand-background";
 import { usePosts } from "@/hooks/usePosts";
 import { usePresence } from "@/hooks/usePresence";
 import { toast } from "sonner";
@@ -47,7 +48,8 @@ export function HomePage() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen">
+      <BrandBackground />
+      <div className="min-h-screen relative z-10">
         <FeedHeader />
         
         <FeedFilters 
@@ -59,14 +61,14 @@ export function HomePage() {
           <FeedSkeleton count={4} />
         ) : filteredPosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-            <p className="text-muted-foreground text-lg">
+            <p className="text-white/60 text-lg">
               {contentFilter === 'all' 
                 ? "Пока нет публикаций" 
                 : contentFilter === 'media' 
                   ? "Нет публикаций с медиа"
                   : "Нет текстовых публикаций"}
             </p>
-            <p className="text-muted-foreground/70 text-sm mt-1">
+            <p className="text-white/30 text-sm mt-1">
               {contentFilter === 'all' 
                 ? "Создайте первую запись или подпишитесь на авторов"
                 : "Попробуйте другой фильтр"}
