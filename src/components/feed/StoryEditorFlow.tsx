@@ -429,8 +429,8 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     try {
       let mediaToUpload: Blob | null = editedBlob;
 
-      // If we have drawings, text, or stickers, composite them
-      if (!mediaToUpload && (drawLines.length > 0 || textOverlays.length > 0 || stickerOverlays.length > 0)) {
+      // Always composite if we have drawings, text, or stickers
+      if (drawLines.length > 0 || textOverlays.length > 0 || stickerOverlays.length > 0) {
         mediaToUpload = await compositeImage();
       }
 
