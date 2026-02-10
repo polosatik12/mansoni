@@ -42,7 +42,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </ScrollContainerProvider>
-      <BottomNav hidden={shouldHideBottomNav || isReelsPage} />
+      <BottomNav hidden={shouldHideBottomNav} />
       {/* Call UI is now handled globally by GlobalCallOverlay in App.tsx */}
     </div>
   );
