@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { ChevronLeft, Search, MapPin, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, Search, MapPin, ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -14,6 +15,8 @@ import {
 interface RealEstateFiltersProps {
   onShowResults: () => void;
   resultsCount?: number;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
   onFiltersChange?: (filters: {
     propertyType: string;
     dealType: string;
@@ -62,13 +65,15 @@ const priceOptions = [
   { value: "50m", label: "До 50 млн" },
 ];
 
-export function RealEstateFilters({ onShowResults, resultsCount = 1000, onFiltersChange }: RealEstateFiltersProps) {
+export function RealEstateFilters({ onShowResults, resultsCount = 1000, searchQuery = "", onSearchChange, onFiltersChange }: RealEstateFiltersProps) {
   const navigate = useNavigate();
   const [propertyType, setPropertyType] = useState("apartment");
   const [dealType, setDealType] = useState("buy");
   const [marketType, setMarketType] = useState("all");
   const [rooms, setRooms] = useState("");
   const [price, setPrice] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Notify parent when filters change
   useEffect(() => {
@@ -94,13 +99,32 @@ export function RealEstateFilters({ onShowResults, resultsCount = 1000, onFilter
   return (
     <div className="bg-accent/30 rounded-b-3xl pb-4">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <button onClick={() => navigate(-1)} className="p-1">
+      <div className="flex items-center justify-between px-4 py-3 gap-2">
+        <button onClick={() => navigate(-1)} className="p-1 shrink-0">
           <ChevronLeft className="w-6 h-6 text-foreground" />
         </button>
-        <button className="p-1">
-          <Search className="w-6 h-6 text-foreground" />
-        </button>
+        {showSearch ? (
+          <div className="flex-1 flex items-center gap-2">
+            <Input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              placeholder="Поиск по адресу, району..."
+              className="h-9 rounded-xl bg-background border-0"
+              autoFocus
+            />
+            <button 
+              onClick={() => { setShowSearch(false); onSearchChange?.(""); }} 
+              className="p-1 shrink-0"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setShowSearch(true)} className="p-1">
+            <Search className="w-6 h-6 text-foreground" />
+          </button>
+        )}
       </div>
 
       {/* Title & Location */}
