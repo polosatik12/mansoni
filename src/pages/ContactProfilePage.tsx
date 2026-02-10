@@ -73,7 +73,11 @@ export function ContactProfilePage() {
           .maybeSingle();
         
         if (data) {
-          setProfile(data);
+          setProfile(prev => ({
+            ...data,
+            // Keep avatar from navigation state if DB doesn't have one
+            avatar_url: data.avatar_url || prev?.avatar_url || null,
+          }));
         }
       } catch (err) {
         console.error('Error fetching contact profile:', err);
