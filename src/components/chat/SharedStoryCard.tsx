@@ -20,12 +20,13 @@ interface SharedStory {
 }
 
 interface SharedStoryCardProps {
-  storyId: string;
+  storyId?: string;
+  mediaUrl?: string;
   isOwn: boolean;
   caption?: string;
 }
 
-export function SharedStoryCard({ storyId, isOwn, caption }: SharedStoryCardProps) {
+export function SharedStoryCard({ storyId, mediaUrl, isOwn, caption }: SharedStoryCardProps) {
   const [story, setStory] = useState<SharedStory | null>(null);
   const [loading, setLoading] = useState(true);
   const [expired, setExpired] = useState(false);
@@ -34,13 +35,42 @@ export function SharedStoryCard({ storyId, isOwn, caption }: SharedStoryCardProp
   useEffect(() => {
     const fetchStory = async () => {
       try {
-        const { data, error } = await (supabase
-          .from("stories" as any)
-          .select("*")
-          .eq("id", storyId)
-          .single() as any);
+        let data: any = null;
+        let error: any = null;
+
+        if (storyId) {
+          const res = await (supabase
+            .from("stories" as any)
+            .select("*")
+            .eq("id", storyId)
+            .single() as any);
+          data = res.data;
+          error = res.error;
+        } else if (mediaUrl) {
+          const res = await (supabase
+            .from("stories" as any)
+            .select("*")
+            .eq("media_url", mediaUrl)
+            .limit(1)
+            .maybeSingle() as any);
+          data = res.data;
+          error = res.error;
+        }
 
         if (error || !data) {
+          // For legacy media_url stories, show a basic card with the image
+          if (mediaUrl && !data) {
+            setStory({
+              id: 'legacy',
+              author_id: '',
+              media_url: mediaUrl,
+              media_type: 'image',
+              caption: null,
+              created_at: '',
+              expires_at: new Date(Date.now() + 86400000).toISOString(),
+            });
+            return;
+          }
           setExpired(true);
           return;
         }
@@ -64,14 +94,26 @@ export function SharedStoryCard({ storyId, isOwn, caption }: SharedStoryCardProp
           author: profile || undefined,
         });
       } catch {
-        setExpired(true);
+        if (mediaUrl) {
+          setStory({
+            id: 'legacy',
+            author_id: '',
+            media_url: mediaUrl,
+            media_type: 'image',
+            caption: null,
+            created_at: '',
+            expires_at: new Date(Date.now() + 86400000).toISOString(),
+          });
+        } else {
+          setExpired(true);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchStory();
-  }, [storyId]);
+  }, [storyId, mediaUrl]);
 
   if (loading) {
     return (

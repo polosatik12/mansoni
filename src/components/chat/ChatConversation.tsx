@@ -892,21 +892,11 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                       caption={message.content || undefined}
                     />
                   ) : (
-                    /* Legacy story share: media_url from stories-media bucket */
-                    <div className={`w-48 rounded-2xl overflow-hidden ${isOwn ? "bg-[#1e3a4f]" : "bg-[#1a2733]"}`}>
-                      <div className="relative h-64 overflow-hidden">
-                        <img src={message.media_url!} alt="" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
-                        <div className="absolute bottom-3 left-3 right-3">
-                          <p className="text-xs text-white/70">📷 История</p>
-                        </div>
-                      </div>
-                      {message.content && (
-                        <div className="px-3 py-2">
-                          <p className="text-sm text-white/90">{message.content}</p>
-                        </div>
-                      )}
-                    </div>
+                    <SharedStoryCard
+                      mediaUrl={message.media_url!}
+                      isOwn={isOwn}
+                      caption={message.content || undefined}
+                    />
                   )}
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                     {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
