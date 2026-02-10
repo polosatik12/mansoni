@@ -785,7 +785,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const isVideo = message.media_type === 'video';
           const isSharedPost = !!message.shared_post_id;
           const isSharedReel = !!message.shared_reel_id;
-          const isSharedStory = !!(message as any).shared_story_id;
+          const isSharedStory = !!(message as any).shared_story_id || (message.media_type === 'image' && message.media_url?.includes('stories-media'));
           const isRead = message.is_read;
 
           const prevMessage = index > 0 ? messages[index - 1] : null;
@@ -883,13 +883,31 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               )}
 
               <div className={`flex flex-col ${isOwn ? "items-end" : "items-start"} max-w-[75%]`}>
-              {isSharedStory && (message as any).shared_story_id ? (
+              {isSharedStory ? (
                 <div className="flex flex-col gap-1">
-                  <SharedStoryCard
-                    storyId={(message as any).shared_story_id}
-                    isOwn={isOwn}
-                    caption={message.content || undefined}
-                  />
+                  {(message as any).shared_story_id ? (
+                    <SharedStoryCard
+                      storyId={(message as any).shared_story_id}
+                      isOwn={isOwn}
+                      caption={message.content || undefined}
+                    />
+                  ) : (
+                    /* Legacy story share: media_url from stories-media bucket */
+                    <div className={`w-48 rounded-2xl overflow-hidden ${isOwn ? "bg-[#1e3a4f]" : "bg-[#1a2733]"}`}>
+                      <div className="relative h-64 overflow-hidden">
+                        <img src={message.media_url!} alt="" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <p className="text-xs text-white/70">📷 История</p>
+                        </div>
+                      </div>
+                      {message.content && (
+                        <div className="px-3 py-2">
+                          <p className="text-sm text-white/90">{message.content}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                     {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
                     <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
