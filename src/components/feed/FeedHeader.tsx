@@ -120,7 +120,7 @@ export function FeedHeader() {
         if (!styles) return null;
         
         const hasStories = user.stories.length > 0;
-        const showPlusIcon = user.isOwn && !hasStories && collapseProgress < 0.5;
+        const showPlusIcon = user.isOwn && collapseProgress < 0.5;
 
         return (
           <button
@@ -142,11 +142,13 @@ export function FeedHeader() {
                 "story-avatar rounded-full flex-shrink-0 relative",
                 user.isOwn && !hasStories
                   ? "p-0.5 bg-muted"
-                  : user.hasNew
-                    ? "p-[2.5px] bg-gradient-to-tr from-primary via-accent to-primary"
-                    : hasStories
-                      ? "p-0.5 bg-muted-foreground/30"
-                      : "p-0.5 bg-muted"
+                  : user.isOwn && hasStories
+                    ? "p-[2.5px] bg-gradient-to-tr from-primary/50 via-accent/50 to-primary/50"
+                    : user.hasNew
+                      ? "p-[2.5px] bg-gradient-to-tr from-primary via-accent to-primary"
+                      : hasStories
+                        ? "p-0.5 bg-muted-foreground/30"
+                        : "p-0.5 bg-muted"
               )}
               style={{
                 width: `${EXPANDED_AVATAR_SIZE}px`,

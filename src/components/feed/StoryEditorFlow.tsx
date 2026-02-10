@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { X, ChevronDown, Camera, Smile, Music, AtSign, ImagePlus, Wand2, Loader2, Pencil, Type, Undo2, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SimpleMediaEditor } from "@/components/editor";
@@ -416,7 +417,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[70] flex flex-col bg-black">
       <input
         ref={fileInputRef}
@@ -745,6 +746,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
         onSave={handleEditorSave}
         onCancel={() => setShowAdvancedEditor(false)}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
