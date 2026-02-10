@@ -289,7 +289,7 @@ export function SettingsPage() {
               <div className="px-4 mb-3">
                 <p className="text-sm text-white/60 mb-2 px-1">Аккаунт</p>
                 <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                  {renderMenuItem(<Bookmark className="w-5 h-5 text-white/60" />, "Сохранённое", () => setCurrentScreen("saved"))}
+                  {renderMenuItem(<Bookmark className="w-5 h-5 text-white/60" />, "Сохранённое", () => navigate("/profile?tab=saved"))}
                   {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив", () => setCurrentScreen("archive"))}
                   {renderMenuItem(<Clock className="w-5 h-5 text-white/60" />, "Ваша активность", () => setCurrentScreen("activity"))}
                 </div>
