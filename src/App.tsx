@@ -38,6 +38,7 @@ const PostDetailPage = lazy(() => import("@/pages/PostDetailPage").then(m => ({ 
 const AuthPage = lazy(() => import("@/pages/AuthPage").then(m => ({ default: m.AuthPage })));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const DevPanelPage = lazy(() => import("@/pages/DevPanelPage"));
+const SwaggerPage = lazy(() => import("@/pages/SwaggerPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then(m => ({ default: m.CommandPalette })));
 
@@ -156,6 +157,11 @@ const App = () => (
                 <Route path="/dev" element={
                   <Suspense fallback={<PageLoader />}>
                     <DevPanelPage />
+                  </Suspense>
+                } />
+                <Route path="/api-docs" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <SwaggerPage />
                   </Suspense>
                 } />
                 
