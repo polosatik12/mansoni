@@ -64,8 +64,16 @@ export function CommandPalette() {
   };
 
   const handleAction = (action: string) => {
-    // В будущем можно добавить реальные действия
-    console.log("Action:", action);
+    switch (action) {
+      case "saved":
+        navigate("/profile?tab=saved");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+      default:
+        console.log("Action:", action);
+    }
     setOpen(false);
   };
 

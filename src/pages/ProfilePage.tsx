@@ -1,8 +1,8 @@
 import { Settings, Grid3X3, Bookmark, Play, Plus, AtSign, Share2, Eye, User, Loader2, Edit3, QrCode } from "lucide-react";
 import { ProfileReelsGrid } from "@/components/profile/ProfileReelsGrid";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
@@ -34,6 +34,7 @@ function formatNumber(num: number): string {
 
 export function ProfilePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { profile, loading: profileLoading, updateProfile } = useProfile();
   const { posts, loading: postsLoading } = useUserPosts();
@@ -46,6 +47,15 @@ export function ProfilePage() {
   
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+
+  // Open saved tab from URL param
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && tabs.some(t => t.id === tab)) {
+      setActiveTab(tab);
+      if (tab === "saved") fetchSavedPosts();
+    }
+  }, [searchParams]);
 
   const handleCreateSelect = (type: string) => {
     if (type === "post") {
