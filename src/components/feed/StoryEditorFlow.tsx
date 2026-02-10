@@ -577,11 +577,11 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               onMouseLeave={handleDrawEnd}
             />
 
-            {/* Text overlays */}
+            {/* Text overlays - draggable */}
             {textOverlays.map((t) => (
               <div
                 key={t.id}
-                className="absolute pointer-events-none select-none"
+                className="absolute select-none cursor-move z-15"
                 style={{
                   left: `${t.x}%`,
                   top: `${t.y}%`,
@@ -591,6 +591,58 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                   fontWeight: "bold",
                   textShadow: "0 2px 8px rgba(0,0,0,0.5)",
                   whiteSpace: "nowrap",
+                  touchAction: "none",
+                  pointerEvents: activeTool === "draw" ? "none" : "auto",
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  const touch = e.touches[0];
+                  const startX = touch.clientX;
+                  const startY = touch.clientY;
+                  const startPctX = t.x;
+                  const startPctY = t.y;
+                  const container = e.currentTarget.parentElement;
+                  if (!container) return;
+                  const rect = container.getBoundingClientRect();
+
+                  const onMove = (ev: TouchEvent) => {
+                    ev.preventDefault();
+                    const dx = ev.touches[0].clientX - startX;
+                    const dy = ev.touches[0].clientY - startY;
+                    const newX = Math.max(5, Math.min(95, startPctX + (dx / rect.width) * 100));
+                    const newY = Math.max(5, Math.min(95, startPctY + (dy / rect.height) * 100));
+                    setTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, x: newX, y: newY } : o));
+                  };
+                  const onEnd = () => {
+                    document.removeEventListener("touchmove", onMove);
+                    document.removeEventListener("touchend", onEnd);
+                  };
+                  document.addEventListener("touchmove", onMove, { passive: false });
+                  document.addEventListener("touchend", onEnd);
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const startPctX = t.x;
+                  const startPctY = t.y;
+                  const container = e.currentTarget.parentElement;
+                  if (!container) return;
+                  const rect = container.getBoundingClientRect();
+
+                  const onMove = (ev: MouseEvent) => {
+                    const dx = ev.clientX - startX;
+                    const dy = ev.clientY - startY;
+                    const newX = Math.max(5, Math.min(95, startPctX + (dx / rect.width) * 100));
+                    const newY = Math.max(5, Math.min(95, startPctY + (dy / rect.height) * 100));
+                    setTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, x: newX, y: newY } : o));
+                  };
+                  const onEnd = () => {
+                    document.removeEventListener("mousemove", onMove);
+                    document.removeEventListener("mouseup", onEnd);
+                  };
+                  document.addEventListener("mousemove", onMove);
+                  document.addEventListener("mouseup", onEnd);
                 }}
               >
                 {t.text}
@@ -681,15 +733,20 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
 
             {/* Color picker (when drawing or adding text) */}
             {(activeTool === "draw" || isAddingText) && (
-              <div className="absolute bottom-32 left-0 right-0 flex justify-center gap-2 z-10 px-4">
+              <div className="absolute bottom-32 left-0 right-0 flex justify-center gap-2 z-30 px-4">
                 {DRAW_COLORS.map((color) => (
                   <button
                     key={color}
-                    onClick={() => setDrawColor(color)}
+                    type="button"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setDrawColor(color);
+                    }}
                     className={`w-7 h-7 rounded-full border-2 transition-transform ${
                       drawColor === color ? "border-white scale-125" : "border-white/30"
                     }`}
-                    style={{ backgroundColor: color }}
+                    style={{ backgroundColor: color, touchAction: "none" }}
                   />
                 ))}
               </div>
