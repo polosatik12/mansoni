@@ -53,24 +53,14 @@ export function Stories({ onOpenStory }: StoriesProps) {
 
   const handleStoryClick = (index: number, user: UserWithStories) => {
     if (user.isOwn) {
-      if (user.stories.length > 0) {
-        // Has stories — open viewer to see own stories
-        setSelectedUserIndex(index);
-        setViewerOpen(true);
-      } else {
-        // No stories — open editor
-        setStoryEditorOpen(true);
-      }
-    } else if (user.stories.length > 0) {
+      // Own avatar: always open editor to create new story
+      setStoryEditorOpen(true);
+      return;
+    }
+    if (user.stories.length > 0) {
       setSelectedUserIndex(index);
       setViewerOpen(true);
     }
-  };
-
-  const handleAddStory = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setStoryEditorOpen(true);
   };
 
   if (loading && usersWithStories.length === 0) {
@@ -153,13 +143,10 @@ export function Stories({ onOpenStory }: StoriesProps) {
                         />
                       </div>
                     )}
-                    {user.isOwn && hasStories && (
-                      <button
-                        onClick={handleAddStory}
-                        className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-card z-20"
-                      >
+                    {user.isOwn && (
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-card z-20 pointer-events-none">
                         <Plus className="text-primary-foreground w-3.5 h-3.5" />
-                      </button>
+                      </div>
                     )}
                     {user.hasNew && (
                       <div 
