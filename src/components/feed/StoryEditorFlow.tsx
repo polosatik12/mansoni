@@ -46,6 +46,16 @@ interface StickerOverlay {
   size: number;
 }
 
+// Convert emoji to Apple-style image URL via Twemoji CDN
+const emojiToImageUrl = (emoji: string): string => {
+  const codePoints = [...emoji]
+    .map(char => char.codePointAt(0)?.toString(16))
+    .filter(Boolean)
+    .filter(cp => cp !== "fe0f")
+    .join("-");
+  return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${codePoints}.png`;
+};
+
 const STICKER_CATEGORIES = [
   {
     label: "Популярные",
@@ -328,7 +338,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
@@ -371,15 +381,28 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
           ctx.shadowBlur = 0;
         });
 
-        // Draw sticker overlays
-        stickerOverlays.forEach(s => {
-          const scale = img.width / (canvasRef.current?.width || img.width);
-          const fontSize = s.size * scale;
-          ctx.font = `${fontSize}px sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(s.emoji, (s.x / 100) * img.width, (s.y / 100) * img.height);
+        // Draw sticker overlays as images
+        const stickerPromises = stickerOverlays.map(s => {
+          return new Promise<void>((res) => {
+            const stickerImg = new Image();
+            stickerImg.crossOrigin = "anonymous";
+            stickerImg.onload = () => {
+              const scale = img.width / (canvasRef.current?.width || img.width);
+              const stickerSize = s.size * scale;
+              ctx.drawImage(
+                stickerImg,
+                (s.x / 100) * img.width - stickerSize / 2,
+                (s.y / 100) * img.height - stickerSize / 2,
+                stickerSize,
+                stickerSize
+              );
+              res();
+            };
+            stickerImg.onerror = () => res();
+            stickerImg.src = emojiToImageUrl(s.emoji);
+          });
         });
+        await Promise.all(stickerPromises);
 
         canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
       };
@@ -766,7 +789,13 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                   document.addEventListener("mouseup", onEnd);
                 }}
               >
-                {s.emoji}
+                <img
+                  src={emojiToImageUrl(s.emoji)}
+                  alt={s.emoji}
+                  className="w-full h-full pointer-events-none"
+                  draggable={false}
+                  style={{ width: `${s.size}px`, height: `${s.size}px` }}
+                />
               </div>
             ))}
 
@@ -906,7 +935,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                             onClick={() => addSticker(emoji)}
                             className="aspect-square flex items-center justify-center text-2xl rounded-lg active:bg-white/10 transition-colors"
                           >
-                            {emoji}
+                            <img src={emojiToImageUrl(emoji)} alt={emoji} className="w-8 h-8 pointer-events-none" draggable={false} />
                           </button>
                         ))}
                       </div>
