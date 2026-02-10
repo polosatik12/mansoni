@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, ChevronDown, Camera, Smile, Music, AtSign, ImagePlus, Wand2, Loader2, Pencil, Type, Undo2, Palette } from "lucide-react";
+import { X, ChevronDown, Camera, Smile, Music, AtSign, ImagePlus, Wand2, Loader2, Pencil, Type, Undo2, Palette, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SimpleMediaEditor } from "@/components/editor";
 import { useAuth } from "@/hooks/useAuth";
@@ -121,6 +121,9 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
   // Sticker state
   const [stickerOverlays, setStickerOverlays] = useState<StickerOverlay[]>([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [isOverTrash, setIsOverTrash] = useState(false);
+  const trashZoneRef = useRef<HTMLDivElement>(null);
 
   // Hide bottom nav
   useEffect(() => {
@@ -294,6 +297,12 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
 
   const undoDraw = () => {
     setDrawLines(prev => prev.slice(0, -1));
+  };
+
+  const checkOverTrash = (clientX: number, clientY: number): boolean => {
+    if (!trashZoneRef.current) return false;
+    const rect = trashZoneRef.current.getBoundingClientRect();
+    return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
   };
 
   // --- Text overlay ---
@@ -654,11 +663,11 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               onMouseLeave={handleDrawEnd}
             />
 
-            {/* Text overlays - draggable */}
+            {/* Text overlays - draggable with delete */}
             {textOverlays.map((t) => (
               <div
                 key={t.id}
-                className="absolute select-none cursor-move z-15"
+                className={`absolute select-none cursor-move z-15 transition-transform ${draggingId === t.id && isOverTrash ? "scale-75 opacity-50" : ""}`}
                 style={{
                   left: `${t.x}%`,
                   top: `${t.y}%`,
@@ -673,6 +682,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                 }}
                 onTouchStart={(e) => {
                   e.stopPropagation();
+                  setDraggingId(t.id);
                   const touch = e.touches[0];
                   const startX = touch.clientX;
                   const startY = touch.clientY;
@@ -681,16 +691,25 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                   const container = e.currentTarget.parentElement;
                   if (!container) return;
                   const rect = container.getBoundingClientRect();
-
                   const onMove = (ev: TouchEvent) => {
                     ev.preventDefault();
-                    const dx = ev.touches[0].clientX - startX;
-                    const dy = ev.touches[0].clientY - startY;
+                    const cx = ev.touches[0].clientX;
+                    const cy = ev.touches[0].clientY;
+                    const dx = cx - startX;
+                    const dy = cy - startY;
                     const newX = Math.max(5, Math.min(95, startPctX + (dx / rect.width) * 100));
                     const newY = Math.max(5, Math.min(95, startPctY + (dy / rect.height) * 100));
                     setTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, x: newX, y: newY } : o));
+                    setIsOverTrash(checkOverTrash(cx, cy));
                   };
-                  const onEnd = () => {
+                  const onEnd = (ev: TouchEvent) => {
+                    const cx = ev.changedTouches[0].clientX;
+                    const cy = ev.changedTouches[0].clientY;
+                    if (checkOverTrash(cx, cy)) {
+                      setTextOverlays(prev => prev.filter(o => o.id !== t.id));
+                    }
+                    setDraggingId(null);
+                    setIsOverTrash(false);
                     document.removeEventListener("touchmove", onMove);
                     document.removeEventListener("touchend", onEnd);
                   };
@@ -699,6 +718,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                 }}
                 onMouseDown={(e) => {
                   e.stopPropagation();
+                  setDraggingId(t.id);
                   const startX = e.clientX;
                   const startY = e.clientY;
                   const startPctX = t.x;
@@ -706,15 +726,20 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                   const container = e.currentTarget.parentElement;
                   if (!container) return;
                   const rect = container.getBoundingClientRect();
-
                   const onMove = (ev: MouseEvent) => {
                     const dx = ev.clientX - startX;
                     const dy = ev.clientY - startY;
                     const newX = Math.max(5, Math.min(95, startPctX + (dx / rect.width) * 100));
                     const newY = Math.max(5, Math.min(95, startPctY + (dy / rect.height) * 100));
                     setTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, x: newX, y: newY } : o));
+                    setIsOverTrash(checkOverTrash(ev.clientX, ev.clientY));
                   };
-                  const onEnd = () => {
+                  const onEnd = (ev: MouseEvent) => {
+                    if (checkOverTrash(ev.clientX, ev.clientY)) {
+                      setTextOverlays(prev => prev.filter(o => o.id !== t.id));
+                    }
+                    setDraggingId(null);
+                    setIsOverTrash(false);
                     document.removeEventListener("mousemove", onMove);
                     document.removeEventListener("mouseup", onEnd);
                   };
@@ -726,11 +751,11 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
               </div>
             ))}
 
-            {/* Sticker overlays - draggable */}
+            {/* Sticker overlays - draggable with delete */}
             {stickerOverlays.map((s) => (
               <div
                 key={s.id}
-                className="absolute select-none cursor-move z-15"
+                className={`absolute select-none cursor-move z-15 transition-transform ${draggingId === s.id && isOverTrash ? "scale-75 opacity-50" : ""}`}
                 style={{
                   left: `${s.x}%`,
                   top: `${s.y}%`,
@@ -742,6 +767,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                 }}
                 onTouchStart={(e) => {
                   e.stopPropagation();
+                  setDraggingId(s.id);
                   const touch = e.touches[0];
                   const startX = touch.clientX;
                   const startY = touch.clientY;
@@ -752,13 +778,23 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                   const rect = container.getBoundingClientRect();
                   const onMove = (ev: TouchEvent) => {
                     ev.preventDefault();
-                    const dx = ev.touches[0].clientX - startX;
-                    const dy = ev.touches[0].clientY - startY;
+                    const cx = ev.touches[0].clientX;
+                    const cy = ev.touches[0].clientY;
+                    const dx = cx - startX;
+                    const dy = cy - startY;
                     const newX = Math.max(5, Math.min(95, startPctX + (dx / rect.width) * 100));
                     const newY = Math.max(5, Math.min(95, startPctY + (dy / rect.height) * 100));
                     setStickerOverlays(prev => prev.map(o => o.id === s.id ? { ...o, x: newX, y: newY } : o));
+                    setIsOverTrash(checkOverTrash(cx, cy));
                   };
-                  const onEnd = () => {
+                  const onEnd = (ev: TouchEvent) => {
+                    const cx = ev.changedTouches[0].clientX;
+                    const cy = ev.changedTouches[0].clientY;
+                    if (checkOverTrash(cx, cy)) {
+                      setStickerOverlays(prev => prev.filter(o => o.id !== s.id));
+                    }
+                    setDraggingId(null);
+                    setIsOverTrash(false);
                     document.removeEventListener("touchmove", onMove);
                     document.removeEventListener("touchend", onEnd);
                   };
@@ -767,6 +803,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                 }}
                 onMouseDown={(e) => {
                   e.stopPropagation();
+                  setDraggingId(s.id);
                   const startX = e.clientX;
                   const startY = e.clientY;
                   const startPctX = s.x;
@@ -780,8 +817,14 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                     const newX = Math.max(5, Math.min(95, startPctX + (dx / rect.width) * 100));
                     const newY = Math.max(5, Math.min(95, startPctY + (dy / rect.height) * 100));
                     setStickerOverlays(prev => prev.map(o => o.id === s.id ? { ...o, x: newX, y: newY } : o));
+                    setIsOverTrash(checkOverTrash(ev.clientX, ev.clientY));
                   };
-                  const onEnd = () => {
+                  const onEnd = (ev: MouseEvent) => {
+                    if (checkOverTrash(ev.clientX, ev.clientY)) {
+                      setStickerOverlays(prev => prev.filter(o => o.id !== s.id));
+                    }
+                    setDraggingId(null);
+                    setIsOverTrash(false);
                     document.removeEventListener("mousemove", onMove);
                     document.removeEventListener("mouseup", onEnd);
                   };
@@ -798,6 +841,20 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
                 />
               </div>
             ))}
+
+            {/* Trash zone - appears when dragging */}
+            {draggingId && (
+              <div
+                ref={trashZoneRef}
+                className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center transition-all duration-200 ${
+                  isOverTrash
+                    ? "w-20 h-20 rounded-full bg-destructive/90 scale-110"
+                    : "w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm"
+                }`}
+              >
+                <Trash2 className={`transition-all ${isOverTrash ? "w-8 h-8 text-white" : "w-6 h-6 text-white/70"}`} />
+              </div>
+            )}
 
             {/* Text input overlay */}
             {isAddingText && (
