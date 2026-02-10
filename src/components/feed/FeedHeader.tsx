@@ -1,10 +1,11 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Loader2, User } from "lucide-react";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
 import { ServicesMenu } from "@/components/layout/ServicesMenu";
 import { cn } from "@/lib/utils";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 import { StoryViewer } from "./StoryViewer";
+import { StoryEditorFlow } from "./StoryEditorFlow";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 
 // Animation constants - moved outside for performance
@@ -27,10 +28,10 @@ const Y_DIFF = COLLAPSED_Y - HEADER_HEIGHT;
 export function FeedHeader() {
   const { collapseProgress } = useScrollCollapse(100);
   const scrollContainerRef = useScrollContainer();
-  const { usersWithStories, loading, uploadStory } = useStories();
+  const { usersWithStories, loading } = useStories();
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [storyEditorOpen, setStoryEditorOpen] = useState(false);
 
   // Handle story click - either scroll to top or open viewer
   const handleStoryClick = (index: number, user: UserWithStories) => {
@@ -40,21 +41,11 @@ export function FeedHeader() {
         behavior: 'smooth'
       });
     } else if (user.isOwn && user.stories.length === 0) {
-      // Open file picker to add story
-      fileInputRef.current?.click();
+      // Open story editor flow
+      setStoryEditorOpen(true);
     } else if (user.stories.length > 0) {
       setSelectedStoryIndex(index);
       setStoryViewerOpen(true);
-    }
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await uploadStory(file);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
@@ -97,13 +88,6 @@ export function FeedHeader() {
 
   return (
     <>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*"
-        className="hidden"
-        onChange={handleFileSelect}
-      />
     <div 
       className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl overflow-hidden will-change-auto border-b border-white/10"
       style={{ height: `${containerHeight}px` }}
@@ -221,6 +205,12 @@ export function FeedHeader() {
         onClose={() => setStoryViewerOpen(false)}
       />
     </div>
+
+    {/* Story Editor Flow */}
+    <StoryEditorFlow
+      isOpen={storyEditorOpen}
+      onClose={() => setStoryEditorOpen(false)}
+    />
     </>
   );
 }
