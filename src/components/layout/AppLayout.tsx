@@ -27,7 +27,7 @@ export function AppLayout() {
         <main 
           ref={mainRef}
           className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden max-w-lg mx-auto w-full native-scroll relative z-10",
+            "flex-1 overflow-y-auto overflow-x-hidden max-w-lg mx-auto w-full native-scroll relative z-10 scrollbar-hide",
             !isReelsPage && "pb-20"
           )}
           style={{
