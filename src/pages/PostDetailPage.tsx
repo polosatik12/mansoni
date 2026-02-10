@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MessageCircle, Share2, Bookmark, MoreHorizontal } from "lucide-react";
+import { BrandBackground } from "@/components/ui/brand-background";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -162,18 +163,24 @@ export function PostDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen relative overflow-hidden">
+        <BrandBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+        </div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6">
-        <h2 className="text-xl font-semibold mb-2">Пост не найден</h2>
-        <p className="text-muted-foreground mb-4">Возможно, он был удалён</p>
-        <Button onClick={() => navigate(-1)}>Назад</Button>
+      <div className="min-h-screen relative overflow-hidden">
+        <BrandBackground />
+        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-6">
+          <h2 className="text-xl font-semibold mb-2 text-white">Пост не найден</h2>
+          <p className="text-white/60 mb-4">Возможно, он был удалён</p>
+          <Button onClick={() => navigate(-1)} variant="outline" className="bg-white/10 border-white/20 text-white">Назад</Button>
+        </div>
       </div>
     );
   }
@@ -182,14 +189,16 @@ export function PostDetailPage() {
   const authorAvatar = post.author?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_id}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative overflow-hidden">
+      <BrandBackground />
+      <div className="relative z-10 min-h-screen pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
+      <div className="sticky top-0 z-20 bg-black/40 backdrop-blur-xl border-b border-white/10">
         <div className="flex items-center gap-3 px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-1">
-            <ArrowLeft className="w-6 h-6" />
+          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+            <ArrowLeft className="w-5 h-5 text-white" />
           </button>
-          <h1 className="font-semibold">Публикация</h1>
+          <h1 className="font-semibold text-white">Публикация</h1>
         </div>
       </div>
 
@@ -203,11 +212,11 @@ export function PostDetailPage() {
             className="w-10 h-10 rounded-full object-cover"
           />
           <div className="flex-1">
-            <p className="font-semibold text-sm">{authorName}</p>
-            <p className="text-xs text-muted-foreground">{formatTime(post.created_at)}</p>
+            <p className="font-semibold text-sm text-white">{authorName}</p>
+            <p className="text-xs text-white/60">{formatTime(post.created_at)}</p>
           </div>
           <button className="p-2">
-            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+            <MoreHorizontal className="w-5 h-5 text-white/60" />
           </button>
         </div>
 
@@ -252,23 +261,23 @@ export function PostDetailPage() {
             <button onClick={handleLike} className="flex items-center gap-1">
               <Heart
                 className={`w-6 h-6 transition-colors ${
-                  post.isLiked ? "fill-red-500 text-red-500" : ""
+                  post.isLiked ? "fill-red-500 text-red-500" : "text-white"
                 }`}
               />
-              <span className="text-sm font-medium">{post.likes_count}</span>
+              <span className="text-sm font-medium text-white">{post.likes_count}</span>
             </button>
             <button onClick={() => setShowComments(true)} className="flex items-center gap-1">
-              <MessageCircle className="w-6 h-6" />
-              <span className="text-sm font-medium">{post.comments_count}</span>
+              <MessageCircle className="w-6 h-6 text-white" />
+              <span className="text-sm font-medium text-white">{post.comments_count}</span>
             </button>
             <button onClick={() => setShowShare(true)}>
-              <Share2 className="w-6 h-6" />
+              <Share2 className="w-6 h-6 text-white" />
             </button>
           </div>
           <button onClick={handleSave}>
             <Bookmark
               className={`w-6 h-6 transition-colors ${
-                post.isSaved ? "fill-foreground" : ""
+                post.isSaved ? "fill-white text-white" : "text-white"
               }`}
             />
           </button>
@@ -277,7 +286,7 @@ export function PostDetailPage() {
         {/* Content */}
         {post.content && (
           <div className="px-4 pb-4">
-            <p className="text-sm">
+            <p className="text-sm text-white">
               <span className="font-semibold mr-1">{authorName}</span>
               {post.content}
             </p>
@@ -286,8 +295,9 @@ export function PostDetailPage() {
 
         {/* Views */}
         <div className="px-4 pb-4">
-          <p className="text-xs text-muted-foreground">{post.views_count} просмотров</p>
+          <p className="text-xs text-white/60">{post.views_count} просмотров</p>
         </div>
+      </div>
       </div>
 
       {/* Comments Sheet */}
