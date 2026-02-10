@@ -7,7 +7,6 @@ import {
   Bookmark,
   Music2,
   Play,
-  Pause,
   User,
   Loader2,
   Plus,
@@ -48,7 +47,6 @@ export function ReelsPage() {
   const [activeTab, setActiveTab] = useState<FeedTab>("foryou");
   const [savedReels, setSavedReels] = useState<Set<string>>(new Set());
   const [videoProgress, setVideoProgress] = useState(0);
-  const [showPauseIcon, setShowPauseIcon] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
@@ -59,6 +57,9 @@ export function ReelsPage() {
   const lastTapTime = useRef(0);
   const lastTapPos = useRef({ x: 0, y: 0 });
   const [heartAnimPos, setHeartAnimPos] = useState<{ x: number; y: number } | null>(null);
+  const [showMuteIndicator, setShowMuteIndicator] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPressing = useRef(false);
 
   const currentReel = reels[currentIndex];
 
@@ -142,8 +143,9 @@ export function ReelsPage() {
     });
   }, [user, navigate]);
 
-  // Handle tap (single = pause/play, double = like)
+  // Handle tap (single = toggle mute, double = like)
   const handleTap = useCallback((e: React.MouseEvent, reel: typeof reels[0]) => {
+    if (isLongPressing.current) return;
     const now = Date.now();
     const x = e.clientX;
     const y = e.clientY;
@@ -155,22 +157,37 @@ export function ReelsPage() {
       setTimeout(() => setHeartAnimPos(null), 900);
       lastTapTime.current = 0;
     } else {
-      // Single tap → toggle play/pause after delay
+      // Single tap → toggle mute
       lastTapTime.current = now;
       lastTapPos.current = { x, y };
       setTimeout(() => {
         if (lastTapTime.current === now) {
-          setIsPaused(prev => !prev);
-          setShowPauseIcon(true);
-          setTimeout(() => setShowPauseIcon(false), 600);
+          setIsMuted(prev => !prev);
+          setShowMuteIndicator(true);
+          setTimeout(() => setShowMuteIndicator(false), 800);
         }
       }, 300);
     }
   }, [handleLike]);
 
-  const toggleMute = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMuted(prev => !prev);
+  // Long press → pause, release → resume
+  const handleTouchStart = useCallback(() => {
+    isLongPressing.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPressing.current = true;
+      setIsPaused(true);
+    }, 400);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (isLongPressing.current) {
+      setIsPaused(false);
+      isLongPressing.current = false;
+    }
   }, []);
 
   if (loading) {
@@ -255,6 +272,10 @@ export function ReelsPage() {
               key={reel.id}
               className="relative w-full h-screen flex-shrink-0 snap-start snap-always"
               onClick={(e) => handleTap(e, reel)}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleTouchStart}
+              onMouseUp={handleTouchEnd}
             >
               {/* Video */}
               <div className="absolute inset-0 bg-black">
@@ -282,14 +303,14 @@ export function ReelsPage() {
               <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/70 via-black/30 to-transparent pointer-events-none" />
               <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
-              {/* Pause indicator */}
-              {isActive && showPauseIcon && (
+              {/* Mute/Unmute indicator */}
+              {isActive && showMuteIndicator && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                   <div className="w-20 h-20 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center animate-[fadeInScale_0.2s_ease-out]">
-                    {isPaused ? (
-                      <Play className="w-10 h-10 text-white fill-white ml-1" />
+                    {isMuted ? (
+                      <VolumeX className="w-10 h-10 text-white" />
                     ) : (
-                      <Pause className="w-10 h-10 text-white fill-white" />
+                      <Volume2 className="w-10 h-10 text-white" />
                     )}
                   </div>
                 </div>
@@ -438,17 +459,6 @@ export function ReelsPage() {
                 )}
               </div>
 
-              {/* Mute button - bottom right above nav */}
-              {isActive && (
-                <button
-                  className="absolute bottom-24 right-3 z-20 opacity-0 pointer-events-none"
-                  onClick={toggleMute}
-                  aria-hidden
-                >
-                  {/* Hidden - mute controlled by tapping volume in overlay */}
-                </button>
-              )}
-
               {/* Progress bar */}
               {isActive && (
                 <div className="absolute bottom-[72px] left-0 right-0 z-30 h-[3px] bg-white/20">
@@ -462,28 +472,6 @@ export function ReelsPage() {
           );
         })}
       </div>
-
-      {/* Mute toggle floating */}
-      <button
-        onClick={toggleMute}
-        className="absolute bottom-[84px] right-4 z-40 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
-      >
-        {isMuted ? (
-          <VolumeX className="w-4 h-4 text-white/80" />
-        ) : (
-          <Volume2 className="w-4 h-4 text-white/80" />
-        )}
-      </button>
-
-      {/* Create button floating */}
-      {user && (
-        <button
-          onClick={() => setShowCreateSheet(true)}
-          className="absolute bottom-[84px] left-4 z-40 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
-        >
-          <Plus className="w-4 h-4 text-white/80" />
-        </button>
-      )}
 
       {/* Sheets */}
       <CreateReelSheet open={showCreateSheet} onOpenChange={setShowCreateSheet} />
