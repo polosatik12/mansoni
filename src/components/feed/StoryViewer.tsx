@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { X, Heart, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { formatDistanceToNow } from "date-fns";
@@ -8,6 +8,9 @@ import { ru } from "date-fns/locale";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { useNavigate } from "react-router-dom";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface StoryViewerProps {
   usersWithStories: UserWithStories[];
@@ -19,6 +22,7 @@ interface StoryViewerProps {
 export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClose }: StoryViewerProps) {
   const { markAsViewed } = useStories();
   const { setIsStoryOpen } = useChatOpen();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
   const [currentStoryInUser, setCurrentStoryInUser] = useState(0);
@@ -26,6 +30,10 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
   const [isPaused, setIsPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [liked, setLiked] = useState(false);
+  const [sendingReply, setSendingReply] = useState(false);
+  const replyInputRef = useRef<HTMLInputElement>(null);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
@@ -195,6 +203,56 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
     };
   }, []);
 
+  // Reset reply state when story/user changes
+  useEffect(() => {
+    setReplyText("");
+    setLiked(false);
+  }, [currentUserIndex, currentStoryInUser]);
+
+  const isOtherUser = currentUser && !currentUser.isOwn;
+
+  const sendStoryReply = useCallback(async () => {
+    if (!user || !currentUser || !replyText.trim() || sendingReply) return;
+
+    setSendingReply(true);
+    setIsPaused(true);
+    try {
+      // Get or create DM conversation
+      const { data: convData, error: convError } = await supabase
+        .rpc('get_or_create_dm', { target_user_id: currentUser.user_id });
+
+      if (convError) throw convError;
+
+      const conversationId = convData;
+
+      const activeStory = currentUserStories[currentStoryInUser];
+      const storyCaption = activeStory?.caption ? `: "${activeStory.caption}"` : '';
+      const messageContent = `💬 Ответ на историю${storyCaption}\n\n${replyText.trim()}`;
+
+      const { error: msgError } = await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content: messageContent,
+      } as any);
+
+      if (msgError) throw msgError;
+
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+
+      setReplyText("");
+      toast.success("Сообщение отправлено");
+    } catch (err) {
+      console.error("Error sending story reply:", err);
+      toast.error("Не удалось отправить сообщение");
+    } finally {
+      setSendingReply(false);
+      setIsPaused(false);
+    }
+  }, [user, currentUser, replyText, sendingReply, currentUserStories, currentStoryInUser]);
+
   if (!isOpen || !currentUser || currentUserStories.length === 0) return null;
 
   const currentStory = currentUserStories[currentStoryInUser];
@@ -210,7 +268,7 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
     <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
       {/* Story content */}
       <div
-        className="relative w-full h-full max-w-md mx-auto overflow-hidden"
+        className="relative w-full h-full max-w-md mx-auto overflow-hidden flex flex-col"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -218,14 +276,14 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
         {/* Tap zones for navigation */}
         <button
           type="button"
-          className="absolute left-0 top-16 w-1/2 h-[calc(100%-4rem)] z-10 bg-transparent border-0 outline-none focus:outline-none focus-visible:outline-none ring-0 appearance-none cursor-default"
+          className="absolute left-0 top-16 w-1/2 h-[calc(100%-8rem)] z-10 bg-transparent border-0 outline-none focus:outline-none focus-visible:outline-none ring-0 appearance-none cursor-default"
           style={{ WebkitTapHighlightColor: 'transparent' }}
           onClick={goToPrevStory}
           aria-label="Previous story"
         />
         <button
           type="button"
-          className="absolute right-0 top-16 w-1/2 h-[calc(100%-4rem)] z-10 bg-transparent border-0 outline-none focus:outline-none focus-visible:outline-none ring-0 appearance-none cursor-default"
+          className="absolute right-0 top-16 w-1/2 h-[calc(100%-8rem)] z-10 bg-transparent border-0 outline-none focus:outline-none focus-visible:outline-none ring-0 appearance-none cursor-default"
           style={{ WebkitTapHighlightColor: 'transparent' }}
           onClick={goToNextStory}
           aria-label="Next story"
@@ -281,7 +339,6 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
             className="flex items-center gap-3 flex-1 min-w-0 text-left"
             onClick={(e) => {
               e.stopPropagation();
-              // Always navigate by user_id for reliability (display_name can be duplicated)
               const targetId = currentUser.user_id;
               if (!targetId) return;
               onClose();
@@ -317,10 +374,65 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
 
         {/* Caption */}
         {currentStory.caption && (
-          <div className="absolute bottom-20 left-0 right-0 z-20 px-4">
+          <div className={cn("absolute left-0 right-0 z-20 px-4", isOtherUser ? "bottom-24" : "bottom-20")}>
             <p className="text-white text-center text-lg font-medium drop-shadow-lg">
               {currentStory.caption}
             </p>
+          </div>
+        )}
+
+        {/* Bottom reply bar for other users' stories */}
+        {isOtherUser && (
+          <div className="absolute bottom-0 left-0 right-0 z-30 px-3 pb-4 pt-2">
+            <div className="flex items-center gap-2">
+              <input
+                ref={replyInputRef}
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                onFocus={() => setIsPaused(true)}
+                onBlur={() => { if (!replyText.trim()) setIsPaused(false); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && replyText.trim()) {
+                    e.preventDefault();
+                    sendStoryReply();
+                  }
+                }}
+                placeholder="Отправить сообщение..."
+                className="flex-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2.5 text-white text-sm placeholder:text-white/50 outline-none focus:border-white/40 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setLiked(!liked);
+                  if (!liked) toast.success("❤️");
+                }}
+                className="p-2 transition-transform active:scale-125"
+              >
+                <Heart className={cn("w-6 h-6", liked ? "fill-destructive text-destructive" : "text-white")} />
+              </button>
+              {replyText.trim() ? (
+                <button
+                  type="button"
+                  onClick={sendStoryReply}
+                  disabled={sendingReply}
+                  className="p-2 text-white active:scale-95 transition-transform disabled:opacity-50"
+                >
+                  <Send className="w-6 h-6" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate(`/chats`);
+                  }}
+                  className="p-2 text-white"
+                >
+                  <Send className="w-6 h-6 rotate-[-25deg]" />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
