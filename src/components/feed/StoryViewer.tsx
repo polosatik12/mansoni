@@ -330,12 +330,12 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
         />
 
         {/* Story image/video */}
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none bg-black">
           {currentStory.media_type === 'video' ? (
             <video 
               ref={videoRef}
               src={currentStory.media_url}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               autoPlay
               muted
               playsInline
@@ -344,7 +344,7 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
             <img 
               src={currentStory.media_url} 
               alt={`${currentUser.display_name}'s story`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           )}
           {/* Subtle overlay for readability */}

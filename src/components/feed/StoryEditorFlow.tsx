@@ -449,13 +449,12 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     }
     setIsPublishing(true);
     try {
-      let mediaToUpload: Blob | null = editedBlob;
+      // Always composite through 9:16 canvas so the uploaded image matches what the user sees
+      let mediaToUpload: Blob | null = await compositeImage();
 
-      // Always composite if we have drawings, text, or stickers
-      if (drawLines.length > 0 || textOverlays.length > 0 || stickerOverlays.length > 0) {
-        mediaToUpload = await compositeImage();
+      if (!mediaToUpload && editedBlob) {
+        mediaToUpload = editedBlob;
       }
-
       if (!mediaToUpload && selectedFile) {
         mediaToUpload = selectedFile;
       }
