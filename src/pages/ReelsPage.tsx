@@ -459,13 +459,54 @@ export function ReelsPage() {
                 )}
               </div>
 
-              {/* Progress bar */}
+              {/* Progress bar with seek */}
               {isActive && (
-                <div className="absolute bottom-[72px] left-0 right-0 z-30 h-[3px] bg-white/20">
-                  <div
-                    className="h-full bg-white rounded-full transition-none"
-                    style={{ width: `${videoProgress}%` }}
-                  />
+                <div
+                  className="absolute bottom-[72px] left-0 right-0 z-30 h-[14px] flex items-end cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const video = videoRefs.current.get(currentIndex);
+                    if (!video || !video.duration) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    video.currentTime = pct * video.duration;
+                    setVideoProgress(pct * 100);
+                  }}
+                  onTouchMove={(e) => {
+                    e.stopPropagation();
+                    const video = videoRefs.current.get(currentIndex);
+                    if (!video || !video.duration) return;
+                    const touch = e.touches[0];
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const pct = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+                    video.currentTime = pct * video.duration;
+                    setVideoProgress(pct * 100);
+                  }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    const bar = e.currentTarget;
+                    const video = videoRefs.current.get(currentIndex);
+                    if (!video || !video.duration) return;
+                    const onMove = (ev: MouseEvent) => {
+                      const rect = bar.getBoundingClientRect();
+                      const pct = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+                      video.currentTime = pct * video.duration;
+                      setVideoProgress(pct * 100);
+                    };
+                    const onUp = () => {
+                      window.removeEventListener("mousemove", onMove);
+                      window.removeEventListener("mouseup", onUp);
+                    };
+                    window.addEventListener("mousemove", onMove);
+                    window.addEventListener("mouseup", onUp);
+                  }}
+                >
+                  <div className="w-full h-[3px] bg-white/20 relative">
+                    <div
+                      className="h-full bg-white rounded-full transition-none"
+                      style={{ width: `${videoProgress}%` }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
