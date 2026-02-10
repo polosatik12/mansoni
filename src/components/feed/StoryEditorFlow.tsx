@@ -248,10 +248,11 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
   const handleDrawEnd = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
-    if (currentLineRef.current && currentLineRef.current.points.length > 1) {
-      setDrawLines(prev => [...prev, currentLineRef.current!]);
-    }
+    const finishedLine = currentLineRef.current;
     currentLineRef.current = null;
+    if (finishedLine && finishedLine.points.length > 1) {
+      setDrawLines(prev => [...prev, finishedLine]);
+    }
   };
 
   const undoDraw = () => {
