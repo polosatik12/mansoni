@@ -45,13 +45,13 @@ const mockAccounts: Account[] = [
   },
 ];
 
-// Default nav items: Лента → Reels → Чаты → Профиль | AR (отдельная кнопка)
+// Default nav items: Лента → Reels → Поиск → Чаты → Профиль (отдельная кнопка)
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Лента" },
   { to: "/reels", icon: PlaySquare, label: "Reels" },
+  { to: "/search", icon: Search, label: "Поиск" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "/profile", icon: User, label: "Профиль", hasLongPress: true },
-  { to: "/ar", label: "AR" },
 ];
 
 // Real estate service nav items
