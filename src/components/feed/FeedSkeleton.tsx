@@ -4,7 +4,7 @@ export function FeedSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-0">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="border-b border-border p-4 space-y-3">
+        <div key={i} className="border-b border-white/10 p-4 space-y-3">
           {/* Author row */}
           <div className="flex items-center gap-3">
             <Skeleton className="w-10 h-10 rounded-full" />

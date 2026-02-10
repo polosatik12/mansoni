@@ -170,7 +170,7 @@ export function PostCard({
   };
 
   return (
-    <div className="bg-white/50 dark:bg-card backdrop-blur-sm border-b border-white/60 dark:border-border">
+    <div className="bg-white/5 backdrop-blur-sm border-b border-white/10">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
@@ -178,7 +178,7 @@ export function PostCard({
             <img
               src={author.avatar}
               alt={author.name}
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-white/20"
             />
             {author.verified && (
               <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
@@ -189,7 +189,7 @@ export function PostCard({
           <div>
             <div className="flex items-center gap-1">
               <span 
-                className="font-semibold text-foreground text-sm cursor-pointer hover:underline"
+                className="font-semibold text-white text-sm cursor-pointer hover:underline"
                 onClick={goToProfile}
               >
                 {author.username}
@@ -197,7 +197,7 @@ export function PostCard({
               {author.verified && <VerifiedBadge size="sm" />}
             </div>
             {isRecommended && (
-              <p className="text-xs text-muted-foreground">Рекомендации для вас</p>
+              <p className="text-xs text-white/40">Рекомендации для вас</p>
             )}
           </div>
         </div>
@@ -205,7 +205,7 @@ export function PostCard({
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-muted-foreground h-8 w-8"
+            className="text-white/50 h-8 w-8"
             onClick={() => setShowOptions(true)}
           >
             <MoreHorizontal className="w-5 h-5" />
@@ -274,7 +274,7 @@ export function PostCard({
             onClick={handleLike}
             className={cn(
               "flex items-center gap-1.5 transition-all",
-              liked ? "text-destructive" : "text-foreground"
+              liked ? "text-destructive" : "text-white/90"
             )}
           >
             <Heart 
@@ -287,14 +287,14 @@ export function PostCard({
             <span className="text-sm">{formatNumber(likeCount)}</span>
           </button>
           <button 
-            className="flex items-center gap-1.5 text-foreground"
+            className="flex items-center gap-1.5 text-white/90"
             onClick={() => setShowComments(true)}
           >
             <MessageCircle className="w-6 h-6" />
             <span className="text-sm">{formatNumber(comments)}</span>
           </button>
           <button 
-            className="flex items-center gap-1.5 text-foreground"
+            className="flex items-center gap-1.5 text-white/90"
             onClick={() => setShowShare(true)}
           >
             <Send className="w-6 h-6" />
@@ -305,7 +305,7 @@ export function PostCard({
             onClick={handleSave}
             className={cn(
               "transition-colors",
-              saved ? "text-primary" : "text-foreground"
+              saved ? "text-primary" : "text-white/90"
             )}
           >
             <Bookmark className={cn("w-6 h-6", saved && "fill-current")} />
@@ -316,12 +316,12 @@ export function PostCard({
       {/* Caption */}
       <div className="px-4 py-2">
         <p className="text-sm">
-          <span className="font-semibold">{author.username}</span>{" "}
-          <span className="text-foreground">{truncatedContent}</span>
+          <span className="font-semibold text-white">{author.username}</span>{" "}
+          <span className="text-white/80">{truncatedContent}</span>
           {content.length > 100 && !expanded && (
             <button 
               onClick={() => setExpanded(true)}
-              className="text-muted-foreground ml-1"
+              className="text-white/50 ml-1"
             >
               ещё
             </button>
@@ -330,10 +330,10 @@ export function PostCard({
       </div>
 
       {/* Time & Translation */}
-      <div className="px-4 pb-3 flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="px-4 pb-3 flex items-center gap-2 text-xs text-white/40">
         <span>{timeAgo}</span>
         <span>·</span>
-        <button className="hover:text-foreground transition-colors">
+        <button className="hover:text-white/70 transition-colors">
           Показать перевод
         </button>
       </div>
