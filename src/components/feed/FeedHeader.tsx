@@ -40,8 +40,8 @@ export function FeedHeader() {
         top: 0,
         behavior: 'smooth'
       });
-    } else if (user.isOwn && user.stories.length === 0) {
-      // Open story editor flow
+    } else if (user.isOwn) {
+      // Own avatar always opens editor to add new story
       setStoryEditorOpen(true);
     } else if (user.stories.length > 0) {
       setSelectedStoryIndex(index);

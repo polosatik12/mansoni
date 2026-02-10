@@ -36,7 +36,8 @@ export function ChatStories({ expandProgress, onStackClick, mode }: ChatStoriesP
     }
     
     // In row mode, handle story interaction
-    if (user.isOwn && user.stories.length === 0) {
+    if (user.isOwn) {
+      // Own avatar always opens file picker to add new story
       fileInputRef.current?.click();
     } else if (user.stories.length > 0) {
       setSelectedUserIndex(index);
