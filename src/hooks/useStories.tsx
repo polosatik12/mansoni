@@ -50,9 +50,9 @@ export function useStories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStories = useCallback(async () => {
+  const fetchStories = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       setError(null);
 
       // Fetch active stories (not expired)
@@ -183,23 +183,26 @@ export function useStories() {
   }, [user]);
 
   useEffect(() => {
-    fetchStories();
+    fetchStories(true);
   }, [fetchStories]);
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates with debounce
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout>;
     const channel = supabase
       .channel('stories-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'stories' },
         () => {
-          fetchStories();
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => fetchStories(), 500);
         }
       )
       .subscribe();
 
     return () => {
+      clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [fetchStories]);
