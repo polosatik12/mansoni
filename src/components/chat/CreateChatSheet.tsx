@@ -85,15 +85,19 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated, onGroupC
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent 
         side="top" 
-        className="rounded-b-3xl border-b border-white/10 shadow-lg p-0 bg-black/40 backdrop-blur-xl"
+        className="rounded-b-3xl border-b border-white/10 shadow-lg p-0 bg-transparent"
+        overlayClassName="bg-transparent"
         hideCloseButton
       >
+        {/* Semi-transparent glass effect */}
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-xl rounded-b-3xl pointer-events-none" />
+        
         {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
+        <div className="relative z-10 flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 bg-white/30 rounded-full" />
         </div>
         
-        <div className="px-6 pb-6">
+        <div className="relative z-10 px-6 pb-6">
           <SheetHeader className="pb-4">
             <SheetTitle className="text-foreground flex items-center">
               {mode === "select" && "Создать"}
