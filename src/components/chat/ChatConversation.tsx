@@ -21,6 +21,7 @@ import { VideoPlayer, FullscreenVideoPlayer } from "./VideoPlayer";
 import { MediaMessageBubble } from "./MediaMessageBubble";
 import { SharedPostCard } from "./SharedPostCard";
 import { SharedReelCard } from "./SharedReelCard";
+import { SharedStoryCard } from "./SharedStoryCard";
 import { EmojiStickerPicker } from "./EmojiStickerPicker";
 import { MessageContextMenu } from "./MessageContextMenu";
 import { MessageReactions } from "./MessageReactions";
@@ -784,6 +785,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           const isVideo = message.media_type === 'video';
           const isSharedPost = !!message.shared_post_id;
           const isSharedReel = !!message.shared_reel_id;
+          const isSharedStory = !!(message as any).shared_story_id;
           const isRead = message.is_read;
 
           const prevMessage = index > 0 ? messages[index - 1] : null;
@@ -881,7 +883,24 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               )}
 
               <div className={`flex flex-col ${isOwn ? "items-end" : "items-start"} max-w-[75%]`}>
-              {isSharedReel && message.shared_reel_id ? (
+              {isSharedStory && (message as any).shared_story_id ? (
+                <div className="flex flex-col gap-1">
+                  <SharedStoryCard
+                    storyId={(message as any).shared_story_id}
+                    isOwn={isOwn}
+                    caption={message.content || undefined}
+                  />
+                  <div className={`flex items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    {message.edited_at && <span className="text-[10px] text-white/30 italic">ред.</span>}
+                    <span className="text-[11px] text-white/50">{formatMessageTime(message.created_at)}</span>
+                    {isOwn && (
+                      isRead 
+                        ? <CheckCheck className="w-3.5 h-3.5 text-[#6ab3f3]" />
+                        : <Check className="w-3.5 h-3.5 text-white/40" />
+                    )}
+                  </div>
+                </div>
+              ) : isSharedReel && message.shared_reel_id ? (
                 <div className="flex flex-col gap-1">
                   <SharedReelCard 
                     reelId={message.shared_reel_id} 

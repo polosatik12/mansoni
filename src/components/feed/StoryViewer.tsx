@@ -226,14 +226,12 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
       const conversationId = convData;
 
       const activeStory = currentUserStories[currentStoryInUser];
-      console.log('[StoryReply] Sending with media:', activeStory?.media_url, activeStory?.media_type);
 
       const { error: msgError } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
         content: replyText.trim(),
-        media_url: activeStory?.media_url || null,
-        media_type: activeStory?.media_type === 'video' ? 'video' : 'image',
+        shared_story_id: activeStory?.id || null,
       } as any);
 
       if (msgError) throw msgError;
