@@ -390,19 +390,32 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
           ctx.shadowBlur = 0;
         });
 
-        // Draw sticker overlays as emoji text (avoids CORS issues with external CDN images)
-        stickerOverlays.forEach(s => {
+        // Draw sticker overlays by rendering emoji to an offscreen canvas first
+        for (const s of stickerOverlays) {
           const scale = img.width / (canvasRef.current?.width || img.width);
-          const stickerSize = s.size * scale;
-          ctx.font = `${stickerSize}px serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(
-            s.emoji,
-            (s.x / 100) * img.width,
-            (s.y / 100) * img.height
-          );
-        });
+          const stickerSize = Math.round(s.size * scale);
+          
+          // Render emoji to offscreen canvas to get a clean image
+          const offscreen = document.createElement("canvas");
+          offscreen.width = stickerSize;
+          offscreen.height = stickerSize;
+          const offCtx = offscreen.getContext("2d");
+          if (offCtx) {
+            offCtx.font = `${Math.round(stickerSize * 0.85)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+            offCtx.textAlign = "center";
+            offCtx.textBaseline = "middle";
+            offCtx.fillText(s.emoji, stickerSize / 2, stickerSize / 2);
+            
+            // Draw the offscreen canvas onto the main canvas
+            ctx.drawImage(
+              offscreen,
+              (s.x / 100) * img.width - stickerSize / 2,
+              (s.y / 100) * img.height - stickerSize / 2,
+              stickerSize,
+              stickerSize
+            );
+          }
+        }
 
         canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
       };
