@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "./useAuth";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -60,6 +60,7 @@ export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initialLoadDone = useRef(false);
 
   const withTimeout = async <T,>(label: string, p: PromiseLike<T>, ms = 12000): Promise<T> => {
     let t: number | undefined;
@@ -74,7 +75,10 @@ export function useConversations() {
   };
 
   const fetchConversations = useCallback(async () => {
-    setLoading(true);
+    // Only show loading skeleton on the very first load
+    if (!initialLoadDone.current) {
+      setLoading(true);
+    }
     setError(null);
 
     if (!user) {
@@ -206,6 +210,7 @@ export function useConversations() {
       setConversations([]);
     } finally {
       setLoading(false);
+      initialLoadDone.current = true;
     }
   }, [user]);
 
@@ -213,9 +218,11 @@ export function useConversations() {
     fetchConversations();
   }, [fetchConversations]);
 
-  // Realtime subscription for conversation updates
+  // Realtime subscription for conversation updates — debounced to prevent floods
   useEffect(() => {
     if (!user) return;
+
+    let debounceTimer: number | undefined;
 
     const channel = supabase
       .channel('conversations-updates')
@@ -227,12 +234,17 @@ export function useConversations() {
           table: 'conversations',
         },
         () => {
-          fetchConversations();
+          // Debounce: only refetch once per 500ms
+          if (debounceTimer) window.clearTimeout(debounceTimer);
+          debounceTimer = window.setTimeout(() => {
+            fetchConversations();
+          }, 500);
         }
       )
       .subscribe();
 
     return () => {
+      if (debounceTimer) window.clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [user, fetchConversations]);
