@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Plus, Loader2, User } from "lucide-react";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
 import { ServicesMenu } from "@/components/layout/ServicesMenu";
@@ -27,9 +27,10 @@ const Y_DIFF = COLLAPSED_Y - HEADER_HEIGHT;
 export function FeedHeader() {
   const { collapseProgress } = useScrollCollapse(100);
   const scrollContainerRef = useScrollContainer();
-  const { usersWithStories, loading } = useStories();
+  const { usersWithStories, loading, uploadStory } = useStories();
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle story click - either scroll to top or open viewer
   const handleStoryClick = (index: number, user: UserWithStories) => {
@@ -38,9 +39,22 @@ export function FeedHeader() {
         top: 0,
         behavior: 'smooth'
       });
+    } else if (user.isOwn && user.stories.length === 0) {
+      // Open file picker to add story
+      fileInputRef.current?.click();
     } else if (user.stories.length > 0) {
       setSelectedStoryIndex(index);
       setStoryViewerOpen(true);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadStory(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -82,6 +96,14 @@ export function FeedHeader() {
   const containerHeight = HEADER_HEIGHT + EXPANDED_ROW_HEIGHT * (1 - collapseProgress);
 
   return (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
     <div 
       className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl overflow-hidden will-change-auto border-b border-white/10"
       style={{ height: `${containerHeight}px` }}
@@ -199,5 +221,6 @@ export function FeedHeader() {
         onClose={() => setStoryViewerOpen(false)}
       />
     </div>
+    </>
   );
 }
