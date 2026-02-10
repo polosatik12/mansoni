@@ -14,8 +14,8 @@ export function AppLayout() {
   return (
     <div 
       className={cn(
-        "h-full flex flex-col safe-area-top safe-area-left safe-area-right relative",
-        isReelsPage ? "bg-black" : "bg-background"
+        "h-full flex flex-col safe-area-left safe-area-right relative",
+        isReelsPage ? "bg-black" : "bg-background safe-area-top"
       )}
       style={{ 
         position: 'relative',
@@ -27,8 +27,10 @@ export function AppLayout() {
         <main 
           ref={mainRef}
           className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden max-w-lg mx-auto w-full native-scroll relative z-10 scrollbar-hide",
-            !isReelsPage && "pb-20"
+            "flex-1 overflow-x-hidden max-w-lg mx-auto w-full relative z-10",
+            isReelsPage
+              ? "overflow-hidden"
+              : "overflow-y-auto native-scroll scrollbar-hide pb-20"
           )}
           style={{
             WebkitOverflowScrolling: 'touch',
@@ -40,7 +42,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </ScrollContainerProvider>
-      <BottomNav hidden={shouldHideBottomNav} />
+      <BottomNav hidden={shouldHideBottomNav || isReelsPage} />
       {/* Call UI is now handled globally by GlobalCallOverlay in App.tsx */}
     </div>
   );
