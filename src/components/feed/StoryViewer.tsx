@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, Heart, Send } from "lucide-react";
+import { X, Heart, Send, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { formatDistanceToNow } from "date-fns";
@@ -20,7 +20,7 @@ interface StoryViewerProps {
 }
 
 export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClose }: StoryViewerProps) {
-  const { markAsViewed } = useStories();
+  const { markAsViewed, deleteStory } = useStories();
   const { setIsStoryOpen } = useChatOpen();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -33,6 +33,8 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
   const [replyText, setReplyText] = useState("");
   const [liked, setLiked] = useState(false);
   const [sendingReply, setSendingReply] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const replyInputRef = useRef<HTMLInputElement>(null);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -207,8 +209,10 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
   useEffect(() => {
     setReplyText("");
     setLiked(false);
+    setShowDeleteConfirm(false);
   }, [currentUserIndex, currentStoryInUser]);
 
+  const isOwnStory = currentUser && currentUser.isOwn;
   const isOtherUser = currentUser && !currentUser.isOwn;
 
   const sendStoryReply = useCallback(async () => {
@@ -235,19 +239,12 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
         shared_story_id: activeStory?.id || null,
       };
 
-      console.log("[StoryReply] Inserting:", JSON.stringify(insertPayload));
-
-      const { data: insertedData, error: msgError } = await supabase
+      const { error: msgError } = await supabase
         .from("messages")
         .insert(insertPayload as any)
         .select() as any;
 
-      if (msgError) {
-        console.error("[StoryReply] Insert error:", msgError);
-        throw msgError;
-      }
-
-      console.log("[StoryReply] Inserted:", insertedData);
+      if (msgError) throw msgError;
 
       await supabase
         .from("conversations")
@@ -275,6 +272,32 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
       return '';
     }
   })();
+
+  const handleDeleteStory = async () => {
+    if (!currentStory || deleting) return;
+    setDeleting(true);
+    setIsPaused(true);
+    try {
+      await deleteStory(currentStory.id);
+      toast.success("История удалена");
+      if (totalStoriesForUser <= 1) {
+        onClose();
+      } else if (currentStoryInUser >= totalStoriesForUser - 1) {
+        setCurrentStoryInUser(prev => Math.max(0, prev - 1));
+        setProgress(0);
+      } else {
+        setProgress(0);
+      }
+      setShowDeleteConfirm(false);
+    } catch {
+      toast.error("Ошибка удаления");
+    } finally {
+      setDeleting(false);
+      setIsPaused(false);
+    }
+  };
+
+
 
   return createPortal(
     <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
@@ -373,6 +396,18 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
               <p className="text-white/60 text-xs">{timeAgo} назад</p>
             </div>
           </button>
+          {isOwnStory && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteConfirm(true);
+                setIsPaused(true);
+              }}
+              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
           <button 
             onClick={(e) => {
               e.stopPropagation();
@@ -444,6 +479,45 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
                   <Send className="w-6 h-6 rotate-[-25deg]" />
                 </button>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Delete confirmation for own stories */}
+        {showDeleteConfirm && (
+          <div 
+            className="absolute inset-0 z-50 flex items-center justify-center"
+            onClick={() => { setShowDeleteConfirm(false); setIsPaused(false); }}
+          >
+            <div className="absolute inset-0 bg-black/60" />
+            <div 
+              className="relative rounded-2xl overflow-hidden border border-white/20 p-6 max-w-[280px] w-[85vw]"
+              style={{
+                background: "rgba(30,40,55,0.95)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-white font-semibold text-lg mb-2">Удалить историю?</h3>
+              <p className="text-white/60 text-sm mb-5">
+                Это действие нельзя отменить.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); setIsPaused(false); }}
+                  className="flex-1 py-2.5 rounded-xl text-white/70 text-sm font-medium hover:bg-white/10 transition-colors border border-white/10"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={handleDeleteStory}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 rounded-xl bg-red-500/80 text-white text-sm font-medium hover:bg-red-500 transition-colors disabled:opacity-50"
+                >
+                  {deleting ? "Удаление..." : "Удалить"}
+                </button>
+              </div>
             </div>
           </div>
         )}

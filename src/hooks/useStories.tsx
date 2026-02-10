@@ -271,5 +271,16 @@ export function useStories() {
     }
   }, [user, fetchStories]);
 
-  return { usersWithStories, loading, error, refetch: fetchStories, markAsViewed, uploadStory };
+  const deleteStory = useCallback(async (storyId: string) => {
+    if (!user) return;
+    try {
+      await (supabase.from('stories' as any).delete().eq('id', storyId).eq('author_id', user.id) as any);
+      await fetchStories();
+    } catch (err) {
+      console.error('Error deleting story:', err);
+      throw err;
+    }
+  }, [user, fetchStories]);
+
+  return { usersWithStories, loading, error, refetch: fetchStories, markAsViewed, uploadStory, deleteStory };
 }
