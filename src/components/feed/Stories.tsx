@@ -53,12 +53,7 @@ export function Stories({ onOpenStory }: StoriesProps) {
 
   const handleStoryClick = (index: number, user: UserWithStories) => {
     if (user.isOwn) {
-      if (user.stories.length > 0) {
-        setSelectedUserIndex(index);
-        setViewerOpen(true);
-      } else {
-        setStoryEditorOpen(true);
-      }
+      setStoryEditorOpen(true);
       return;
     }
     if (user.stories.length > 0) {
