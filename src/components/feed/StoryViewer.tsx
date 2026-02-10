@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
@@ -205,8 +206,8 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
     }
   })();
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
       {/* Story content */}
       <div
         className="relative w-full h-full max-w-md mx-auto overflow-hidden"
@@ -323,6 +324,7 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

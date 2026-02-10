@@ -198,15 +198,15 @@ export function FeedHeader() {
           </button>
         );
       })}
-
-      {/* Story Viewer */}
-      <StoryViewer
-        usersWithStories={usersWithStories}
-        initialUserIndex={selectedStoryIndex}
-        isOpen={storyViewerOpen}
-        onClose={() => setStoryViewerOpen(false)}
-      />
     </div>
+
+    {/* Story Viewer - outside overflow:hidden container */}
+    <StoryViewer
+      usersWithStories={usersWithStories}
+      initialUserIndex={selectedStoryIndex}
+      isOpen={storyViewerOpen}
+      onClose={() => setStoryViewerOpen(false)}
+    />
 
     {/* Story Editor Flow */}
     <StoryEditorFlow
