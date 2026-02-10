@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronDown, Check } from "lucide-react";
+import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -77,6 +78,7 @@ const incomeConfirmation = [
 ];
 
 export function MortgageCalculator() {
+  const { setIsCreatingContent } = useChatOpen();
   const [isOpen, setIsOpen] = useState(false);
   const [region, setRegion] = useState("Москва");
   const [propertyType, setPropertyType] = useState("new");
@@ -135,7 +137,7 @@ export function MortgageCalculator() {
   );
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet open={isOpen} onOpenChange={(open) => { setIsOpen(open); setIsCreatingContent(open); }}>
       <SheetTrigger asChild>
         <Button 
           variant="outline" 
@@ -149,7 +151,7 @@ export function MortgageCalculator() {
         {/* Header */}
         <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center">
-            <button onClick={() => setIsOpen(false)} className="p-1 -ml-1">
+            <button onClick={() => { setIsOpen(false); setIsCreatingContent(false); }} className="p-1 -ml-1">
               <ChevronLeft className="w-6 h-6" />
             </button>
             <SheetTitle className="flex-1 text-center pr-6">Подбор ипотеки</SheetTitle>
