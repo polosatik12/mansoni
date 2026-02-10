@@ -252,7 +252,7 @@ export function ProfilePage() {
                     const imageUrl = getPostImage(post);
                     const isVideo = post.post_media?.[0]?.media_type === 'video';
                     return (
-                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10">
+                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10" onClick={() => navigate(`/post/${post.id}`)}>
                         {imageUrl ? (
                           <img
                             src={imageUrl}
@@ -302,7 +302,7 @@ export function ProfilePage() {
                   {savedPosts.map((post: any) => {
                     const imageUrl = post.post_media?.[0]?.media_url;
                     return (
-                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10">
+                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10" onClick={() => navigate(`/post/${post.id}`)}>
                         {imageUrl ? (
                           <img
                             src={imageUrl}
