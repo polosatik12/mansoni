@@ -99,11 +99,11 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated, onGroupC
         
         <div className="relative z-10 px-6 pb-6">
           <SheetHeader className="pb-4">
-            <SheetTitle className="text-foreground flex items-center">
+            <SheetTitle className="text-white flex items-center">
               {mode === "select" && "Создать"}
               {mode === "channel" && (
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setMode("select")} className="text-muted-foreground hover:text-foreground">
+                   <button onClick={() => setMode("select")} className="text-white/50 hover:text-white">
                     ←
                   </button>
                   Новый канал
@@ -111,7 +111,7 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated, onGroupC
               )}
               {mode === "group" && (
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setMode("select")} className="text-muted-foreground hover:text-foreground">
+                  <button onClick={() => setMode("select")} className="text-white/50 hover:text-white">
                     ←
                   </button>
                   Новая группа
@@ -124,27 +124,27 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated, onGroupC
             <div className="space-y-1">
               <button
                 onClick={() => setMode("channel")}
-                className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors text-left"
+                className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-white/10 transition-colors text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
                   <Megaphone className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <div className="font-medium text-foreground">Новый канал</div>
-                  <div className="text-sm text-muted-foreground">Создайте канал для публикаций</div>
+                  <div className="font-medium text-white">Новый канал</div>
+                  <div className="text-sm text-white/50">Создайте канал для публикаций</div>
                 </div>
               </button>
               
               <button
                 onClick={() => setMode("group")}
-                className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors text-left"
+                className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-white/10 transition-colors text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-500" />
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <div className="font-medium text-foreground">Новая группа</div>
-                  <div className="text-sm text-muted-foreground">Создайте групповой чат</div>
+                  <div className="font-medium text-white">Новая группа</div>
+                  <div className="text-sm text-white/50">Создайте групповой чат</div>
                 </div>
               </button>
             </div>
