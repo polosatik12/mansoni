@@ -390,28 +390,19 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
           ctx.shadowBlur = 0;
         });
 
-        // Draw sticker overlays as images
-        const stickerPromises = stickerOverlays.map(s => {
-          return new Promise<void>((res) => {
-            const stickerImg = new Image();
-            stickerImg.crossOrigin = "anonymous";
-            stickerImg.onload = () => {
-              const scale = img.width / (canvasRef.current?.width || img.width);
-              const stickerSize = s.size * scale;
-              ctx.drawImage(
-                stickerImg,
-                (s.x / 100) * img.width - stickerSize / 2,
-                (s.y / 100) * img.height - stickerSize / 2,
-                stickerSize,
-                stickerSize
-              );
-              res();
-            };
-            stickerImg.onerror = () => res();
-            stickerImg.src = emojiToImageUrl(s.emoji);
-          });
+        // Draw sticker overlays as emoji text (avoids CORS issues with external CDN images)
+        stickerOverlays.forEach(s => {
+          const scale = img.width / (canvasRef.current?.width || img.width);
+          const stickerSize = s.size * scale;
+          ctx.font = `${stickerSize}px serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(
+            s.emoji,
+            (s.x / 100) * img.width,
+            (s.y / 100) * img.height
+          );
         });
-        await Promise.all(stickerPromises);
 
         canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
       };
