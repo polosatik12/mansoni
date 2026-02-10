@@ -85,7 +85,7 @@ export function CreateChatSheet({ open, onOpenChange, onChannelCreated, onGroupC
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent 
         side="top" 
-        className="rounded-b-3xl border-b border-border shadow-lg p-0 bg-card"
+        className="rounded-b-3xl border-b border-white/10 shadow-lg p-0 bg-black/40 backdrop-blur-xl"
         hideCloseButton
       >
         {/* Drag handle */}
