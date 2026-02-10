@@ -118,12 +118,16 @@ export function useStories() {
         }
       }
 
-      // Group stories by author
+      // Group stories by author (chronological: oldest first for viewer)
       const storiesByAuthor = new Map<string, Story[]>();
       stories.forEach(story => {
         const existing = storiesByAuthor.get(story.author_id) || [];
         existing.push(story);
         storiesByAuthor.set(story.author_id, existing);
+      });
+      // Reverse each user's stories so oldest is first (viewer progresses old→new)
+      storiesByAuthor.forEach((userStories, authorId) => {
+        storiesByAuthor.set(authorId, userStories.reverse());
       });
 
       // Build users with stories array
