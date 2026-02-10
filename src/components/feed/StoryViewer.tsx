@@ -262,9 +262,14 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
     }
   }, [user, currentUser, replyText, sendingReply, currentUserStories, currentStoryInUser]);
 
+  // Clamp index to valid range when stories array changes (e.g. after deletion)
+  const safeStoryIndex = Math.min(currentStoryInUser, currentUserStories.length - 1);
+  
   if (!isOpen || !currentUser || currentUserStories.length === 0) return null;
 
-  const currentStory = currentUserStories[currentStoryInUser];
+  const currentStory = currentUserStories[safeStoryIndex];
+  if (!currentStory) return null;
+  
   const timeAgo = (() => {
     try {
       return formatDistanceToNow(new Date(currentStory.created_at), { addSuffix: false, locale: ru });
