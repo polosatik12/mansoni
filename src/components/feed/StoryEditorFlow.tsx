@@ -196,7 +196,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
     const allLines = [...drawLines];
     if (currentLineRef.current) allLines.push(currentLineRef.current);
     allLines.forEach(line => {
-      if (line.points.length < 2) return;
+      if (!line || !line.points || line.points.length < 2) return;
       ctx.beginPath();
       ctx.strokeStyle = line.color;
       ctx.lineWidth = line.width;
@@ -298,7 +298,7 @@ export function StoryEditorFlow({ isOpen, onClose }: StoryEditorFlowProps) {
 
         // Draw lines
         drawLines.forEach(line => {
-          if (line.points.length < 2) return;
+          if (!line || !line.points || line.points.length < 2) return;
           ctx.beginPath();
           ctx.strokeStyle = line.color;
           ctx.lineWidth = line.width * (img.width / (canvasRef.current?.width || img.width));
