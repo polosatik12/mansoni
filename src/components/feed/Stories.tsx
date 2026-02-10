@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { StoryViewer } from "./StoryViewer";
+import { StoryEditorFlow } from "./StoryEditorFlow";
 
 interface StoriesProps {
   onOpenStory?: (userIndex: number) => void;
@@ -11,10 +12,10 @@ interface StoriesProps {
 
 export function Stories({ onOpenStory }: StoriesProps) {
   const { collapseProgress } = useScrollCollapse(100);
-  const { usersWithStories, loading, uploadStory } = useStories();
+  const { usersWithStories, loading } = useStories();
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [storyEditorOpen, setStoryEditorOpen] = useState(false);
 
   // Telegram-style: stack to the left
   const maxVisibleInStack = 4;
@@ -52,21 +53,10 @@ export function Stories({ onOpenStory }: StoriesProps) {
 
   const handleStoryClick = (index: number, user: UserWithStories) => {
     if (user.isOwn && user.stories.length === 0) {
-      // Open file picker to add story
-      fileInputRef.current?.click();
+      setStoryEditorOpen(true);
     } else if (user.stories.length > 0) {
       setSelectedUserIndex(index);
       setViewerOpen(true);
-    }
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await uploadStory(file);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
@@ -80,13 +70,6 @@ export function Stories({ onOpenStory }: StoriesProps) {
 
   return (
     <>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*"
-        className="hidden"
-        onChange={handleFileSelect}
-      />
       
       <div 
         className="sticky top-0 z-30 bg-white/40 dark:bg-background backdrop-blur-xl transition-all duration-150"
@@ -193,6 +176,11 @@ export function Stories({ onOpenStory }: StoriesProps) {
         initialUserIndex={selectedUserIndex}
         isOpen={viewerOpen}
         onClose={() => setViewerOpen(false)}
+      />
+
+      <StoryEditorFlow
+        isOpen={storyEditorOpen}
+        onClose={() => setStoryEditorOpen(false)}
       />
     </>
   );
