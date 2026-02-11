@@ -84,7 +84,7 @@ export function HomePage() {
                   author={{
                     name: post.author?.display_name || "Пользователь",
                     username: post.author?.display_name || post.author_id.slice(0, 8),
-                    avatar: post.author?.avatar_url || `https://i.pravatar.cc/150?u=${post.author_id}`,
+                    avatar: post.author?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_id}`,
                     verified: false,
                   }}
                   content={post.content || ""}

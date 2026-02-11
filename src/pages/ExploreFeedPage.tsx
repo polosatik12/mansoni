@@ -73,7 +73,7 @@ export function ExploreFeedPage() {
                 author={{
                   name: post.profile?.display_name || "Пользователь",
                   username: post.profile?.display_name || "user",
-                  avatar: post.profile?.avatar_url || "",
+                  avatar: post.profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_id}`,
                   verified: post.profile?.verified,
                 }}
                 content={post.content || ""}
