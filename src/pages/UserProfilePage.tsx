@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useProfileByUsername, useUserPosts } from "@/hooks/useProfile";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { FollowersSheet } from "@/components/profile/FollowersSheet";
 import { StoryViewer } from "@/components/feed/StoryViewer";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
@@ -280,12 +280,12 @@ export function UserProfilePage() {
               aria-label="Open stories"
             >
               <div className="w-full h-full rounded-full bg-background p-[2px]">
-                <Avatar className="w-full h-full">
-                  <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
-                  <AvatarFallback className="bg-muted">
-                    <User className="w-8 h-8 text-muted-foreground" />
-                  </AvatarFallback>
-                </Avatar>
+                <GradientAvatar
+                  name={profile.display_name || "User"}
+                  seed={profile.user_id}
+                  avatarUrl={profile.avatar_url}
+                  size="lg"
+                />
               </div>
             </button>
           </div>
