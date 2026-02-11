@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SimpleMediaEditor } from "@/components/editor";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
+import { BrandBackground } from "@/components/ui/brand-background";
 
 interface CreatePostSheetProps {
   isOpen: boolean;
@@ -187,7 +188,8 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-background">
+    <div className="fixed inset-0 z-[70] flex flex-col">
+      <BrandBackground />
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -199,11 +201,11 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border safe-area-top">
-        <Button variant="ghost" size="icon" onClick={handleClose} disabled={isUploading}>
+      <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20 backdrop-blur-xl safe-area-top">
+        <Button variant="ghost" size="icon" onClick={handleClose} disabled={isUploading} className="text-white hover:bg-white/10">
           <X className="w-6 h-6" />
         </Button>
-        <h1 className="font-semibold text-lg">Новая публикация</h1>
+        <h1 className="font-semibold text-lg text-white">Новая публикация</h1>
         <Button 
           size="sm" 
           className="rounded-full px-5 font-semibold"
@@ -219,7 +221,7 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto native-scroll">
+      <div className="relative z-10 flex-1 overflow-y-auto native-scroll">
         {/* Author */}
         <div className="flex items-center gap-3 px-4 py-3">
           <img
@@ -228,8 +230,8 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
             className="w-10 h-10 rounded-full object-cover"
           />
           <div>
-            <p className="font-semibold text-sm">{user?.email?.split("@")[0] || "user"}</p>
-            <button className="flex items-center gap-1 text-xs text-muted-foreground">
+            <p className="font-semibold text-sm text-white">{user?.email?.split("@")[0] || "user"}</p>
+            <button className="flex items-center gap-1 text-xs text-white/50">
               <span>Все</span>
               <ChevronDown className="w-3 h-3" />
             </button>
@@ -242,7 +244,7 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
             placeholder="О чём вы думаете?"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="min-h-[120px] border-0 resize-none text-base p-0 focus-visible:ring-0 placeholder:text-muted-foreground"
+            className="min-h-[120px] border-0 resize-none text-base p-0 focus-visible:ring-0 bg-transparent text-white placeholder:text-white/30"
             disabled={isUploading}
           />
         </div>
@@ -258,13 +260,11 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
                     alt={`Selected ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
-                  {/* Edit badge if edited */}
                   {image.edited && (
                     <div className="absolute top-2 left-2 px-2 py-0.5 bg-primary/90 rounded-full text-[10px] text-primary-foreground font-medium">
                       Изменено
                     </div>
                   )}
-                  {/* Action buttons overlay */}
                   <div className="absolute top-2 right-2 flex gap-1.5">
                     <button
                       onClick={() => handleEditImage(index)}
@@ -284,7 +284,7 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
+            <p className="text-xs text-white/40 mt-2 text-center">
               {selectedImages.length}/10 изображений • Нажмите ✨ для редактирования
             </p>
           </div>
@@ -292,9 +292,9 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
 
         {/* Add to post */}
         <div className="px-4 py-3 mt-auto">
-          <div className="border border-border rounded-xl p-3">
+          <div className="border border-white/10 rounded-xl p-3 bg-white/5 backdrop-blur-xl">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-sm">Добавить в публикацию</span>
+              <span className="font-medium text-sm text-white">Добавить в публикацию</span>
             </div>
             <div className="flex items-center gap-4">
               <button 
@@ -313,8 +313,8 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
               <button className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
                 <MapPin className="w-5 h-5 text-red-500" />
               </button>
-              <button className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+              <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                <MoreHorizontal className="w-5 h-5 text-white/50" />
               </button>
             </div>
           </div>
@@ -322,17 +322,17 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
 
         {/* Options */}
         <div className="px-4 pb-6 space-y-1">
-          <button className="w-full flex items-center justify-between py-3 border-b border-border">
-            <span className="text-sm">Добавить музыку</span>
-            <ChevronDown className="w-5 h-5 text-muted-foreground -rotate-90" />
+          <button className="w-full flex items-center justify-between py-3 border-b border-white/10">
+            <span className="text-sm text-white">Добавить музыку</span>
+            <ChevronDown className="w-5 h-5 text-white/40 -rotate-90" />
           </button>
-          <button className="w-full flex items-center justify-between py-3 border-b border-border">
-            <span className="text-sm">Настройки аудитории</span>
-            <ChevronDown className="w-5 h-5 text-muted-foreground -rotate-90" />
+          <button className="w-full flex items-center justify-between py-3 border-b border-white/10">
+            <span className="text-sm text-white">Настройки аудитории</span>
+            <ChevronDown className="w-5 h-5 text-white/40 -rotate-90" />
           </button>
-          <button className="w-full flex items-center justify-between py-3 border-b border-border">
-            <span className="text-sm">Расширенные настройки</span>
-            <ChevronDown className="w-5 h-5 text-muted-foreground -rotate-90" />
+          <button className="w-full flex items-center justify-between py-3 border-b border-white/10">
+            <span className="text-sm text-white">Расширенные настройки</span>
+            <ChevronDown className="w-5 h-5 text-white/40 -rotate-90" />
           </button>
         </div>
       </div>
