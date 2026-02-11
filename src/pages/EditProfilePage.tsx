@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
-import { Switch } from '@/components/ui/switch';
+import { BrandBackground } from '@/components/ui/brand-background';
 
 export function EditProfilePage() {
   const navigate = useNavigate();
@@ -84,8 +84,9 @@ export function EditProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="min-h-screen relative flex items-center justify-center">
+        <BrandBackground />
+        <Loader2 className="w-8 h-8 animate-spin text-white/50" />
       </div>
     );
   }
@@ -93,14 +94,15 @@ export function EditProfilePage() {
   const genderLabel = gender === 'male' ? 'Мужской' : gender === 'female' ? 'Женский' : 'Не указан';
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      <BrandBackground />
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="sticky top-0 z-10 bg-black/20 backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex items-center justify-between px-4 h-12">
           <button onClick={() => navigate(-1)} className="p-1">
-            <ArrowLeft className="w-6 h-6 text-foreground" />
+            <ArrowLeft className="w-6 h-6 text-white" />
           </button>
-          <h1 className="text-base font-semibold text-foreground">Редактировать профиль</h1>
+          <h1 className="text-base font-semibold text-white">Редактировать профиль</h1>
           <button
             onClick={handleSave}
             disabled={saving || uploading}
@@ -131,7 +133,7 @@ export function EditProfilePage() {
           <button
             onClick={handleAvatarClick}
             disabled={uploading}
-            className="mt-3 text-primary text-sm font-semibold"
+            className="mt-3 text-primary text-sm font-semibold drop-shadow-lg"
           >
             Изменить фото
           </button>
@@ -145,7 +147,7 @@ export function EditProfilePage() {
         </div>
 
         {/* Fields — Instagram-style rows */}
-        <div className="border-t border-border">
+        <div className="border-t border-white/10">
           {/* Имя */}
           <EditRow
             label="Имя"
@@ -184,15 +186,15 @@ export function EditProfilePage() {
 
           {/* Пол */}
           <div
-            className="flex items-center px-4 py-3.5 border-b border-border cursor-pointer active:bg-muted/30"
+            className="flex items-center px-4 py-3.5 border-b border-white/10 cursor-pointer active:bg-white/5"
             onClick={() => {
               const next = gender === 'male' ? 'female' : gender === 'female' ? '' : 'male';
               setGender(next);
             }}
           >
-            <span className="text-sm text-muted-foreground w-28 shrink-0">Пол</span>
-            <span className="flex-1 text-sm text-foreground">{genderLabel}</span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-white/60 w-28 shrink-0">Пол</span>
+            <span className="flex-1 text-sm text-white">{genderLabel}</span>
+            <ChevronRight className="w-4 h-4 text-white/40" />
           </div>
         </div>
       </div>
@@ -224,10 +226,10 @@ function EditRow({ label, value, placeholder, editing, onTap, onChange, onBlur, 
 
   return (
     <div
-      className="flex items-start px-4 py-3.5 border-b border-border cursor-text"
+      className="flex items-start px-4 py-3.5 border-b border-white/10 cursor-text"
       onClick={onTap}
     >
-      <span className="text-sm text-muted-foreground w-28 shrink-0 pt-0.5">{label}</span>
+      <span className="text-sm text-white/60 w-28 shrink-0 pt-0.5">{label}</span>
       <div className="flex-1 min-w-0">
         {editing ? (
           multiline ? (
@@ -239,7 +241,7 @@ function EditRow({ label, value, placeholder, editing, onTap, onChange, onBlur, 
               placeholder={placeholder}
               maxLength={maxLength}
               rows={3}
-              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none resize-none"
+              className="w-full bg-transparent text-sm text-white placeholder:text-white/30 outline-none resize-none"
             />
           ) : (
             <input
@@ -249,11 +251,11 @@ function EditRow({ label, value, placeholder, editing, onTap, onChange, onBlur, 
               onBlur={onBlur}
               placeholder={placeholder}
               maxLength={maxLength}
-              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none"
+              className="w-full bg-transparent text-sm text-white placeholder:text-white/30 outline-none"
             />
           )
         ) : (
-          <span className={`text-sm ${value ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+          <span className={`text-sm ${value ? 'text-white' : 'text-white/30'}`}>
             {value || placeholder}
           </span>
         )}
