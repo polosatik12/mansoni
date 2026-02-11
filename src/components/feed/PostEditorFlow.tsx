@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { X, ChevronLeft, ChevronRight, Music, Type, Layers, Sparkles, SlidersHorizontal, Users, MapPin, MessageSquare, HelpCircle, Eye, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BrandBackground } from "@/components/ui/brand-background";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
@@ -115,7 +116,8 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-background">
+    <div className="fixed inset-0 z-[70] flex flex-col">
+      <BrandBackground />
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -130,11 +132,11 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
       {step === "gallery" && (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border safe-area-top">
-            <Button variant="ghost" size="icon" onClick={handleClose}>
+          <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20 backdrop-blur-xl safe-area-top">
+            <Button variant="ghost" size="icon" onClick={handleClose} className="text-white hover:bg-white/10">
               <X className="w-6 h-6" />
             </Button>
-            <h1 className="font-semibold text-lg">Новая публикация</h1>
+            <h1 className="font-semibold text-lg text-white">Новая публикация</h1>
             <Button 
               variant="link" 
               className="text-primary font-semibold px-0"
@@ -149,7 +151,6 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
           <div className="aspect-square relative overflow-hidden">
             {selectedImages.length > 0 ? (
               <>
-                {/* Blurred Background */}
                 <div 
                   className="absolute inset-0 scale-150 blur-3xl opacity-50"
                   style={{ 
@@ -166,15 +167,15 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
                 />
               </>
             ) : (
-              <div className="w-full h-full bg-muted/30 flex items-center justify-center text-muted-foreground">
+              <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/40">
                 Выберите фото
               </div>
             )}
           </div>
 
           {/* Gallery Header */}
-          <div className="flex items-center justify-between px-4 py-3">
-            <button className="flex items-center gap-1 font-semibold">
+          <div className="relative z-10 flex items-center justify-between px-4 py-3">
+            <button className="flex items-center gap-1 font-semibold text-white">
               Недавние
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -187,15 +188,14 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
           </div>
 
           {/* Gallery Grid */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="relative z-10 flex-1 overflow-y-auto">
             <div className="grid grid-cols-4 gap-[2px]">
-              {/* Add from gallery button */}
               <button 
-                className="aspect-square bg-muted flex flex-col items-center justify-center gap-1"
+                className="aspect-square bg-white/5 flex flex-col items-center justify-center gap-1"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <ImagePlus className="w-6 h-6 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">Галерея</span>
+                <ImagePlus className="w-6 h-6 text-white/50" />
+                <span className="text-[10px] text-white/50">Галерея</span>
               </button>
               
               {allImages.map((img) => (
@@ -230,7 +230,7 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
           </div>
 
           {/* Content Type Tabs */}
-          <div className="border-t border-border safe-area-bottom">
+          <div className="relative z-10 border-t border-white/10 bg-black/20 backdrop-blur-xl safe-area-bottom">
             <div className="flex justify-center gap-8 py-4">
               {[
                 { id: "post", label: "ПУБЛИКАЦИЯ" },
@@ -242,7 +242,7 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
                   onClick={() => setContentType(type.id as ContentType)}
                   className={cn(
                     "text-sm font-semibold transition-colors",
-                    contentType === type.id ? "text-foreground" : "text-muted-foreground"
+                    contentType === type.id ? "text-white" : "text-white/40"
                   )}
                 >
                   {type.label}
@@ -287,16 +287,16 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
           </div>
 
           {/* Editor Tools */}
-          <div className="bg-card border-t border-border safe-area-bottom">
+          <div className="relative z-10 bg-black/20 backdrop-blur-xl border-t border-white/10 safe-area-bottom">
             <div className="flex justify-around py-4">
               {editorTools.map((tool) => {
                 const Icon = tool.icon;
                 return (
                   <button key={tool.id} className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
-                      <Icon className="w-5 h-5" />
+                    <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-xs">{tool.label}</span>
+                    <span className="text-xs text-white/70">{tool.label}</span>
                   </button>
                 );
               })}
@@ -319,16 +319,16 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
       {step === "details" && (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border safe-area-top">
-            <Button variant="ghost" size="icon" onClick={handleBack}>
+          <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20 backdrop-blur-xl safe-area-top">
+            <Button variant="ghost" size="icon" onClick={handleBack} className="text-white hover:bg-white/10">
               <ChevronLeft className="w-6 h-6" />
             </Button>
-            <h1 className="font-semibold text-lg">Новая публикация</h1>
+            <h1 className="font-semibold text-lg text-white">Новая публикация</h1>
             <div className="w-10" />
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto native-scroll">
+          <div className="relative z-10 flex-1 overflow-y-auto native-scroll">
             {/* Preview */}
             <div className="p-4 flex justify-center">
               <div className="w-48 aspect-[3/4] rounded-xl overflow-hidden shadow-lg">
@@ -346,39 +346,37 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
                 placeholder="Добавьте подпись..."
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                className="w-full bg-transparent resize-none outline-none text-foreground placeholder:text-muted-foreground min-h-[60px]"
+                className="w-full bg-transparent resize-none outline-none text-white placeholder:text-white/30 min-h-[60px]"
               />
             </div>
 
             {/* Quick Actions */}
             <div className="px-4 pb-4 flex gap-2">
-              <button className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
+              <button className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white">
                 <MessageSquare className="w-4 h-4" />
                 <span className="text-sm font-medium">Опрос</span>
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
+              <button className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white">
                 <HelpCircle className="w-4 h-4" />
                 <span className="text-sm font-medium">Подсказка</span>
               </button>
             </div>
 
             {/* Options */}
-            <div className="border-t border-border">
-              {/* Add Audio */}
-              <button className="w-full flex items-center gap-4 px-4 py-4 border-b border-border">
+            <div className="border-t border-white/10">
+              <button className="w-full flex items-center gap-4 px-4 py-4 border-b border-white/10 text-white">
                 <Music className="w-6 h-6" />
                 <span className="flex-1 text-left font-medium">Добавьте аудио</span>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
-              {/* Suggested Tracks */}
-              <div className="px-4 py-3 border-b border-border">
+              <div className="px-4 py-3 border-b border-white/10">
                 <ScrollArea className="w-full">
                   <div className="flex gap-2">
                     {suggestedTracks.map((track) => (
                       <button 
                         key={track.id}
-                        className="flex items-center gap-2 px-3 py-2 bg-muted rounded-full flex-shrink-0"
+                        className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-full flex-shrink-0 text-white"
                       >
                         <img src={track.cover} alt="" className="w-6 h-6 rounded-full" />
                         <span className="text-sm">↗ {track.title}</span>
@@ -389,26 +387,23 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
                 </ScrollArea>
               </div>
 
-              {/* Tag People */}
-              <button className="w-full flex items-center gap-4 px-4 py-4 border-b border-border">
+              <button className="w-full flex items-center gap-4 px-4 py-4 border-b border-white/10 text-white">
                 <Users className="w-6 h-6" />
                 <span className="flex-1 text-left font-medium">Отметить людей</span>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
-              {/* Add Location */}
-              <button className="w-full flex items-center gap-4 px-4 py-4 border-b border-border">
+              <button className="w-full flex items-center gap-4 px-4 py-4 border-b border-white/10 text-white">
                 <MapPin className="w-6 h-6" />
                 <span className="flex-1 text-left font-medium">Добавить место</span>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-white/40" />
               </button>
 
-              {/* AI Label */}
-              <div className="flex items-start gap-4 px-4 py-4">
+              <div className="flex items-start gap-4 px-4 py-4 text-white">
                 <Sparkles className="w-6 h-6 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="font-medium">Добавить значок ИИ</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-white/50">
                     Вы должны отмечать значком определенный реалистичный контент, созданный с помощью ИИ.
                   </p>
                 </div>
@@ -418,7 +413,7 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
           </div>
 
           {/* Publish Button */}
-          <div className="px-4 py-4 border-t border-border safe-area-bottom">
+          <div className="relative z-10 px-4 py-4 border-t border-white/10 bg-black/20 backdrop-blur-xl safe-area-bottom">
             <Button 
               className="w-full rounded-full h-12 font-semibold text-base"
               onClick={handlePublish}
