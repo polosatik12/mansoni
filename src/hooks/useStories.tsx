@@ -133,16 +133,27 @@ export function useStories() {
       // Build users with stories array
       const users: UserWithStories[] = [];
 
-      // Add current user first (own stories or placeholder)
+      // Add current user first (own stories or placeholder) — always exactly one entry
       if (user) {
         const ownStories = storiesByAuthor.get(user.id) || [];
         const profile = profilesMap.get(user.id);
+
+        // If profile wasn't fetched (user had no stories initially), fetch it
+        let ownProfile = profile;
+        if (!ownProfile) {
+          const { data: p } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, avatar_url, verified')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (p) ownProfile = p as ProfileRow;
+        }
         
         users.push({
           user_id: user.id,
-          display_name: profile?.display_name || 'Вы',
-          avatar_url: profile?.avatar_url,
-          verified: profile?.verified || false,
+          display_name: ownProfile?.display_name || 'Вы',
+          avatar_url: ownProfile?.avatar_url,
+          verified: ownProfile?.verified || false,
           stories: ownStories,
           hasNew: false, // Own stories don't show as "new"
           isOwn: true
