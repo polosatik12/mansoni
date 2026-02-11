@@ -256,7 +256,7 @@ export function UserProfilePage() {
       <div className="relative z-10 min-h-screen pb-24">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 text-white hover:bg-white/10">
+        <Button variant="ghost" size="icon" onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="shrink-0 text-white hover:bg-white/10 relative z-20">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex items-center gap-1.5">
