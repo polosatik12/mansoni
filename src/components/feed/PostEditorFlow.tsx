@@ -120,23 +120,38 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
     setIsUploading(true);
 
     try {
-      // Upload selected device images
+      // Upload selected images
       const mediaUrls: string[] = [];
       for (const imgSrc of selectedImages) {
         const deviceImg = deviceImages.find(d => d.src === imgSrc);
+        let fileToUpload: File | Blob | null = null;
+
         if (deviceImg?.file) {
-          const fileExt = deviceImg.file.name.split(".").pop();
-          const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          fileToUpload = deviceImg.file;
+        } else {
+          // Fetch external/mock image as blob
+          try {
+            const response = await fetch(imgSrc);
+            const blob = await response.blob();
+            fileToUpload = blob;
+          } catch {
+            console.warn("Could not fetch image:", imgSrc);
+            continue;
+          }
+        }
+
+        if (fileToUpload) {
+          const ext = deviceImg?.file?.name?.split(".").pop() || "jpg";
+          const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
           const { error: uploadError } = await supabase.storage
             .from("post-media")
-            .upload(fileName, deviceImg.file);
+            .upload(fileName, fileToUpload);
           if (uploadError) throw new Error(`Не удалось загрузить файл`);
           const { data: publicUrl } = supabase.storage
             .from("post-media")
             .getPublicUrl(fileName);
           mediaUrls.push(publicUrl.publicUrl);
         }
-        // Skip mock images — they can't be uploaded
       }
 
       const { error } = await createPost(caption.trim(), mediaUrls);
