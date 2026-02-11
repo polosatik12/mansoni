@@ -1,4 +1,5 @@
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from "lucide-react";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -175,10 +176,12 @@ export function PostCard({
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="relative cursor-pointer" onClick={goToProfile}>
-            <img
-              src={author.avatar}
-              alt={author.name}
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-white/20"
+            <GradientAvatar
+              name={author.name}
+              seed={authorId}
+              avatarUrl={author.avatar || null}
+              size="sm"
+              className="ring-2 ring-white/20 border-0"
             />
             {author.verified && (
               <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
