@@ -260,8 +260,10 @@ export function ProfilePage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Grid3X3 className="w-6 h-6 text-white/40" />
+                          <div className="w-full h-full flex items-center justify-center p-2 bg-white/5">
+                            <p className="text-white/60 text-xs line-clamp-4 text-center leading-snug">
+                              {post.content || "Пост"}
+                            </p>
                           </div>
                         )}
                         {isVideo && (
