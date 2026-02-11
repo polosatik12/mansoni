@@ -277,21 +277,22 @@ export function UserProfilePage() {
               type="button"
               onClick={openProfileStories}
               className={cn(
-                "w-20 h-20 rounded-full p-[2.5px]",
+                "w-[84px] h-[84px] rounded-full p-[3px]",
                 hasUnviewedStories
                   ? "bg-gradient-to-tr from-primary via-accent to-primary"
                   : hasAnyStories
-                    ? "bg-muted-foreground/40" // просмотрено
-                    : "bg-muted" // нет сторис
+                    ? "bg-white/30"
+                    : "bg-white/10"
               )}
               aria-label="Open stories"
             >
-              <div className="w-full h-full rounded-full bg-black/30 p-[2px]">
+              <div className="w-full h-full rounded-full bg-[#0a1628] p-[2px] flex items-center justify-center">
                 <GradientAvatar
                   name={profile.display_name || "User"}
                   seed={profile.user_id}
                   avatarUrl={profile.avatar_url}
                   size="lg"
+                  className="!w-full !h-full !border-0"
                 />
               </div>
             </button>
