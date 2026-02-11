@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MessageCircle, Share2, Bookmark, MoreHorizontal } from "lucide-react";
 import { BrandBackground } from "@/components/ui/brand-background";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -189,7 +190,6 @@ export function PostDetailPage() {
   }
 
   const authorName = post.author?.display_name || "Пользователь";
-  const authorAvatar = post.author?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_id}`;
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -209,10 +209,11 @@ export function PostDetailPage() {
       <div className="pb-20">
         {/* Author header */}
         <div className="flex items-center gap-3 px-4 py-3">
-          <img
-            src={authorAvatar}
-            alt={authorName}
-            className="w-10 h-10 rounded-full object-cover"
+          <GradientAvatar
+            name={authorName}
+            seed={post.author_id}
+            avatarUrl={post.author?.avatar_url}
+            size="sm"
           />
           <div className="flex-1">
             <p className="font-semibold text-sm text-white">{authorName}</p>
