@@ -1,5 +1,4 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { User, Loader2, X } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
@@ -8,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { BrandBackground } from "@/components/ui/brand-background";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 
 interface FollowUser {
   id: string;
@@ -158,27 +159,29 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[100dvh] rounded-none p-0" hideCloseButton>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <div className="w-8" /> {/* Spacer */}
-          <SheetTitle className="text-center font-semibold">{title}</SheetTitle>
+      <SheetContent side="bottom" className="h-[100dvh] rounded-none p-0 border-0 bg-transparent" hideCloseButton>
+        <BrandBackground />
+        <div className="relative z-10 h-full flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="w-8" />
+          <SheetTitle className="text-center font-semibold text-white">{title}</SheetTitle>
           <button 
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
         <div className="py-4 px-4 overflow-y-auto flex-1">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              <Loader2 className="w-8 h-8 animate-spin text-white/40" />
             </div>
           ) : users.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <User className="w-12 h-12 text-muted-foreground mb-3" />
-              <p className="text-muted-foreground text-sm">
+              <User className="w-12 h-12 text-white/40 mb-3" />
+              <p className="text-white/60 text-sm">
                 {type === "followers" ? "Нет подписчиков" : "Нет подписок"}
               </p>
             </div>
@@ -190,15 +193,15 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
                     className="flex items-center gap-3 flex-1 cursor-pointer"
                     onClick={() => handleUserClick(user.user_id)}
                   >
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={user.avatar_url || undefined} alt={user.display_name || "User"} />
-                      <AvatarFallback className="bg-muted">
-                        <User className="w-5 h-5 text-muted-foreground" />
-                      </AvatarFallback>
-                    </Avatar>
+                    <GradientAvatar
+                      name={user.display_name || "User"}
+                      seed={user.user_id}
+                      avatarUrl={user.avatar_url}
+                      size="sm"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
-                        <p className="font-semibold text-sm truncate">
+                        <p className="font-semibold text-sm truncate text-white">
                           {user.display_name || "Пользователь"}
                         </p>
                         {user.verified && <VerifiedBadge size="xs" />}
@@ -227,6 +230,7 @@ export function FollowersSheet({ isOpen, onClose, userId, type, title }: Followe
               ))}
             </div>
           )}
+        </div>
         </div>
       </SheetContent>
     </Sheet>
