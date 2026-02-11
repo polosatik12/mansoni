@@ -217,48 +217,53 @@ export function UserProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="min-h-screen flex items-center justify-center">
+        <BrandBackground />
+        <Loader2 className="w-8 h-8 animate-spin text-white/60" />
       </div>
     );
   }
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
+        <BrandBackground />
+        <div className="relative z-10">
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 text-white hover:bg-white/10">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h2 className="font-semibold text-foreground">Профиль</h2>
+            <h2 className="font-semibold text-white">Профиль</h2>
           </div>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center p-8 mt-20">
-          <User className="w-16 h-16 text-muted-foreground mb-4" />
-          <h2 className="text-lg font-semibold mb-2">Пользователь не найден</h2>
-          <p className="text-muted-foreground text-center">
+          <User className="w-16 h-16 text-white/40 mb-4" />
+          <h2 className="text-lg font-semibold mb-2 text-white">Пользователь не найден</h2>
+          <p className="text-white/60 text-center">
             Возможно, аккаунт был удалён или никнейм введён неверно
           </p>
+        </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <BrandBackground />
+      <div className="relative z-10 min-h-screen pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 text-white hover:bg-white/10">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex items-center gap-1.5">
-          <h2 className="font-semibold text-foreground">{profile.display_name}</h2>
+          <h2 className="font-semibold text-white">{profile.display_name}</h2>
           {profile.verified && <VerifiedBadge size="md" />}
         </div>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
           <MoreHorizontal className="w-5 h-5" />
         </Button>
       </div>
@@ -281,7 +286,7 @@ export function UserProfilePage() {
               )}
               aria-label="Open stories"
             >
-              <div className="w-full h-full rounded-full bg-background p-[2px]">
+              <div className="w-full h-full rounded-full bg-black/30 p-[2px]">
                 <GradientAvatar
                   name={profile.display_name || "User"}
                   seed={profile.user_id}
@@ -295,27 +300,27 @@ export function UserProfilePage() {
           {/* Stats */}
           <div className="flex-1">
             <div className="flex items-center gap-1.5 mb-2">
-              <h1 className="text-lg font-semibold">{profile.display_name || 'Пользователь'}</h1>
+              <h1 className="text-lg font-semibold text-white">{profile.display_name || 'Пользователь'}</h1>
               {profile.verified && <VerifiedBadge size="md" />}
             </div>
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <p className="font-bold text-foreground">{profile.stats.postsCount}</p>
-                <p className="text-xs text-muted-foreground">публикации</p>
+                <p className="font-bold text-white">{profile.stats.postsCount}</p>
+                <p className="text-xs text-white/60">публикации</p>
               </div>
               <button 
                 className="text-center"
                 onClick={() => setShowFollowers(true)}
               >
-                <p className="font-bold text-foreground">{formatNumber(profile.stats.followersCount)}</p>
-                <p className="text-xs text-muted-foreground">подписчики</p>
+                <p className="font-bold text-white">{formatNumber(profile.stats.followersCount)}</p>
+                <p className="text-xs text-white/60">подписчики</p>
               </button>
               <button 
                 className="text-center"
                 onClick={() => setShowFollowing(true)}
               >
-                <p className="font-bold text-foreground">{formatNumber(profile.stats.followingCount)}</p>
-                <p className="text-xs text-muted-foreground">подписки</p>
+                <p className="font-bold text-white">{formatNumber(profile.stats.followingCount)}</p>
+                <p className="text-xs text-white/60">подписки</p>
               </button>
             </div>
           </div>
@@ -323,7 +328,7 @@ export function UserProfilePage() {
 
         {/* Bio */}
         <div className="mt-3">
-          <p className="text-sm text-foreground">{profile.bio || ''}</p>
+          <p className="text-sm text-white/80">{profile.bio || ''}</p>
           {profile.website && (
             <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
                target="_blank" 
@@ -362,7 +367,7 @@ export function UserProfilePage() {
       </div>
 
       {/* Content Tabs */}
-      <div className="border-t border-border sticky top-0 z-10 bg-card">
+      <div className="border-t border-white/10 sticky top-0 z-10 bg-black/20 backdrop-blur-xl">
         <div className="flex">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -374,8 +379,8 @@ export function UserProfilePage() {
                 className={cn(
                   "flex-1 flex items-center justify-center py-3 transition-all border-b-2",
                   isActive
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "border-white text-white"
+                    : "border-transparent text-white/40 hover:text-white/70"
                 )}
               >
                 <Icon className={cn("w-6 h-6", tab.id === "reels" && "fill-current")} />
@@ -391,7 +396,7 @@ export function UserProfilePage() {
           <>
             {postsLoading ? (
               <div className="p-12 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <Loader2 className="w-8 h-8 animate-spin text-white/40" />
               </div>
             ) : posts.length > 0 ? (
               <div className="grid grid-cols-3 gap-[2px]">
@@ -399,7 +404,7 @@ export function UserProfilePage() {
                   const imageUrl = getPostImage(post);
                   const isVideo = post.post_media?.[0]?.media_type === 'video';
                   return (
-                    <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-muted">
+                    <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/5">
                       {imageUrl ? (
                         <img
                           src={imageUrl}
@@ -408,7 +413,7 @@ export function UserProfilePage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Grid3X3 className="w-6 h-6 text-muted-foreground" />
+                          <Grid3X3 className="w-6 h-6 text-white/40" />
                         </div>
                       )}
                       {isVideo && (
@@ -428,11 +433,11 @@ export function UserProfilePage() {
               </div>
             ) : (
               <div className="p-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                  <Grid3X3 className="w-8 h-8 text-muted-foreground" />
+                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
+                  <Grid3X3 className="w-8 h-8 text-white/40" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-1">Нет публикаций</h3>
-                <p className="text-sm text-muted-foreground">Пользователь ещё ничего не опубликовал</p>
+                <h3 className="font-semibold text-white mb-1">Нет публикаций</h3>
+                <p className="text-sm text-white/60">Пользователь ещё ничего не опубликовал</p>
               </div>
             )}
           </>
@@ -440,21 +445,21 @@ export function UserProfilePage() {
 
         {activeTab === "reels" && (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-              <Play className="w-8 h-8 text-muted-foreground" />
+            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
+              <Play className="w-8 h-8 text-white/40" />
             </div>
-            <h3 className="font-semibold text-foreground mb-1">Reels</h3>
-            <p className="text-sm text-muted-foreground">Видео Reels пользователя</p>
+            <h3 className="font-semibold text-white mb-1">Reels</h3>
+            <p className="text-sm text-white/60">Видео Reels пользователя</p>
           </div>
         )}
 
         {activeTab === "tagged" && (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-              <AtSign className="w-8 h-8 text-muted-foreground" />
+            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
+              <AtSign className="w-8 h-8 text-white/40" />
             </div>
-            <h3 className="font-semibold text-foreground mb-1">Отметки</h3>
-            <p className="text-sm text-muted-foreground">Публикации с отметками пользователя</p>
+            <h3 className="font-semibold text-white mb-1">Отметки</h3>
+            <p className="text-sm text-white/60">Публикации с отметками пользователя</p>
           </div>
         )}
       </div>
@@ -482,6 +487,7 @@ export function UserProfilePage() {
         isOpen={storyViewerOpen}
         onClose={() => setStoryViewerOpen(false)}
       />
+      </div>
     </div>
   );
 }
