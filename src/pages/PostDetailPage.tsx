@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { CommentsSheet } from "@/components/feed/CommentsSheet";
 import { ShareSheet } from "@/components/feed/ShareSheet";
+import { PostOptionsSheet } from "@/components/feed/PostOptionsSheet";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -38,7 +39,9 @@ export function PostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [likeAnimation, setLikeAnimation] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -215,14 +218,25 @@ export function PostDetailPage() {
             <p className="font-semibold text-sm text-white">{authorName}</p>
             <p className="text-xs text-white/60">{formatTime(post.created_at)}</p>
           </div>
-          <button className="p-2">
+          <button className="p-2" onClick={() => setShowOptions(true)}>
             <MoreHorizontal className="w-5 h-5 text-white/60" />
           </button>
         </div>
 
         {/* Media */}
         {post.media.length > 0 && (
-          <div className="relative">
+          <div className="relative" onDoubleClick={() => {
+            if (!post.isLiked) {
+              setLikeAnimation(true);
+              setTimeout(() => setLikeAnimation(false), 600);
+              handleLike();
+            }
+          }}>
+            {likeAnimation && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                <Heart className="w-20 h-20 text-red-500 fill-red-500 animate-ping" />
+              </div>
+            )}
             <img
               src={post.media[currentImageIndex]?.media_url}
               alt=""
@@ -293,10 +307,6 @@ export function PostDetailPage() {
           </div>
         )}
 
-        {/* Views */}
-        <div className="px-4 pb-4">
-          <p className="text-xs text-white/60">{post.views_count} просмотров</p>
-        </div>
       </div>
       </div>
 
@@ -315,6 +325,15 @@ export function PostDetailPage() {
         postId={post.id}
         postContent={post.content || ""}
         postImage={post.media[0]?.media_url}
+      />
+
+      {/* Options Sheet */}
+      <PostOptionsSheet
+        isOpen={showOptions}
+        onClose={() => setShowOptions(false)}
+        postId={post.id}
+        authorId={post.author_id}
+        authorUsername={post.author?.display_name || "Пользователь"}
       />
     </div>
   );
