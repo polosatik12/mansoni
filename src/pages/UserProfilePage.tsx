@@ -12,6 +12,7 @@ import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { FollowersSheet } from "@/components/profile/FollowersSheet";
 import { StoryViewer } from "@/components/feed/StoryViewer";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { BrandBackground } from "@/components/ui/brand-background";
 import type { Story, UserWithStories } from "@/hooks/useStories";
 
 const tabs = [
@@ -247,6 +248,7 @@ export function UserProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <BrandBackground />
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
