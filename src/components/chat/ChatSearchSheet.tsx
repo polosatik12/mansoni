@@ -91,6 +91,7 @@ export function ChatSearchSheet({
         side="top" 
         className="h-[85vh] rounded-b-3xl border-b border-white/10 shadow-2xl overflow-hidden p-0 bg-transparent"
         overlayClassName="bg-transparent"
+        closeButtonClassName="text-white"
         aria-describedby={undefined}
       >
         {/* Semi-transparent glass effect */}
