@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Music, Type, Layers, Sparkles, SlidersHorizontal, Users, MapPin, MessageSquare, HelpCircle, Eye, ImagePlus } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Music, Type, Layers, Sparkles, SlidersHorizontal, Users, MapPin, MessageSquare, HelpCircle, Eye, ImagePlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BrandBackground } from "@/components/ui/brand-background";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
+import { useAuth } from "@/hooks/useAuth";
+import { usePostActions } from "@/hooks/usePosts";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PostEditorFlowProps {
   isOpen: boolean;
@@ -43,13 +47,16 @@ type Step = "gallery" | "editor" | "details";
 type ContentType = "post" | "story" | "video";
 
 export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
+  const { user } = useAuth();
+  const { createPost } = usePostActions();
   const { setIsCreatingContent } = useChatOpen();
   const [step, setStep] = useState<Step>("gallery");
   const [contentType, setContentType] = useState<ContentType>("post");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [caption, setCaption] = useState("");
   const [aiLabel, setAiLabel] = useState(false);
-  const [deviceImages, setDeviceImages] = useState<{ id: string; src: string }[]>([]);
+  const [deviceImages, setDeviceImages] = useState<{ id: string; src: string; file?: File }[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hide bottom nav when creating content
@@ -60,11 +67,15 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newImages = files.map((file, index) => ({
-      id: `device-${Date.now()}-${index}`,
-      src: URL.createObjectURL(file),
-    }));
+    const newImages = files
+      .filter(f => f.type.startsWith("image/"))
+      .map((file, index) => ({
+        id: `device-${Date.now()}-${index}`,
+        src: URL.createObjectURL(file),
+        file,
+      }));
     setDeviceImages(prev => [...newImages, ...prev]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const allImages = deviceImages.length > 0 
@@ -95,12 +106,54 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
     }
   };
 
-  const handlePublish = () => {
-    console.log("Publishing:", { selectedImages, caption, aiLabel });
-    setStep("gallery");
-    setSelectedImages([]);
-    setCaption("");
-    onClose();
+  const handlePublish = async () => {
+    if (!user) {
+      toast.error("Войдите, чтобы создать пост");
+      return;
+    }
+
+    if (selectedImages.length === 0 && !caption.trim()) {
+      toast.error("Добавьте фото или текст");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Upload selected device images
+      const mediaUrls: string[] = [];
+      for (const imgSrc of selectedImages) {
+        const deviceImg = deviceImages.find(d => d.src === imgSrc);
+        if (deviceImg?.file) {
+          const fileExt = deviceImg.file.name.split(".").pop();
+          const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from("post-media")
+            .upload(fileName, deviceImg.file);
+          if (uploadError) throw new Error(`Не удалось загрузить файл`);
+          const { data: publicUrl } = supabase.storage
+            .from("post-media")
+            .getPublicUrl(fileName);
+          mediaUrls.push(publicUrl.publicUrl);
+        }
+        // Skip mock images — they can't be uploaded
+      }
+
+      const { error } = await createPost(caption.trim(), mediaUrls);
+      if (error) throw new Error(error);
+
+      toast.success("Публикация создана!");
+      setStep("gallery");
+      setSelectedImages([]);
+      setCaption("");
+      deviceImages.forEach(img => URL.revokeObjectURL(img.src));
+      setDeviceImages([]);
+      onClose();
+    } catch (error: any) {
+      toast.error("Ошибка публикации", { description: error.message });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleClose = () => {
@@ -417,8 +470,9 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
             <Button 
               className="w-full rounded-full h-12 font-semibold text-base"
               onClick={handlePublish}
+              disabled={isUploading}
             >
-              Поделиться
+              {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Поделиться"}
             </Button>
           </div>
         </>
