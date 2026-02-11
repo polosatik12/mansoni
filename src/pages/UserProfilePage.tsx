@@ -277,24 +277,23 @@ export function UserProfilePage() {
               type="button"
               onClick={openProfileStories}
               className={cn(
-                "w-[84px] h-[84px] rounded-full p-[3px]",
+                "w-[82px] h-[82px] rounded-full flex items-center justify-center",
                 hasUnviewedStories
-                  ? "bg-gradient-to-tr from-primary via-accent to-primary"
+                  ? "ring-[3px] ring-primary"
                   : hasAnyStories
-                    ? "bg-white/30"
-                    : "bg-white/10"
+                    ? "ring-[2px] ring-white/30"
+                    : "ring-[2px] ring-white/10"
               )}
+              style={{ padding: 0 }}
               aria-label="Open stories"
             >
-              <div className="w-full h-full rounded-full bg-[#0a1628] p-[2px] flex items-center justify-center">
-                <GradientAvatar
-                  name={profile.display_name || "User"}
-                  seed={profile.user_id}
-                  avatarUrl={profile.avatar_url}
-                  size="lg"
-                  className="!w-full !h-full !border-0"
-                />
-              </div>
+              <GradientAvatar
+                name={profile.display_name || "User"}
+                seed={profile.user_id}
+                avatarUrl={profile.avatar_url}
+                size="lg"
+                className="border-[3px] border-[#0a1628]"
+              />
             </button>
           </div>
 
