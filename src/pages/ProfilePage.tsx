@@ -11,7 +11,7 @@ import { FollowersSheet } from "@/components/profile/FollowersSheet";
 import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { BrandBackground } from "@/components/ui/brand-background";
 
@@ -144,12 +144,13 @@ export function ProfilePage() {
               onClick={() => setShowCreateMenu(true)}
             >
               <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
-              <Avatar className="w-20 h-20 border-2 border-white/30 relative">
-                <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || 'Profile'} />
-                <AvatarFallback className="bg-violet-500/80 backdrop-blur-xl text-white text-2xl font-medium">
-                  {profile.display_name?.charAt(0)?.toUpperCase() || <User className="w-8 h-8" />}
-                </AvatarFallback>
-              </Avatar>
+              <GradientAvatar
+                name={profile.display_name || "User"}
+                seed={user?.id}
+                avatarUrl={profile.avatar_url}
+                size="lg"
+                className="relative"
+              />
               {/* Add story button */}
               <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-white/30 flex items-center justify-center">
                 <Plus className="w-4 h-4 text-primary-foreground" />
