@@ -11,6 +11,7 @@ export interface Profile {
   website: string | null;
   phone: string | null;
   verified: boolean;
+  gender: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -97,6 +98,7 @@ export function useProfile(userId?: string) {
         website: extendedProfile.website ?? null,
         phone: extendedProfile.phone,
         verified: extendedProfile.verified ?? false,
+        gender: extendedProfile.gender ?? null,
         created_at: extendedProfile.created_at,
         updated_at: extendedProfile.updated_at,
         stats: {
@@ -168,7 +170,7 @@ export function useProfile(userId?: string) {
     }
   }, [user, targetUserId]);
 
-  const updateProfile = useCallback(async (updates: Partial<Pick<Profile, 'display_name' | 'bio' | 'website' | 'avatar_url'>>) => {
+  const updateProfile = useCallback(async (updates: Partial<Pick<Profile, 'display_name' | 'bio' | 'website' | 'avatar_url' | 'gender'>>) => {
     if (!user) return;
 
     try {
@@ -291,6 +293,7 @@ export function useProfileByUsername(username?: string) {
         website: extendedProfile.website ?? null,
         phone: extendedProfile.phone,
         verified: extendedProfile.verified ?? false,
+        gender: extendedProfile.gender ?? null,
         created_at: extendedProfile.created_at,
         updated_at: extendedProfile.updated_at,
         stats: {
