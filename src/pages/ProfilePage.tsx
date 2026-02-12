@@ -84,9 +84,9 @@ export function ProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen relative overflow-hidden">
+      <div className="min-h-[100dvh] relative overflow-hidden">
         <BrandBackground />
-        <div className="relative z-10 min-h-screen flex items-center justify-center">
+        <div className="relative z-10 min-h-[100dvh] flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-white/60" />
         </div>
       </div>
@@ -95,9 +95,9 @@ export function ProfilePage() {
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen relative overflow-hidden">
+      <div className="min-h-[100dvh] relative overflow-hidden">
         <BrandBackground />
-        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="relative z-10 min-h-[100dvh] flex flex-col items-center justify-center p-4">
           <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
             <User className="w-10 h-10 text-white/60" />
           </div>
@@ -117,11 +117,11 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-[100dvh] relative overflow-hidden">
       <BrandBackground />
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen pb-24">
+      <div className="relative z-10 min-h-[100dvh] pb-24">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 pt-safe">
           <div className="w-10" />

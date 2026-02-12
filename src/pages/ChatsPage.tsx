@@ -163,7 +163,7 @@ export function ChatsPage() {
   // Show auth prompt if not logged in
   if (!authLoading && !user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center relative">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center p-6 text-center relative">
         <BrandBackground />
         <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4 relative z-10">
           <MessageCircle className="w-10 h-10 text-white/60" />

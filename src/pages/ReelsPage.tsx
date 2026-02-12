@@ -191,7 +191,7 @@ export function ReelsPage() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-black flex items-center justify-center">
+      <div className="h-[100dvh] bg-black flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     );
@@ -199,7 +199,7 @@ export function ReelsPage() {
 
   if (reels.length === 0) {
     return (
-      <div className="h-screen bg-black flex flex-col items-center justify-center text-white px-8">
+      <div className="h-[100dvh] bg-black flex flex-col items-center justify-center text-white px-8">
         <Play className="w-16 h-16 mb-4 opacity-40" />
         <h2 className="text-xl font-bold mb-2">Reels</h2>
         <p className="text-white/60 text-center mb-6">
@@ -217,7 +217,7 @@ export function ReelsPage() {
   }
 
   return (
-    <div className="relative h-screen bg-black overflow-hidden">
+    <div className="relative h-[100dvh] bg-black overflow-hidden">
       {/* Top header: tabs + create — glass style */}
       <div className="absolute top-0 inset-x-0 z-30 safe-area-top">
         <div className="mx-3 mt-2 rounded-2xl bg-black/30 backdrop-blur-2xl border border-white/10 shadow-lg">
@@ -257,7 +257,7 @@ export function ReelsPage() {
       {/* Reels scroll container */}
       <div
         ref={containerRef}
-        className="h-screen overflow-y-scroll overflow-x-hidden snap-y snap-mandatory"
+        className="h-[100dvh] overflow-y-scroll overflow-x-hidden snap-y snap-mandatory"
         onScroll={handleScroll}
         style={{
           WebkitOverflowScrolling: "touch",
@@ -271,7 +271,7 @@ export function ReelsPage() {
           return (
             <div
               key={reel.id}
-              className="relative w-full h-screen flex-shrink-0 snap-start snap-always"
+              className="relative w-full h-[100dvh] flex-shrink-0 snap-start snap-always"
               onClick={(e) => handleTap(e, reel)}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}

@@ -48,7 +48,7 @@ const CommandPalette = lazy(() => import("@/components/CommandPalette").then(m =
 // Loading fallback component with brand background
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a1628] relative overflow-hidden">
+    <div className="h-[100dvh] flex items-center justify-center bg-[#0a1628] relative overflow-hidden">
       {/* Animated orbs */}
       <div className="absolute w-[300px] h-[300px] rounded-full opacity-30 blur-[80px] bg-[#1a6985]" style={{ top: '20%', left: '10%', animation: 'float-orb-1 12s ease-in-out infinite' }} />
       <div className="absolute w-[250px] h-[250px] rounded-full opacity-25 blur-[70px] bg-[#2a9d8f]" style={{ bottom: '20%', right: '15%', animation: 'float-orb-2 10s ease-in-out infinite' }} />

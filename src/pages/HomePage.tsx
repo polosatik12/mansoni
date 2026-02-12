@@ -49,7 +49,7 @@ export function HomePage() {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <BrandBackground />
-      <div className="min-h-screen relative z-10">
+      <div className="min-h-[100dvh] relative z-10">
         <FeedHeader />
         
         <FeedFilters 

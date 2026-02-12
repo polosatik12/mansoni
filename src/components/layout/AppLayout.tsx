@@ -14,7 +14,7 @@ export function AppLayout() {
   return (
     <div 
       className={cn(
-        "h-full flex flex-col safe-area-left safe-area-right relative",
+        "h-[100dvh] flex flex-col safe-area-left safe-area-right relative",
         isReelsPage ? "bg-black" : "bg-background safe-area-top"
       )}
       style={{ 
@@ -27,7 +27,7 @@ export function AppLayout() {
         <main 
           ref={mainRef}
           className={cn(
-            "flex-1 overflow-x-hidden max-w-lg mx-auto w-full relative z-10",
+            "flex-1 overflow-x-hidden w-full relative z-10",
             isReelsPage
               ? "overflow-hidden"
               : "overflow-y-auto native-scroll scrollbar-hide pb-20"
