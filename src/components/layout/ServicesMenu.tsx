@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Car, Package, ShoppingBag, Home, Shield, Briefcase, Building2, TrendingUp, Plane, Hotel, Film, Dumbbell, GraduationCap, Music, Truck, Code2 } from "lucide-react";
-import logoImage from "@/assets/logo.png";
+import { Car, Package, ShoppingBag, Home, Shield, Briefcase, Building2, TrendingUp, Plane, Hotel, Film, Dumbbell, GraduationCap, Music, Truck, Code2, Grid3x3 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -52,11 +51,7 @@ export function ServicesMenu() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/50 dark:hover:bg-muted backdrop-blur-sm transition-colors">
-          <img 
-            src={logoImage} 
-            alt="Menu" 
-            className="w-7 h-7 object-contain"
-          />
+          <Grid3x3 className="w-5 h-5" />
         </button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[300px] bg-white/90 dark:bg-card backdrop-blur-xl border-white/20 dark:border-border p-0">
