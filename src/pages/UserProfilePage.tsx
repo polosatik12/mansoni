@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Grid3X3, Bookmark, Heart, Play, MoreHorizontal, MessageCircle, Loader2, User, Eye, AtSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +13,8 @@ import { FollowersSheet } from "@/components/profile/FollowersSheet";
 import { StoryViewer } from "@/components/feed/StoryViewer";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { BrandBackground } from "@/components/ui/brand-background";
+import { AvatarViewer } from "@/components/profile/AvatarViewer";
+import { ProfileOptionsMenu } from "@/components/profile/ProfileOptionsMenu";
 import type { Story, UserWithStories } from "@/hooks/useStories";
 
 const tabs = [
@@ -41,6 +43,9 @@ export function UserProfilePage() {
   const [showFollowing, setShowFollowing] = useState(false);
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [profileStoriesUsers, setProfileStoriesUsers] = useState<UserWithStories[]>([]);
+  const [showAvatarViewer, setShowAvatarViewer] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
 
   // Decode URI component to handle spaces and special characters
   const username = rawUsername ? decodeURIComponent(rawUsername) : undefined;
@@ -263,7 +268,7 @@ export function UserProfilePage() {
           <h2 className="font-semibold text-white">{profile.display_name}</h2>
           {profile.verified && <VerifiedBadge size="md" />}
         </div>
-        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+        <Button ref={menuBtnRef} variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={() => setShowProfileMenu(true)}>
           <MoreHorizontal className="w-5 h-5" />
         </Button>
       </div>
@@ -275,7 +280,8 @@ export function UserProfilePage() {
           <div className="relative">
             <button
               type="button"
-              onClick={openProfileStories}
+              onClick={hasAnyStories ? openProfileStories : () => profile.avatar_url && setShowAvatarViewer(true)}
+              onDoubleClick={() => profile.avatar_url && setShowAvatarViewer(true)}
               className={cn(
                 "w-[82px] h-[82px] rounded-full flex items-center justify-center",
                 hasUnviewedStories
@@ -403,8 +409,8 @@ export function UserProfilePage() {
                 {posts.map((post) => {
                   const imageUrl = getPostImage(post);
                   const isVideo = post.post_media?.[0]?.media_type === 'video';
-                  return (
-                    <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/5">
+                    return (
+                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/5" onClick={() => navigate(`/profile-posts/${profile.user_id}?startPost=${post.id}`)}>
                       {imageUrl ? (
                         <img
                           src={imageUrl}
@@ -486,6 +492,27 @@ export function UserProfilePage() {
         initialUserIndex={0}
         isOpen={storyViewerOpen}
         onClose={() => setStoryViewerOpen(false)}
+      />
+
+      {/* Avatar Viewer */}
+      {profile.avatar_url && (
+        <AvatarViewer
+          src={profile.avatar_url}
+          name={profile.display_name || "Пользователь"}
+          isOpen={showAvatarViewer}
+          onClose={() => setShowAvatarViewer(false)}
+        />
+      )}
+
+      {/* Profile Options Menu */}
+      <ProfileOptionsMenu
+        isOpen={showProfileMenu}
+        onClose={() => setShowProfileMenu(false)}
+        userId={profile.user_id}
+        username={profile.display_name || "Пользователь"}
+        isFollowing={profile.isFollowing}
+        onFollowToggle={handleFollowToggle}
+        anchorRef={menuBtnRef}
       />
       </div>
     </div>

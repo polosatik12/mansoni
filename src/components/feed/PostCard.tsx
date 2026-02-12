@@ -272,6 +272,22 @@ export function PostCard({
         </div>
       )}
 
+      {/* Caption */}
+      <div className="px-4 py-2">
+        <p className="text-sm">
+          <span className="font-semibold text-white">{author.username}</span>{" "}
+          <span className="text-white/80">{truncatedContent}</span>
+          {content.length > 100 && !expanded && (
+            <button 
+              onClick={() => setExpanded(true)}
+              className="text-white/50 ml-1"
+            >
+              ещё
+            </button>
+          )}
+        </p>
+      </div>
+
       {/* Actions with Stats */}
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-5">
@@ -318,29 +334,9 @@ export function PostCard({
         </div>
       </div>
 
-      {/* Caption */}
-      <div className="px-4 py-2">
-        <p className="text-sm">
-          <span className="font-semibold text-white">{author.username}</span>{" "}
-          <span className="text-white/80">{truncatedContent}</span>
-          {content.length > 100 && !expanded && (
-            <button 
-              onClick={() => setExpanded(true)}
-              className="text-white/50 ml-1"
-            >
-              ещё
-            </button>
-          )}
-        </p>
-      </div>
-
-      {/* Time & Translation */}
-      <div className="px-4 pb-3 flex items-center gap-2 text-xs text-white/40">
+      {/* Time */}
+      <div className="px-4 pb-3 text-xs text-white/40">
         <span>{timeAgo}</span>
-        <span>·</span>
-        <button className="hover:text-white/70 transition-colors">
-          Показать перевод
-        </button>
       </div>
 
       {/* Comments Sheet */}

@@ -35,6 +35,7 @@ const InsurancePage = lazy(() => import("@/pages/InsurancePage").then(m => ({ de
 const InsurancePoliciesPage = lazy(() => import("@/pages/InsurancePoliciesPage"));
 const ExploreFeedPage = lazy(() => import("@/pages/ExploreFeedPage").then(m => ({ default: m.ExploreFeedPage })));
 const PostDetailPage = lazy(() => import("@/pages/PostDetailPage").then(m => ({ default: m.PostDetailPage })));
+const ProfilePostsFeedPage = lazy(() => import("@/pages/ProfilePostsFeedPage").then(m => ({ default: m.ProfilePostsFeedPage })));
 const AuthPage = lazy(() => import("@/pages/AuthPage").then(m => ({ default: m.AuthPage })));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const DevPanelPage = lazy(() => import("@/pages/DevPanelPage"));
@@ -96,6 +97,11 @@ const App = () => (
                     <Route path="/post/:id" element={
                       <Suspense fallback={<PageLoader />}>
                         <PostDetailPage />
+                      </Suspense>
+                    } />
+                    <Route path="/profile-posts/:userId" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <ProfilePostsFeedPage />
                       </Suspense>
                     } />
                     <Route path="/chats" element={
