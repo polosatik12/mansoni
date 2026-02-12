@@ -175,12 +175,7 @@ export function CommentsSheet({
             </div>
           )}
           
-          <div className="p-3 flex items-center gap-3 safe-area-bottom">
-            <img 
-              src={`https://i.pravatar.cc/150?u=${user?.id || 'guest'}`} 
-              alt="You" 
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-white/20" 
-            />
+          <div className="p-3 flex items-center gap-2 safe-area-bottom">
             <div className="flex-1">
               <input 
                 ref={inputRef} 
