@@ -270,6 +270,16 @@ export function PostDetailPage() {
           </div>
         )}
 
+        {/* Content */}
+        {post.content && (
+          <div className="px-4 py-2">
+            <p className="text-sm text-white">
+              <span className="font-semibold mr-1">{authorName}</span>
+              {post.content}
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-4">
@@ -297,16 +307,6 @@ export function PostDetailPage() {
             />
           </button>
         </div>
-
-        {/* Content */}
-        {post.content && (
-          <div className="px-4 pb-4">
-            <p className="text-sm text-white">
-              <span className="font-semibold mr-1">{authorName}</span>
-              {post.content}
-            </p>
-          </div>
-        )}
 
       </div>
       </div>

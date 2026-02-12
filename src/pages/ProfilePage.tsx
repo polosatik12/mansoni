@@ -3,6 +3,7 @@ import { ProfileReelsGrid } from "@/components/profile/ProfileReelsGrid";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { AvatarViewer } from "@/components/profile/AvatarViewer";
 import { cn } from "@/lib/utils";
 import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
@@ -47,6 +48,7 @@ export function ProfilePage() {
   
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+  const [showAvatarViewer, setShowAvatarViewer] = useState(false);
 
   // Open saved tab from URL param
   useEffect(() => {
@@ -138,10 +140,11 @@ export function ProfilePage() {
         {/* Profile Info Row */}
         <div className="px-4 py-4">
           <div className="flex items-start gap-4">
-            {/* Avatar - clickable to open create menu */}
+            {/* Avatar - clickable to view photo, long press for create menu */}
             <button 
               className="relative cursor-pointer"
-              onClick={() => setShowCreateMenu(true)}
+              onClick={() => profile.avatar_url ? setShowAvatarViewer(true) : setShowCreateMenu(true)}
+              onContextMenu={(e) => { e.preventDefault(); setShowCreateMenu(true); }}
             >
               <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
               <GradientAvatar
@@ -253,7 +256,7 @@ export function ProfilePage() {
                     const imageUrl = getPostImage(post);
                     const isVideo = post.post_media?.[0]?.media_type === 'video';
                     return (
-                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10" onClick={() => navigate(`/post/${post.id}`)}>
+                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10" onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}>
                         {imageUrl ? (
                           <img
                             src={imageUrl}
@@ -387,6 +390,16 @@ export function ProfilePage() {
             title="Подписки"
           />
         </>
+      )}
+
+      {/* Avatar Viewer */}
+      {profile?.avatar_url && (
+        <AvatarViewer
+          src={profile.avatar_url}
+          name={profile.display_name || "Профиль"}
+          isOpen={showAvatarViewer}
+          onClose={() => setShowAvatarViewer(false)}
+        />
       )}
     </div>
   );
