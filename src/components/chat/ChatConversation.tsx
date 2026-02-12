@@ -609,7 +609,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   }, [isSelectionMode, forwardData, selectedMessages, messages, user?.id, profile?.display_name, chatName]);
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background z-[200]">
+    <div className="fixed inset-0 flex flex-col z-[200]">
       {/* Header - Selection mode or standard */}
       <AnimatePresence mode="wait">
         {isSelectionMode ? (

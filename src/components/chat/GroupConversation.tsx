@@ -145,7 +145,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
 
   return (
     <>
-      <div className="fixed inset-0 flex flex-col bg-background z-[200]">
+      <div className="fixed inset-0 flex flex-col z-[200]">
         {/* Header - clickable to open group info */}
         <div className="flex-shrink-0 safe-area-top relative z-10 backdrop-blur-xl bg-black/20 border-b border-white/10">
           <div className="flex items-center px-2 py-2">

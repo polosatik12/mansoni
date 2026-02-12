@@ -51,7 +51,7 @@ export function ChatsPage() {
   const [selectedGroup, setSelectedGroup] = useState<GroupChat | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<"all" | "chats" | "groups" | "channels">("all");
+  const [activeFilter, setActiveFilter] = useState<"chats" | "groups" | "channels">("chats");
   
   
   // Local scroll container for chat list
@@ -239,7 +239,7 @@ export function ChatsPage() {
     | { kind: "dm"; id: string; activityAt: string; conv: Conversation };
 
   const combinedItems: CombinedItem[] = [
-    ...(activeFilter === "all" || activeFilter === "channels" 
+    ...(activeFilter === "channels" 
       ? channels.map((channel) => ({
           kind: "channel" as const,
           id: channel.id,
@@ -247,7 +247,7 @@ export function ChatsPage() {
           channel,
         }))
       : []),
-    ...(activeFilter === "all" || activeFilter === "groups"
+    ...(activeFilter === "groups"
       ? groups.map((group) => ({
           kind: "group" as const,
           id: group.id,
@@ -255,7 +255,7 @@ export function ChatsPage() {
           group,
         }))
       : []),
-    ...(activeFilter === "all" || activeFilter === "chats"
+    ...(activeFilter === "chats"
       ? conversations.map((conv) => ({
           kind: "dm" as const,
           id: conv.id,
@@ -327,7 +327,6 @@ export function ChatsPage() {
           {/* Filter tabs */}
           <div className="flex items-center gap-2 px-4 h-11">
             {[
-              { id: "all", label: "Все" },
               { id: "chats", label: "Чаты" },
               { id: "groups", label: "Группы" },
               { id: "channels", label: "Каналы" },

@@ -32,8 +32,8 @@ export function GradientAvatar({
   className = "" 
 }: GradientAvatarProps) {
   const sizeClasses = {
-    sm: "w-10 h-10 text-sm",
-    md: "w-14 h-14 text-lg",
+    sm: "w-9 h-9 text-sm",
+    md: "w-12 h-12 text-base",
     lg: "w-20 h-20 text-2xl",
     xl: "w-28 h-28 text-4xl",
   };
