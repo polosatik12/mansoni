@@ -623,11 +623,11 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="h-[100dvh] relative overflow-hidden">
       <BrandBackground />
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col safe-area-top safe-area-bottom">
+      <div className="relative z-10 h-full flex flex-col safe-area-top safe-area-bottom">
         {renderScreen()}
       </div>
     </div>
