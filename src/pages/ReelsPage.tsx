@@ -326,7 +326,7 @@ export function ReelsPage() {
               )}
 
               {/* Right sidebar actions */}
-              <div className="absolute right-3 bottom-32 flex flex-col items-center gap-5 z-20">
+              <div className="absolute right-3 bottom-[140px] flex flex-col items-center gap-5 z-20">
                 {/* Author avatar */}
                 <button
                   className="relative mb-2"
@@ -424,7 +424,7 @@ export function ReelsPage() {
               </div>
 
               {/* Bottom info */}
-              <div className="absolute left-4 right-20 bottom-[76px] z-20">
+              <div className="absolute left-4 right-20 bottom-[90px] z-20">
                 {/* Author */}
                 <div className="flex items-center gap-2 mb-2">
                   <button
@@ -467,7 +467,7 @@ export function ReelsPage() {
               {/* Progress bar with seek */}
               {isActive && (
                 <div
-                  className="absolute bottom-[60px] left-0 right-0 z-30 h-[14px] flex items-end cursor-pointer"
+                  className="absolute bottom-[72px] left-0 right-0 z-30 h-[14px] flex items-end cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     const video = videoRefs.current.get(currentIndex);
