@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Heart, Send, Loader2 } from "lucide-react";
+import { Heart, Send, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useComments, Comment } from "@/hooks/useComments";
@@ -13,8 +12,6 @@ import { VerifiedBadge } from "@/components/ui/verified-badge";
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
 } from "@/components/ui/drawer";
 
 interface CommentsSheetProps {
@@ -101,7 +98,6 @@ export function CommentsSheet({
     navigate(`/user/${userId}`);
   };
 
-  // Focus input when replying
   useEffect(() => {
     if (replyingTo && inputRef.current) {
       inputRef.current.focus();
@@ -112,28 +108,32 @@ export function CommentsSheet({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="h-[92dvh] max-h-[92dvh] mt-0 flex flex-col">
-        <DrawerHeader className="border-b border-border pb-3 flex-shrink-0">
-          <DrawerTitle className="text-center">
+      <DrawerContent className="h-[92dvh] max-h-[92dvh] mt-0 flex flex-col bg-black/60 backdrop-blur-2xl border-t border-white/10 z-[200]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
+          <div className="w-8" />
+          <h3 className="font-semibold text-white/90 text-base">
             Комментарии {totalComments > 0 && `(${totalComments})`}
-          </DrawerTitle>
-        </DrawerHeader>
+          </h3>
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-white/60 hover:text-white hover:bg-white/10 h-8 w-8">
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
         
         {/* Comments List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 native-scroll min-h-[300px]">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Loader2 className="w-6 h-6 animate-spin text-white/40" />
             </div>
           ) : comments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <p className="text-base">Пока нет комментариев</p>
-              <p className="text-sm mt-1">Будьте первым!</p>
+            <div className="flex flex-col items-center justify-center py-12">
+              <p className="text-white/50 text-base">Пока нет комментариев</p>
+              <p className="text-white/30 text-sm mt-1">Будьте первым!</p>
             </div>
           ) : (
             comments.map(comment => (
               <div key={comment.id} className="space-y-3">
-                {/* Main comment */}
                 <CommentItem 
                   comment={comment} 
                   onLike={() => handleLikeComment(comment)} 
@@ -142,9 +142,8 @@ export function CommentsSheet({
                   formatTimeAgo={formatTimeAgo} 
                 />
                 
-                {/* Replies */}
                 {comment.replies && comment.replies.length > 0 && (
-                  <div className="ml-12 space-y-3 border-l-2 border-border pl-3">
+                  <div className="ml-12 space-y-3 border-l border-white/10 pl-3">
                     {comment.replies.map(reply => (
                       <CommentItem 
                         key={reply.id} 
@@ -164,40 +163,39 @@ export function CommentsSheet({
         </div>
         
         {/* Input */}
-        <div className="border-t border-border mt-auto">
-          {/* Reply indicator */}
+        <div className="border-t border-white/10 mt-auto">
           {replyingTo && (
-            <div className="flex items-center justify-between px-4 py-2 bg-muted/50 text-sm">
-              <span className="text-muted-foreground">
-                Ответ для <span className="font-medium text-foreground">{replyingTo.authorName}</span>
+            <div className="flex items-center justify-between px-4 py-2 bg-white/5 text-sm">
+              <span className="text-white/50">
+                Ответ для <span className="font-medium text-white/80">@{replyingTo.authorName}</span>
               </span>
-              <button onClick={cancelReply} className="text-primary font-medium">
+              <button onClick={cancelReply} className="text-[hsl(var(--primary))] font-medium text-sm">
                 Отмена
               </button>
             </div>
           )}
           
-          <div className="p-4 flex items-center gap-3 safe-area-bottom">
+          <div className="p-3 flex items-center gap-3 safe-area-bottom">
             <img 
               src={`https://i.pravatar.cc/150?u=${user?.id || 'guest'}`} 
               alt="You" 
-              className="w-9 h-9 rounded-full object-cover flex-shrink-0" 
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-white/20" 
             />
             <div className="flex-1">
-              <Input 
+              <input 
                 ref={inputRef} 
                 placeholder={user ? (replyingTo ? "Напишите ответ..." : "Добавьте комментарий...") : "Войдите чтобы комментировать"} 
                 value={newComment} 
                 onChange={e => setNewComment(e.target.value)} 
                 onKeyDown={e => e.key === "Enter" && handleSubmitComment()} 
-                className="rounded-full bg-muted border-0 h-11" 
+                className="w-full h-10 rounded-full bg-white/10 border border-white/10 px-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 backdrop-blur-sm" 
                 disabled={!user || submitting} 
               />
             </div>
             <Button 
               size="icon" 
               variant="ghost" 
-              className="text-primary h-11 w-11" 
+              className="text-[hsl(var(--primary))] hover:bg-white/10 h-10 w-10" 
               disabled={!newComment.trim() || submitting || !user} 
               onClick={handleSubmitComment}
             >
@@ -235,8 +233,8 @@ function CommentItem({
         src={avatarUrl} 
         alt={comment.author.display_name} 
         className={cn(
-          "rounded-full object-cover flex-shrink-0 cursor-pointer", 
-          isReply ? "w-8 h-8" : "w-10 h-10"
+          "rounded-full object-cover flex-shrink-0 cursor-pointer ring-1 ring-white/20", 
+          isReply ? "w-7 h-7" : "w-9 h-9"
         )} 
         onClick={() => onGoToProfile(comment.author.user_id)} 
       />
@@ -245,21 +243,21 @@ function CommentItem({
           <div className="flex-1">
             <div className="flex items-center gap-1">
               <span 
-                className="font-semibold text-sm cursor-pointer hover:underline" 
+                className="font-semibold text-sm text-white/90 cursor-pointer hover:underline" 
                 onClick={() => onGoToProfile(comment.author.user_id)}
               >
                 {comment.author.display_name}
               </span>
               {comment.author.verified && <VerifiedBadge size="xs" />}
-              <span className="text-xs text-muted-foreground ml-1">
+              <span className="text-xs text-white/40 ml-1">
                 {formatTimeAgo(comment.created_at)}
               </span>
             </div>
-            <p className="text-sm text-foreground mt-1">{comment.content}</p>
+            <p className="text-sm text-white/80 mt-1">{comment.content}</p>
             <div className="flex items-center gap-4 mt-2">
               <button 
                 onClick={onReply} 
-                className="text-xs text-muted-foreground font-medium hover:text-foreground transition-colors"
+                className="text-xs text-white/40 font-medium hover:text-white/70 transition-colors"
               >
                 Ответить
               </button>
@@ -269,11 +267,11 @@ function CommentItem({
             <Heart 
               className={cn(
                 "w-4 h-4", 
-                comment.liked_by_user ? "fill-destructive text-destructive" : "text-muted-foreground"
+                comment.liked_by_user ? "fill-red-500 text-red-500" : "text-white/40"
               )} 
             />
-            <span className="text-xs text-muted-foreground">
-              {comment.likes_count}
+            <span className="text-xs text-white/40">
+              {comment.likes_count > 0 && comment.likes_count}
             </span>
           </button>
         </div>
