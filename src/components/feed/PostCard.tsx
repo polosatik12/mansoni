@@ -65,6 +65,7 @@ export function PostCard({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const heartIdRef = useRef(0);
+  const optionsBtnRef = useRef<HTMLButtonElement>(null);
   
   
   const saved = id ? isSaved(id) : false;
@@ -206,6 +207,7 @@ export function PostCard({
         </div>
         <div className="flex items-center gap-2">
           <Button 
+            ref={optionsBtnRef}
             variant="ghost" 
             size="icon" 
             className="text-white/50 h-8 w-8"
@@ -364,6 +366,7 @@ export function PostCard({
               postId={id}
               authorId={authorId}
               authorUsername={author.username}
+              anchorRef={optionsBtnRef}
             />
           )}
         </>
