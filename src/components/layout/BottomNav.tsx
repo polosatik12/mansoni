@@ -169,15 +169,15 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
         <nav 
           className={cn(
             "flex items-center justify-center gap-2",
-            "max-w-md mx-auto mb-2",
+            "max-w-md mx-auto",
             "rounded-2xl",
             "bg-black/40 backdrop-blur-xl",
             "border border-white/20",
             "shadow-lg shadow-black/20"
           )}
           style={{
-            height: '58px',
-            minHeight: '58px',
+            height: '52px',
+            minHeight: '52px',
           }}
         >
           {navItems.map((item) => {
