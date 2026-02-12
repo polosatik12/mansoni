@@ -146,7 +146,6 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
         className={cn(
           "fixed bottom-0 left-0 right-0 z-[100]",
           "touch-none select-none",
-          "px-4",
           (keyboardOpen || hidden) && "pointer-events-none"
         )}
         style={{
@@ -164,20 +163,18 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden',
           isolation: 'isolate',
+          backgroundColor: 'rgb(0, 0, 0)',
         }}
       >
+        <div className="w-full h-px bg-white/10" />
         <nav 
           className={cn(
-            "flex items-center justify-center gap-2",
-            "max-w-md mx-auto",
-            "rounded-2xl",
-            "bg-black/40 backdrop-blur-xl",
-            "border border-white/20",
-            "shadow-lg shadow-black/20"
+            "flex items-center justify-around",
+            "w-full",
           )}
           style={{
-            height: '52px',
-            minHeight: '52px',
+            height: '48px',
+            minHeight: '48px',
           }}
         >
           {navItems.map((item) => {
