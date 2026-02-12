@@ -25,6 +25,20 @@ if (window.Telegram?.WebApp) {
   window.Telegram.WebApp.expand();
   // Mark body as running inside Telegram Mini App
   document.documentElement.classList.add('tma');
+  
+  // Set CSS variable with actual TMA header offset
+  const setTmaOffset = () => {
+    const viewportHeight = window.Telegram?.WebApp?.viewportStableHeight || window.Telegram?.WebApp?.viewportHeight;
+    if (viewportHeight) {
+      const headerOffset = window.innerHeight - viewportHeight;
+      if (headerOffset > 0) {
+        document.documentElement.style.setProperty('--tma-header-offset', `${headerOffset}px`);
+      }
+    }
+  };
+  setTmaOffset();
+  // Re-calculate on viewport changes
+  window.addEventListener('resize', setTmaOffset);
 }
 
 createRoot(document.getElementById("root")!).render(
