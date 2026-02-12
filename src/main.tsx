@@ -11,6 +11,10 @@ declare global {
         ready: () => void;
         expand: () => void;
         isExpanded?: boolean;
+        headerColor?: string;
+        viewportHeight?: number;
+        viewportStableHeight?: number;
+        platform?: string;
       };
     };
   }
@@ -19,6 +23,8 @@ declare global {
 if (window.Telegram?.WebApp) {
   window.Telegram.WebApp.ready();
   window.Telegram.WebApp.expand();
+  // Mark body as running inside Telegram Mini App
+  document.documentElement.classList.add('tma');
 }
 
 createRoot(document.getElementById("root")!).render(

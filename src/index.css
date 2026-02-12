@@ -198,9 +198,14 @@ All colors MUST be HSL.
   }
 }
 
-/* Safe area padding for notched devices */
+/* Safe area padding for notched devices + Telegram Mini App offset */
 .safe-area-top {
   padding-top: env(safe-area-inset-top);
+}
+
+/* In Telegram Mini App, add extra top padding to avoid overlapping the native header */
+.tma .safe-area-top {
+  padding-top: max(env(safe-area-inset-top, 0px), 8px);
 }
 
 .safe-area-bottom {

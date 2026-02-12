@@ -220,7 +220,7 @@ export function ReelsPage() {
     <div className="relative h-[100dvh] bg-black overflow-hidden">
       {/* Top header: tabs + create — glass style */}
       <div className="absolute top-0 inset-x-0 z-30 safe-area-top">
-        <div className="mx-3 mt-2 rounded-2xl bg-black/30 backdrop-blur-2xl border border-white/10 shadow-lg">
+        <div className="mx-3 mt-2 tma:mt-3 rounded-2xl bg-black/30 backdrop-blur-2xl border border-white/10 shadow-lg">
           <div className="flex items-center justify-between px-4 pt-3 pb-1">
             <h1 className="text-white font-bold text-lg">Reels</h1>
             <div className="flex items-center gap-2">
