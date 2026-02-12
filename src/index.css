@@ -276,9 +276,9 @@ All colors MUST be HSL.
   min-width: 44px;
 }
 
-/* Prevent body scroll issues on Android */
 html, body, #root {
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
 }
 
