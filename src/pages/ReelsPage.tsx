@@ -217,7 +217,7 @@ export function ReelsPage() {
   }
 
   return (
-    <div className="relative h-[calc(100dvh-60px)] bg-black overflow-hidden">
+    <div className="relative h-[100dvh] bg-black overflow-hidden">
       {/* Top header: tabs + create — glass style */}
       <div className="absolute top-0 inset-x-0 z-30 safe-area-top">
         <div className="flex flex-col items-center pt-1.5 pb-0.5">
@@ -252,7 +252,7 @@ export function ReelsPage() {
       {/* Reels scroll container */}
       <div
         ref={containerRef}
-        className="h-[calc(100dvh-60px)] overflow-y-scroll overflow-x-hidden snap-y snap-mandatory"
+        className="h-[100dvh] overflow-y-scroll overflow-x-hidden snap-y snap-mandatory"
         onScroll={handleScroll}
         style={{
           WebkitOverflowScrolling: "touch",
@@ -266,7 +266,7 @@ export function ReelsPage() {
           return (
             <div
               key={reel.id}
-              className="relative w-full h-[calc(100dvh-60px)] flex-shrink-0 snap-start snap-always"
+              className="relative w-full h-[100dvh] flex-shrink-0 snap-start snap-always"
               onClick={(e) => handleTap(e, reel)}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
@@ -326,7 +326,7 @@ export function ReelsPage() {
               )}
 
               {/* Right sidebar actions */}
-              <div className="absolute right-3 bottom-24 flex flex-col items-center gap-5 z-20">
+              <div className="absolute right-3 bottom-32 flex flex-col items-center gap-5 z-20">
                 {/* Author avatar */}
                 <button
                   className="relative mb-2"
@@ -424,7 +424,7 @@ export function ReelsPage() {
               </div>
 
               {/* Bottom info */}
-              <div className="absolute left-4 right-20 bottom-16 z-20">
+              <div className="absolute left-4 right-20 bottom-[76px] z-20">
                 {/* Author */}
                 <div className="flex items-center gap-2 mb-2">
                   <button
@@ -467,7 +467,7 @@ export function ReelsPage() {
               {/* Progress bar with seek */}
               {isActive && (
                 <div
-                  className="absolute bottom-1 left-0 right-0 z-30 h-[14px] flex items-end cursor-pointer"
+                  className="absolute bottom-[60px] left-0 right-0 z-30 h-[14px] flex items-end cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     const video = videoRefs.current.get(currentIndex);
