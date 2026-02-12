@@ -203,9 +203,10 @@ All colors MUST be HSL.
   padding-top: env(safe-area-inset-top);
 }
 
-/* In Telegram Mini App, add extra top padding to avoid overlapping the native header */
+/* In Telegram Mini App the viewport already starts below the native header,
+   so safe-area-top only needs a small extra nudge (status-bar overlap). */
 .tma .safe-area-top {
-  padding-top: var(--tma-header-offset, 56px);
+  padding-top: 0px;
 }
 
 .safe-area-bottom {
