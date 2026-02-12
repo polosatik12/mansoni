@@ -607,7 +607,7 @@ export function SettingsPage() {
               </div>
 
               {/* Logout */}
-              <div className="px-4 mt-6">
+              <div className="px-4 mt-6 pb-24">
                 <button 
                   onClick={handleLogout}
                   className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-colors"
