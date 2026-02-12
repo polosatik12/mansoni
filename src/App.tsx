@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -10,15 +10,17 @@ import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GlobalCallOverlay } from "@/components/chat/GlobalCallOverlay";
-import { createQueryClient } from "@/lib/queryClient";
+import { createQueryClient, createPersister } from "@/lib/queryClient";
 import { initErrorTracking } from "@/lib/sentry";
 import { Loader2 } from "lucide-react";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 // Initialize error tracking
 initErrorTracking();
 
-// Create query client with circuit breaker
+// Create query client with circuit breaker + persister for offline cache
 const queryClient = createQueryClient();
+const persister = createPersister();
 
 // F4: Lazy load heavy pages
 const HomePage = lazy(() => import("@/pages/HomePage").then(m => ({ default: m.HomePage })));
@@ -56,13 +58,14 @@ function PageLoader() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}>
     <AuthProvider>
       <VideoCallProvider>
         <ChatOpenProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <OfflineBanner />
             <GlobalCallOverlay />
             <BrowserRouter>
               <Suspense fallback={null}>
@@ -186,7 +189,7 @@ const App = () => (
         </ChatOpenProvider>
       </VideoCallProvider>
     </AuthProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
