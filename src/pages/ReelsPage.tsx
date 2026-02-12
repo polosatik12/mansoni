@@ -5,7 +5,6 @@ import {
   MessageCircle,
   Send,
   Bookmark,
-  Music2,
   Play,
   User,
   Loader2,
@@ -219,37 +218,39 @@ export function ReelsPage() {
 
   return (
     <div className="relative h-screen bg-black overflow-hidden">
-      {/* Top header: tabs + create */}
+      {/* Top header: tabs + create — glass style */}
       <div className="absolute top-0 inset-x-0 z-30 safe-area-top">
-        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <h1 className="text-white font-bold text-lg">Reels</h1>
-          <div className="flex items-center gap-2">
-            {user && (
-              <button
-                onClick={() => setShowCreateSheet(true)}
-                className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center"
-              >
-                <Plus className="w-5 h-5 text-white" />
-              </button>
-            )}
-          </div>
-        </div>
-        {/* Tabs */}
-        <div className="flex items-center justify-center gap-4 pb-2">
-          {(["foryou", "following"] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "text-sm font-semibold pb-1 border-b-2 transition-all",
-                activeTab === tab
-                  ? "text-white border-white"
-                  : "text-white/50 border-transparent"
+        <div className="mx-3 mt-2 rounded-2xl bg-black/30 backdrop-blur-2xl border border-white/10 shadow-lg">
+          <div className="flex items-center justify-between px-4 pt-3 pb-1">
+            <h1 className="text-white font-bold text-lg">Reels</h1>
+            <div className="flex items-center gap-2">
+              {user && (
+                <button
+                  onClick={() => setShowCreateSheet(true)}
+                  className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10"
+                >
+                  <Plus className="w-5 h-5 text-white" />
+                </button>
               )}
-            >
-              {tab === "foryou" ? "Для тебя" : "Подписки"}
-            </button>
-          ))}
+            </div>
+          </div>
+          {/* Tabs */}
+          <div className="flex items-center justify-center gap-4 pb-2.5">
+            {(["foryou", "following"] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "text-sm font-semibold pb-1 border-b-2 transition-all",
+                  activeTab === tab
+                    ? "text-white border-white"
+                    : "text-white/50 border-transparent"
+                )}
+              >
+                {tab === "foryou" ? "Для тебя" : "Подписки"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -320,11 +321,11 @@ export function ReelsPage() {
               {isActive && heartAnimPos && (
                 <div
                   className="fixed z-50 pointer-events-none"
-                  style={{ left: heartAnimPos.x - 48, top: heartAnimPos.y - 48 }}
+                  style={{ left: heartAnimPos.x - 32, top: heartAnimPos.y - 32 }}
                 >
                   <Heart
-                    className="w-24 h-24 text-white fill-white animate-[heartPop_0.9s_ease-out_forwards]"
-                    style={{ filter: "drop-shadow(0 0 30px rgba(255,255,255,0.6))" }}
+                    className="w-16 h-16 text-red-500 fill-red-500 animate-[heartPop_0.9s_ease-out_forwards]"
+                    style={{ filter: "drop-shadow(0 0 20px rgba(239,68,68,0.7))" }}
                   />
                 </div>
               )}
@@ -405,17 +406,26 @@ export function ReelsPage() {
                   )}
                 </button>
 
-                {/* Music disc */}
-                {reel.music_title && (
-                  <div className="w-10 h-10 rounded-lg border-2 border-white/30 bg-neutral-900 overflow-hidden animate-[spinSlow_4s_linear_infinite]">
-                    <Avatar className="w-full h-full rounded-none">
-                      <AvatarImage src={reel.author?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-neutral-800 rounded-none">
-                        <Music2 className="w-4 h-4 text-white/60" />
+                {/* Vinyl disc */}
+                <div className={cn(
+                  "w-11 h-11 rounded-full border-[3px] border-white/20 bg-black overflow-hidden",
+                  isActive && !isPaused ? "animate-[spinSlow_4s_linear_infinite]" : ""
+                )}>
+                  <div className="w-full h-full rounded-full relative flex items-center justify-center">
+                    {/* Vinyl grooves */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-neutral-800 via-neutral-900 to-black" />
+                    <div className="absolute inset-[3px] rounded-full border border-white/10" />
+                    <div className="absolute inset-[6px] rounded-full border border-white/5" />
+                    <div className="absolute inset-[9px] rounded-full border border-white/10" />
+                    {/* Center label */}
+                    <Avatar className="w-5 h-5 rounded-full relative z-10">
+                      <AvatarImage src={reel.author?.avatar_url || undefined} className="rounded-full" />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent rounded-full text-[8px] text-white">
+                        ♪
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Bottom info */}
@@ -449,7 +459,7 @@ export function ReelsPage() {
                 {/* Music */}
                 {reel.music_title && (
                   <div className="flex items-center gap-2">
-                    <Music2 className="w-3.5 h-3.5 text-white/80" />
+                    <span className="text-white/80 text-xs">♪</span>
                     <div className="overflow-hidden max-w-[200px]">
                       <span className="text-white/80 text-xs whitespace-nowrap inline-block animate-[marquee_8s_linear_infinite]">
                         {reel.music_title} • {reel.author?.display_name || "Original"}

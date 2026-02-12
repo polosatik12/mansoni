@@ -20,19 +20,41 @@ export function ProfileReelsGrid({ userId }: ProfileReelsGridProps) {
   const [reels, setReels] = useState<ProfileReel[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchReels = async () => {
-      setLoading(true);
-      const { data, error } = await (supabase as any)
-        .from("reels")
-        .select("id, video_url, thumbnail_url, views_count, likes_count")
-        .eq("author_id", userId)
-        .order("created_at", { ascending: false });
+  const fetchReels = async () => {
+    setLoading(true);
+    const { data, error } = await (supabase as any)
+      .from("reels")
+      .select("id, video_url, thumbnail_url, views_count, likes_count")
+      .eq("author_id", userId)
+      .order("created_at", { ascending: false });
 
-      if (!error && data) setReels(data);
-      setLoading(false);
-    };
+    if (!error && data) setReels(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchReels();
+
+    // Listen for new reels from this user
+    const channel = supabase
+      .channel(`profile-reels-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reels',
+          filter: `author_id=eq.${userId}`,
+        },
+        () => {
+          fetchReels();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   if (loading) {
