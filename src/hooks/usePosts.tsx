@@ -24,6 +24,10 @@ export interface Post {
     media_type: string;
     sort_order: number;
   }[];
+  mentions?: {
+    user_id: string;
+    display_name: string;
+  }[];
   is_liked?: boolean;
 }
 
@@ -103,7 +107,7 @@ export function usePosts(filter: FeedFilter = 'all') {
       const authorIds = [...new Set(postsData.map(p => p.author_id))];
       const postIds = postsData.map(p => p.id);
 
-      const [profilesRes, likesRes] = await Promise.all([
+      const [profilesRes, likesRes, mentionsRes] = await Promise.all([
         supabase
           .from('profiles')
           .select('user_id, display_name, avatar_url')
@@ -114,11 +118,34 @@ export function usePosts(filter: FeedFilter = 'all') {
               .select('post_id')
               .eq('user_id', user.id)
               .in('post_id', postIds)
-          : Promise.resolve({ data: [] })
+          : Promise.resolve({ data: [] }),
+        (supabase as any)
+          .from('post_mentions')
+          .select('post_id, mentioned_user_id')
+          .in('post_id', postIds)
       ]);
 
       const profilesMap = new Map(profilesRes.data?.map(p => [p.user_id, p]) || []);
       const likedPostIds = new Set(likesRes.data?.map(l => l.post_id) || []);
+      
+      // Fetch display names for mentioned users
+      const mentionedUserIds = Array.from(new Set<string>((mentionsRes.data || []).map((m: any) => String(m.mentioned_user_id))));
+      let mentionProfilesMap = new Map<string, string>();
+      if (mentionedUserIds.length > 0) {
+        const { data: mentionProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .in('user_id', mentionedUserIds);
+        mentionProfilesMap = new Map((mentionProfiles || []).map(p => [p.user_id, p.display_name || 'User']));
+      }
+
+      // Group mentions by post
+      const mentionsByPost = new Map<string, { user_id: string; display_name: string }[]>();
+      for (const m of (mentionsRes.data || []) as any[]) {
+        const list = mentionsByPost.get(m.post_id) || [];
+        list.push({ user_id: m.mentioned_user_id, display_name: mentionProfilesMap.get(m.mentioned_user_id) || 'User' });
+        mentionsByPost.set(m.post_id, list);
+      }
 
       const finalPosts: Post[] = postsData.map(post => ({
         ...post,
@@ -128,6 +155,7 @@ export function usePosts(filter: FeedFilter = 'all') {
           avatar_url: profilesMap.get(post.author_id)?.avatar_url
         } : undefined,
         media: (post.post_media || []).sort((a: any, b: any) => a.sort_order - b.sort_order),
+        mentions: mentionsByPost.get(post.id) || [],
         is_liked: likedPostIds.has(post.id)
       }));
 
@@ -257,7 +285,7 @@ export function usePostActions() {
     }
   }, [user]);
 
-  const createPost = useCallback(async (content: string, mediaUrls?: string[]) => {
+  const createPost = useCallback(async (content: string, mediaUrls?: string[], mentionedUserIds?: string[]) => {
     if (!user) {
       return { error: 'Must be logged in to create posts', post: null };
     }
@@ -281,6 +309,16 @@ export function usePostActions() {
         }));
 
         await supabase.from('post_media').insert(mediaInserts);
+      }
+
+      // Add mentions if provided
+      if (mentionedUserIds && mentionedUserIds.length > 0) {
+        const mentionInserts = mentionedUserIds.map(uid => ({
+          post_id: post.id,
+          mentioned_user_id: uid
+        }));
+
+        await (supabase as any).from('post_mentions').insert(mentionInserts);
       }
 
       return { error: null, post };

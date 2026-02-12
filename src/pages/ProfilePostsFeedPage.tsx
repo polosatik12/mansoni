@@ -50,11 +50,34 @@ export function ProfilePostsFeedPage() {
           likedIds = new Set((likes || []).map(l => l.post_id));
         }
 
+        // Fetch mentions
+        const postIds = postsData.map(p => p.id);
+        const { data: mentionsData } = await (supabase as any)
+          .from('post_mentions')
+          .select('post_id, mentioned_user_id')
+          .in('post_id', postIds);
+
+        let mentionsByPost = new Map<string, { user_id: string; display_name: string }[]>();
+        if (mentionsData && mentionsData.length > 0) {
+          const mentionUserIds = Array.from(new Set<string>(mentionsData.map((m: any) => String(m.mentioned_user_id))));
+          const { data: mentionProfiles } = await supabase
+            .from('profiles')
+            .select('user_id, display_name')
+            .in('user_id', mentionUserIds);
+          const nameMap = new Map((mentionProfiles || []).map(p => [p.user_id, p.display_name || 'User']));
+          for (const m of mentionsData) {
+            const list = mentionsByPost.get(m.post_id) || [];
+            list.push({ user_id: m.mentioned_user_id, display_name: nameMap.get(m.mentioned_user_id) || 'User' });
+            mentionsByPost.set(m.post_id, list);
+          }
+        }
+
         const enriched = postsData.map(post => ({
           ...post,
           profile,
           isLiked: likedIds.has(post.id),
           media: (post.post_media || []).sort((a: any, b: any) => a.sort_order - b.sort_order),
+          mentions: mentionsByPost.get(post.id) || [],
         }));
 
         setPosts(enriched);
@@ -129,6 +152,7 @@ export function ProfilePostsFeedPage() {
                 likes={post.likes_count}
                 comments={post.comments_count}
                 shares={post.shares_count}
+                mentions={post.mentions}
                 timeAgo={formatTime(post.created_at)}
                 isLiked={post.isLiked}
               />

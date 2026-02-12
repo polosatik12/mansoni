@@ -92,7 +92,7 @@ export function HomePage() {
                   likes={post.likes_count}
                   comments={post.comments_count}
                   shares={post.shares_count}
-                  
+                  mentions={post.mentions}
                   timeAgo={formatTimeAgo(post.created_at)}
                   isLiked={post.is_liked}
                 />
