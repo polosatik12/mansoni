@@ -13,8 +13,6 @@ import { supabase } from "@/lib/supabase";
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
 } from "@/components/ui/drawer";
 
 interface ShareSheetProps {
@@ -208,96 +206,105 @@ export function ShareSheet({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="h-[70dvh] max-h-[70dvh] mt-0 flex flex-col">
-        <DrawerHeader className="border-b border-border pb-3 flex-shrink-0">
-          <DrawerTitle className="text-center">Поделиться</DrawerTitle>
-        </DrawerHeader>
-
-        {/* Search */}
-        <div className="px-4 py-3 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Поиск..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-muted border-0 rounded-lg"
-            />
+      <DrawerContent className="h-[70dvh] max-h-[70dvh] mt-0 flex flex-col border-0 bg-transparent">
+        <div
+          className="h-full flex flex-col rounded-t-2xl overflow-hidden border border-white/20"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            backdropFilter: "blur(24px) saturate(1.5)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.5)",
+            boxShadow: "0 -8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+          }}
+        >
+          <div className="flex justify-center pt-3 pb-2">
+            <div className="w-9 h-1 bg-white/30 rounded-full" />
           </div>
-        </div>
+          <div className="text-center pb-3 border-b border-white/10">
+            <h3 className="text-lg font-semibold text-white">Поделиться</h3>
+          </div>
 
-        {/* Targets List */}
-        <div className="flex-1 overflow-y-auto native-scroll">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          {/* Search */}
+          <div className="px-4 py-3 border-b border-white/10">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Input
+                placeholder="Поиск..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-white/10 border-white/10 rounded-xl text-white placeholder:text-white/40"
+              />
             </div>
-          ) : filteredTargets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <p className="text-base">Нет доступных чатов</p>
-              <p className="text-sm mt-1">Начните переписку, чтобы делиться</p>
-            </div>
-          ) : (
-            <div className="py-2">
-              {filteredTargets.map((target) => {
-                const isSelected = selectedTargets.has(target.id);
-                return (
-                  <button
-                    key={target.id}
-                    onClick={() => toggleTarget(target.id)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 transition-colors",
-                      isSelected ? "bg-primary/10" : "hover:bg-muted/50"
-                    )}
-                  >
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={target.avatar} />
-                      <AvatarFallback className="bg-muted text-muted-foreground">
-                        {target.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{target.name}</span>
-                        {getIcon(target.type)}
-                      </div>
-                    </div>
-                    <div
+          </div>
+
+          {/* Targets List */}
+          <div className="flex-1 overflow-y-auto native-scroll">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-white/40" />
+              </div>
+            ) : filteredTargets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <p className="text-base text-white/60">Нет доступных чатов</p>
+                <p className="text-sm mt-1 text-white/40">Начните переписку, чтобы делиться</p>
+              </div>
+            ) : (
+              <div className="py-2">
+                {filteredTargets.map((target) => {
+                  const isSelected = selectedTargets.has(target.id);
+                  return (
+                    <button
+                      key={target.id}
+                      onClick={() => toggleTarget(target.id)}
                       className={cn(
-                        "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                        isSelected
-                          ? "bg-primary border-primary"
-                          : "border-muted-foreground/30"
+                        "w-full flex items-center gap-3 px-4 py-3 transition-colors",
+                        isSelected ? "bg-white/10" : "hover:bg-white/5"
                       )}
                     >
-                      {isSelected && (
-                        <div className="w-2 h-2 rounded-full bg-white" />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={target.avatar} />
+                        <AvatarFallback className="bg-white/10 text-white/70">
+                          {target.name.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-white">{target.name}</span>
+                          {getIcon(target.type)}
+                        </div>
+                      </div>
+                      <div
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
+                          isSelected ? "bg-primary border-primary" : "border-white/30"
+                        )}
+                      >
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Send Button */}
+          {selectedTargets.size > 0 && (
+            <div className="p-4 border-t border-white/10 safe-area-bottom">
+              <Button
+                onClick={handleShare}
+                disabled={sending}
+                className="w-full h-12 text-base font-semibold"
+              >
+                {sending ? (
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                ) : (
+                  <Send className="w-5 h-5 mr-2" />
+                )}
+                Отправить ({selectedTargets.size})
+              </Button>
             </div>
           )}
         </div>
-
-        {/* Send Button */}
-        {selectedTargets.size > 0 && (
-          <div className="p-4 border-t border-border safe-area-bottom">
-            <Button
-              onClick={handleShare}
-              disabled={sending}
-              className="w-full h-12 text-base font-semibold"
-            >
-              {sending ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              ) : (
-                <Send className="w-5 h-5 mr-2" />
-              )}
-              Отправить ({selectedTargets.size})
-            </Button>
-          </div>
-        )}
       </DrawerContent>
     </Drawer>
   );

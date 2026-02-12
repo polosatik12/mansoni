@@ -42,11 +42,14 @@ const SwaggerPage = lazy(() => import("@/pages/SwaggerPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then(m => ({ default: m.CommandPalette })));
 
-// Loading fallback component
+// Loading fallback component with brand background
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-[#0a1628] relative overflow-hidden">
+      {/* Animated orbs */}
+      <div className="absolute w-[300px] h-[300px] rounded-full opacity-30 blur-[80px] bg-[#1a6985]" style={{ top: '20%', left: '10%', animation: 'float-orb-1 12s ease-in-out infinite' }} />
+      <div className="absolute w-[250px] h-[250px] rounded-full opacity-25 blur-[70px] bg-[#2a9d8f]" style={{ bottom: '20%', right: '15%', animation: 'float-orb-2 10s ease-in-out infinite' }} />
+      <Loader2 className="w-8 h-8 animate-spin text-white/60 relative z-10" />
     </div>
   );
 }
