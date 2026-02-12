@@ -220,28 +220,14 @@ export function ReelsPage() {
     <div className="relative h-[100dvh] bg-black overflow-hidden">
       {/* Top header: tabs + create — glass style */}
       <div className="absolute top-0 inset-x-0 z-30 safe-area-top">
-        <div className="mx-3 mt-2 tma:mt-3 rounded-2xl bg-black/30 backdrop-blur-2xl border border-white/10 shadow-lg">
-          <div className="flex items-center justify-between px-4 pt-3 pb-1">
-            <h1 className="text-white font-bold text-lg">Reels</h1>
-            <div className="flex items-center gap-2">
-              {user && (
-                <button
-                  onClick={() => setShowCreateSheet(true)}
-                  className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10"
-                >
-                  <Plus className="w-5 h-5 text-white" />
-                </button>
-              )}
-            </div>
-          </div>
-          {/* Tabs */}
-          <div className="flex items-center justify-center gap-4 pb-2.5">
+        <div className="flex items-center justify-between px-4 pt-1.5 pb-0.5">
+          <div className="flex items-center gap-4">
             {(["foryou", "following"] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  "text-sm font-semibold pb-1 border-b-2 transition-all",
+                  "text-sm font-bold pb-0.5 border-b-2 transition-all",
                   activeTab === tab
                     ? "text-white border-white"
                     : "text-white/50 border-transparent"
@@ -250,6 +236,16 @@ export function ReelsPage() {
                 {tab === "foryou" ? "Для тебя" : "Подписки"}
               </button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            {user && (
+              <button
+                onClick={() => setShowCreateSheet(true)}
+                className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center"
+              >
+                <Plus className="w-4.5 h-4.5 text-white" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -331,7 +327,7 @@ export function ReelsPage() {
               )}
 
               {/* Right sidebar actions */}
-              <div className="absolute right-3 bottom-24 flex flex-col items-center gap-5 z-20">
+              <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 z-20">
                 {/* Author avatar */}
                 <button
                   className="relative mb-2"
