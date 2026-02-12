@@ -197,20 +197,20 @@ export function ReelShareSheet({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="h-[70dvh] max-h-[70dvh] mt-0 flex flex-col">
-        <DrawerHeader className="border-b border-border pb-3 flex-shrink-0">
-          <DrawerTitle className="text-center">Поделиться Reels</DrawerTitle>
+      <DrawerContent className="h-[70dvh] max-h-[70dvh] mt-0 flex flex-col bg-black/60 backdrop-blur-2xl border-t border-white/10">
+        <DrawerHeader className="border-b border-white/10 pb-3 flex-shrink-0">
+          <DrawerTitle className="text-center text-white">Поделиться Reels</DrawerTitle>
         </DrawerHeader>
 
         {/* Search */}
-        <div className="px-4 py-3 border-b border-border">
+        <div className="px-4 py-3 border-b border-white/10">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
             <Input
               placeholder="Поиск..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-muted border-0 rounded-lg"
+              className="pl-9 bg-white/10 border-white/10 rounded-xl text-white placeholder:text-white/40"
             />
           </div>
         </div>
@@ -219,10 +219,10 @@ export function ReelShareSheet({
         <div className="flex-1 overflow-y-auto native-scroll">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Loader2 className="w-6 h-6 animate-spin text-white/50" />
             </div>
           ) : filteredTargets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-white/50">
               <p className="text-base">Нет доступных чатов</p>
               <p className="text-sm mt-1">Начните переписку, чтобы делиться</p>
             </div>
@@ -236,18 +236,18 @@ export function ReelShareSheet({
                     onClick={() => toggleTarget(target.id)}
                     className={cn(
                       "w-full flex items-center gap-3 px-4 py-3 transition-colors",
-                      isSelected ? "bg-primary/10" : "hover:bg-muted/50"
+                      isSelected ? "bg-white/10" : "hover:bg-white/5"
                     )}
                   >
-                    <Avatar className="w-12 h-12">
+                    <Avatar className="w-12 h-12 border border-white/10">
                       <AvatarImage src={target.avatar} />
-                      <AvatarFallback className="bg-muted text-muted-foreground">
+                      <AvatarFallback className="bg-white/10 text-white/70">
                         {target.name.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{target.name}</span>
+                        <span className="font-medium text-white">{target.name}</span>
                         {getIcon(target.type)}
                       </div>
                     </div>
@@ -256,7 +256,7 @@ export function ReelShareSheet({
                         "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
                         isSelected
                           ? "bg-primary border-primary"
-                          : "border-muted-foreground/30"
+                          : "border-white/30"
                       )}
                     >
                       {isSelected && (
@@ -272,11 +272,11 @@ export function ReelShareSheet({
 
         {/* Send Button */}
         {selectedTargets.size > 0 && (
-          <div className="p-4 border-t border-border safe-area-bottom">
+          <div className="p-4 border-t border-white/10 safe-area-bottom">
             <Button
               onClick={handleShare}
               disabled={sending}
-              className="w-full h-12 text-base font-semibold"
+              className="w-full h-12 text-base font-semibold rounded-xl"
             >
               {sending ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
