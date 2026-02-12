@@ -205,7 +205,7 @@ All colors MUST be HSL.
 
 /* In Telegram Mini App, add extra top padding to avoid overlapping the native header */
 .tma .safe-area-top {
-  padding-top: max(env(safe-area-inset-top, 0px), 8px);
+  padding-top: var(--tma-header-offset, 56px);
 }
 
 .safe-area-bottom {
