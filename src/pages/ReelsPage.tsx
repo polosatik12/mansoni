@@ -220,8 +220,9 @@ export function ReelsPage() {
     <div className="relative h-[100dvh] bg-black overflow-hidden">
       {/* Top header: tabs + create — glass style */}
       <div className="absolute top-0 inset-x-0 z-30 safe-area-top">
-        <div className="flex items-center justify-between px-4 pt-1.5 pb-0.5">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col items-center pt-1.5 pb-0.5">
+          <h1 className="text-white font-bold text-[15px] mb-1">Reels</h1>
+          <div className="flex items-center gap-5">
             {(["foryou", "following"] as const).map(tab => (
               <button
                 key={tab}
@@ -237,17 +238,15 @@ export function ReelsPage() {
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            {user && (
-              <button
-                onClick={() => setShowCreateSheet(true)}
-                className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center"
-              >
-                <Plus className="w-4.5 h-4.5 text-white" />
-              </button>
-            )}
-          </div>
         </div>
+        {user && (
+          <button
+            onClick={() => setShowCreateSheet(true)}
+            className="absolute right-4 top-1.5 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center"
+          >
+            <Plus className="w-4.5 h-4.5 text-white" />
+          </button>
+        )}
       </div>
 
       {/* Reels scroll container */}
