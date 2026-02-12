@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Users } from "lucide-react";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
@@ -27,7 +27,7 @@ interface PostCardProps {
   comments: number;
   shares: number;
   saves?: number;
-  
+  mentions?: { user_id: string; display_name: string }[];
   timeAgo: string;
   isRecommended?: boolean;
   isLiked?: boolean;
@@ -45,6 +45,7 @@ export function PostCard({
   comments,
   shares,
   saves = 0,
+  mentions,
   timeAgo,
   isRecommended = false,
   isLiked = false,
@@ -287,6 +288,22 @@ export function PostCard({
           )}
         </p>
       </div>
+
+      {/* Mentions */}
+      {mentions && mentions.length > 0 && (
+        <div className="px-4 pb-1 flex items-center gap-1.5 flex-wrap">
+          <Users className="w-3.5 h-3.5 text-blue-400" />
+          {mentions.map((m, i) => (
+            <button
+              key={m.user_id}
+              onClick={() => navigate(`/user/${m.user_id}`)}
+              className="text-xs text-blue-400 font-medium hover:underline"
+            >
+              @{m.display_name}{i < mentions.length - 1 ? "," : ""}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Actions with Stats */}
       <div className="px-4 py-3 flex items-center justify-between">

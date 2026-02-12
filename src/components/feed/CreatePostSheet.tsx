@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { SimpleMediaEditor } from "@/components/editor";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { BrandBackground } from "@/components/ui/brand-background";
+import { MentionPicker } from "./MentionPicker";
 
 interface CreatePostSheetProps {
   isOpen: boolean;
@@ -27,6 +28,8 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
   // Editor state
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [mentionPickerOpen, setMentionPickerOpen] = useState(false);
+  const [mentionedUsers, setMentionedUsers] = useState<{ user_id: string; display_name: string; avatar_url: string | null }[]>([]);
 
   // Hide bottom nav when creating content
   useEffect(() => {
@@ -156,8 +159,8 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
       // Upload images first
       const mediaUrls = await uploadImages();
 
-      // Create post
-      const { error } = await createPost(text.trim(), mediaUrls);
+      const mentionIds = mentionedUsers.map(u => u.user_id);
+      const { error } = await createPost(text.trim(), mediaUrls, mentionIds.length > 0 ? mentionIds : undefined);
 
       if (error) {
         throw new Error(error);
@@ -169,6 +172,7 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
       selectedImages.forEach(({ preview }) => URL.revokeObjectURL(preview));
       setText("");
       setSelectedImages([]);
+      setMentionedUsers([]);
       onClose();
     } catch (error: any) {
       toast.error("Ошибка публикации", { description: error.message });
@@ -182,6 +186,7 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
     selectedImages.forEach(({ preview }) => URL.revokeObjectURL(preview));
     setText("");
     setSelectedImages([]);
+    setMentionedUsers([]);
     onClose();
   };
 
@@ -290,6 +295,21 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
           </div>
         )}
 
+        {/* Mentioned users display */}
+        {mentionedUsers.length > 0 && (
+          <div className="px-4 py-2">
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <Users className="w-4 h-4 text-blue-400" />
+              <span className="text-xs text-white/50">Отмечены:</span>
+              {mentionedUsers.map(u => (
+                <span key={u.user_id} className="text-xs text-blue-400 font-medium">
+                  @{u.display_name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Add to post */}
         <div className="px-4 py-3 mt-auto">
           <div className="border border-white/10 rounded-xl p-3 bg-white/5 backdrop-blur-xl">
@@ -304,7 +324,10 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
               >
                 <Image className="w-5 h-5 text-green-500" />
               </button>
-              <button className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <button 
+                onClick={() => setMentionPickerOpen(true)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${mentionedUsers.length > 0 ? 'bg-blue-500/30 ring-2 ring-blue-500/50' : 'bg-blue-500/10'}`}
+              >
                 <Users className="w-5 h-5 text-blue-500" />
               </button>
               <button className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center">
@@ -345,6 +368,14 @@ export function CreatePostSheet({ isOpen, onClose }: CreatePostSheetProps) {
         contentType="post"
         onSave={handleEditorSave}
         onCancel={handleEditorCancel}
+      />
+
+      {/* Mention Picker */}
+      <MentionPicker
+        isOpen={mentionPickerOpen}
+        onClose={() => setMentionPickerOpen(false)}
+        selected={mentionedUsers}
+        onSelect={setMentionedUsers}
       />
     </div>
   );
