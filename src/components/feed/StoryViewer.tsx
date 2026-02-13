@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, Heart, Send, Trash2 } from "lucide-react";
+import { X, Heart, Send, Trash2, Eye, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 import { formatDistanceToNow } from "date-fns";
@@ -12,6 +12,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { StoryShareSheet } from "./StoryShareSheet";
+
+interface StoryViewer {
+  viewer_id: string;
+  viewed_at: string;
+  profile?: {
+    display_name: string | null;
+    avatar_url: string | null;
+    verified: boolean | null;
+  };
+}
 
 interface StoryViewerProps {
   usersWithStories: UserWithStories[];
@@ -37,6 +47,10 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [showViewers, setShowViewers] = useState(false);
+  const [viewers, setViewers] = useState<StoryViewer[]>([]);
+  const [viewersCount, setViewersCount] = useState(0);
+  const [loadingViewers, setLoadingViewers] = useState(false);
   const replyInputRef = useRef<HTMLInputElement>(null);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -212,7 +226,59 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
     setReplyText("");
     setLiked(false);
     setShowDeleteConfirm(false);
+    setShowViewers(false);
+    setViewers([]);
+    setViewersCount(0);
   }, [currentUserIndex, currentStoryInUser]);
+
+  // Fetch viewers count for own stories
+  useEffect(() => {
+    if (!isOpen || !currentUser?.isOwn || !currentUserStories[currentStoryInUser]) return;
+    const storyId = currentUserStories[currentStoryInUser].id;
+    
+    (async () => {
+      const { count } = await (supabase as any)
+        .from('story_views')
+        .select('*', { count: 'exact', head: true })
+        .eq('story_id', storyId);
+      setViewersCount(count || 0);
+    })();
+  }, [isOpen, currentUser, currentStoryInUser, currentUserStories]);
+
+  const fetchViewers = useCallback(async () => {
+    if (!currentUserStories[currentStoryInUser]) return;
+    setLoadingViewers(true);
+    const storyId = currentUserStories[currentStoryInUser].id;
+    
+    try {
+      const { data } = await (supabase as any)
+        .from('story_views')
+        .select('viewer_id, viewed_at')
+        .eq('story_id', storyId)
+        .order('viewed_at', { ascending: false });
+
+      if (data && data.length > 0) {
+        const viewerIds = data.map((v: any) => v.viewer_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url, verified')
+          .in('user_id', viewerIds);
+
+        const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+        
+        setViewers(data.map((v: any) => ({
+          ...v,
+          profile: profileMap.get(v.viewer_id) || { display_name: 'Пользователь', avatar_url: null, verified: false },
+        })));
+      } else {
+        setViewers([]);
+      }
+    } catch (e) {
+      console.error('Error fetching viewers:', e);
+    } finally {
+      setLoadingViewers(false);
+    }
+  }, [currentUserStories, currentStoryInUser]);
 
   const isOwnStory = currentUser && currentUser.isOwn;
   const isOtherUser = currentUser && !currentUser.isOwn;
@@ -490,7 +556,104 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
           </div>
         )}
 
-        {/* Delete confirmation for own stories */}
+        {/* Bottom bar for own stories - view count */}
+        {isOwnStory && !showViewers && (
+          <div className="absolute bottom-0 left-0 right-0 z-30 px-3 pb-4 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowViewers(true);
+                setIsPaused(true);
+                fetchViewers();
+              }}
+              className="flex items-center gap-2 text-white/80 hover:text-white transition-colors mx-auto"
+            >
+              <Eye className="w-5 h-5" />
+              <span className="text-sm font-medium">{viewersCount}</span>
+            </button>
+          </div>
+        )}
+
+        {/* Viewers panel (slides up from bottom) */}
+        {isOwnStory && showViewers && (
+          <div className="absolute inset-0 z-50 flex flex-col justify-end" onClick={() => { setShowViewers(false); setIsPaused(false); }}>
+            <div className="absolute inset-0 bg-black/40" />
+            <div 
+              className="relative rounded-t-2xl overflow-hidden border-t border-white/10 max-h-[60vh] flex flex-col"
+              style={{
+                background: "rgba(20,20,25,0.97)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-white/20" />
+              </div>
+              
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-white/70" />
+                  <span className="text-white font-semibold text-base">{viewersCount} {viewersCount === 1 ? 'просмотр' : viewersCount >= 2 && viewersCount <= 4 ? 'просмотра' : 'просмотров'}</span>
+                </div>
+                <button
+                  onClick={() => { setShowViewers(false); setIsPaused(false); }}
+                  className="p-1.5 text-white/60 hover:text-white transition-colors"
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Viewers list */}
+              <div className="overflow-y-auto flex-1 px-4 pb-6">
+                {loadingViewers ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  </div>
+                ) : viewers.length === 0 ? (
+                  <p className="text-white/40 text-sm text-center py-8">Пока никто не посмотрел</p>
+                ) : (
+                  <div className="space-y-1">
+                    {viewers.map((v) => (
+                      <button
+                        key={v.viewer_id}
+                        type="button"
+                        className="flex items-center gap-3 w-full py-2.5 px-1 rounded-xl hover:bg-white/5 transition-colors text-left"
+                        onClick={() => {
+                          setShowViewers(false);
+                          setIsPaused(false);
+                          onClose();
+                          navigate(`/user/${v.viewer_id}`);
+                        }}
+                      >
+                        <img
+                          src={v.profile?.avatar_url || `https://i.pravatar.cc/150?u=${v.viewer_id}`}
+                          alt=""
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
+                            <span className="text-white text-sm font-medium truncate">
+                              {v.profile?.display_name || 'Пользователь'}
+                            </span>
+                            {v.profile?.verified && <VerifiedBadge size="sm" />}
+                          </div>
+                          <span className="text-white/40 text-xs">
+                            {(() => { try { return formatDistanceToNow(new Date(v.viewed_at), { addSuffix: true, locale: ru }); } catch { return ''; } })()}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+
         {showDeleteConfirm && (
           <div 
             className="absolute inset-0 z-50 flex items-center justify-center"
