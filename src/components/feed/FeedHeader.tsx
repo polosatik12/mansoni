@@ -89,14 +89,15 @@ export function FeedHeader() {
     });
   }, [usersWithStories.length, collapseProgress]);
 
-  // Container height
-  const containerHeight = HEADER_HEIGHT + EXPANDED_ROW_HEIGHT * (1 - collapseProgress);
+  // Fixed container height to prevent layout feedback loop
+  // Stories visually collapse via transforms, but container stays the same height
+  const totalHeight = HEADER_HEIGHT + EXPANDED_ROW_HEIGHT;
 
   return (
     <>
     <div 
       className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl overflow-hidden will-change-auto border-b border-white/10"
-      style={{ height: `${containerHeight}px` }}
+      style={{ height: `${totalHeight}px` }}
     >
       {/* Header row with menu */}
 
