@@ -105,7 +105,7 @@ export function SearchPage() {
     <div className="min-h-screen pb-20 relative">
       <BrandBackground />
       {/* Search Bar */}
-      <div className="sticky top-0 z-20 bg-black/30 backdrop-blur-xl border-b border-white/10 px-4 pt-[env(safe-area-inset-top,12px)] pb-3">
+      <div className="sticky top-0 z-20 bg-black/30 backdrop-blur-xl border-b border-white/10 px-4 pt-[calc(env(safe-area-inset-top,12px)+12px)] pb-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
           <Input
