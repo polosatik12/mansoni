@@ -291,9 +291,9 @@ export function SettingsPage() {
             {renderHeader("Архив")}
             <div className="flex-1 overflow-y-auto native-scroll">
               <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив историй")}
-                {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив публикаций")}
-                {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив прямых эфиров")}
+               {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив историй", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив публикаций", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<Archive className="w-5 h-5 text-white/60" />, "Архив прямых эфиров", () => toast.info("Функция в разработке"))}
               </div>
             </div>
           </>
@@ -482,9 +482,9 @@ export function SettingsPage() {
                 )}
               </div>
               <div className="mx-4 mt-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Users className="w-5 h-5 text-white/60" />, "Близкие друзья")}
-                {renderMenuItem(<UserX className="w-5 h-5 text-white/60" />, "Заблокированные")}
-                {renderMenuItem(<MessageCircle className="w-5 h-5 text-white/60" />, "Управление сообщениями")}
+                {renderMenuItem(<Users className="w-5 h-5 text-white/60" />, "Близкие друзья", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<UserX className="w-5 h-5 text-white/60" />, "Заблокированные", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<MessageCircle className="w-5 h-5 text-white/60" />, "Управление сообщениями", () => toast.info("Функция в разработке"))}
               </div>
             </div>
           </>
@@ -496,7 +496,7 @@ export function SettingsPage() {
             {renderHeader("Безопасность")}
             <div className="flex-1 overflow-y-auto native-scroll">
               <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Key className="w-5 h-5 text-white/60" />, "Пароль", undefined, "Изменить")}
+                {renderMenuItem(<Key className="w-5 h-5 text-white/60" />, "Пароль", () => toast.info("Функция в разработке"), "Изменить")}
                 {renderToggleItem(
                   <Shield className="w-5 h-5 text-white/60" />,
                   "Двухфакторная аутентификация",
@@ -506,9 +506,9 @@ export function SettingsPage() {
                 )}
               </div>
               <div className="mx-4 mt-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<Smartphone className="w-5 h-5 text-white/60" />, "Активные сеансы")}
-                {renderMenuItem(<Mail className="w-5 h-5 text-white/60" />, "Письма от нас")}
-                {renderMenuItem(<Database className="w-5 h-5 text-white/60" />, "Данные аккаунта")}
+                {renderMenuItem(<Smartphone className="w-5 h-5 text-white/60" />, "Активные сеансы", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<Mail className="w-5 h-5 text-white/60" />, "Письма от нас", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<Database className="w-5 h-5 text-white/60" />, "Данные аккаунта", () => toast.info("Функция в разработке"))}
               </div>
             </div>
           </>
@@ -520,10 +520,10 @@ export function SettingsPage() {
             {renderHeader("Помощь")}
             <div className="flex-1 overflow-y-auto native-scroll">
               <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<HelpCircle className="w-5 h-5 text-white/60" />, "Справочный центр")}
-                {renderMenuItem(<AlertCircle className="w-5 h-5 text-white/60" />, "Сообщить о проблеме")}
-                {renderMenuItem(<FileText className="w-5 h-5 text-white/60" />, "Условия использования")}
-                {renderMenuItem(<Lock className="w-5 h-5 text-white/60" />, "Политика конфиденциальности")}
+                {renderMenuItem(<HelpCircle className="w-5 h-5 text-white/60" />, "Справочный центр", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<AlertCircle className="w-5 h-5 text-white/60" />, "Сообщить о проблеме", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<FileText className="w-5 h-5 text-white/60" />, "Условия использования", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<Lock className="w-5 h-5 text-white/60" />, "Политика конфиденциальности", () => toast.info("Функция в разработке"))}
               </div>
             </div>
           </>
@@ -542,8 +542,8 @@ export function SettingsPage() {
                 <p className="text-sm text-white/60">Версия 1.0.0</p>
               </div>
               <div className="mx-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
-                {renderMenuItem(<FileText className="w-5 h-5 text-white/60" />, "Лицензии открытого ПО")}
-                {renderMenuItem(<Info className="w-5 h-5 text-white/60" />, "Информация о разработчике")}
+                {renderMenuItem(<FileText className="w-5 h-5 text-white/60" />, "Лицензии открытого ПО", () => toast.info("Функция в разработке"))}
+                {renderMenuItem(<Info className="w-5 h-5 text-white/60" />, "Информация о разработчике", () => toast.info("Функция в разработке"))}
               </div>
             </div>
           </>
