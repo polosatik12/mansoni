@@ -80,6 +80,7 @@ export function VideoCircleRecorder({ onRecord, onCancel, autoRecord = true }: V
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
       }
       setHasPermission(true);
 
@@ -111,28 +112,47 @@ export function VideoCircleRecorder({ onRecord, onCancel, autoRecord = true }: V
   const startRecording = () => {
     if (!streamRef.current) return;
 
-    chunksRef.current = [];
-    const mediaRecorder = new MediaRecorder(streamRef.current, {
-      mimeType: MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-        ? "video/webm;codecs=vp9"
-        : "video/webm",
-    });
+    try {
+      chunksRef.current = [];
 
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        chunksRef.current.push(e.data);
+      // Determine supported mimeType: prefer webm, fallback to mp4, then browser default
+      let mimeType = "";
+      const candidates = [
+        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8",
+        "video/webm",
+        "video/mp4",
+      ];
+      for (const candidate of candidates) {
+        if (MediaRecorder.isTypeSupported(candidate)) {
+          mimeType = candidate;
+          break;
+        }
       }
-    };
 
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: "video/webm" });
-      onRecord(blob, recordingTime);
-    };
+      const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
+      const mediaRecorder = new MediaRecorder(streamRef.current, options);
+      const actualMime = mediaRecorder.mimeType || mimeType || "video/webm";
 
-    mediaRecorderRef.current = mediaRecorder;
-    mediaRecorder.start();
-    setIsRecording(true);
-    setRecordingTime(0);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: actualMime });
+        onRecord(blob, recordingTime);
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+    } catch (err) {
+      console.error("Failed to start recording:", err);
+      toast.error("Не удалось начать запись видео");
+    }
   };
 
   const stopRecording = () => {
