@@ -285,7 +285,13 @@ export function SimpleMediaEditor({
         </div>
 
         {/* Tools */}
-        {!isVideo && (
+        {isVideo ? (
+          <div className="border-t border-border bg-card p-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Редактирование видео: предварительный просмотр. Нажмите «Применить» чтобы сохранить.
+            </p>
+          </div>
+        ) : (
           <div className="border-t border-border bg-card">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-12 px-2">

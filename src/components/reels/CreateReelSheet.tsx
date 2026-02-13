@@ -147,12 +147,12 @@ export function CreateReelSheet({ open, onOpenChange }: CreateReelSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent side="bottom" className="h-[90vh] bg-background">
+      <SheetContent side="bottom" className="h-[90vh] bg-background flex flex-col">
         <SheetHeader>
           <SheetTitle>Новый Reel</SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col gap-4 mt-4 h-[calc(100%-4rem)] overflow-y-auto">
+        <div className="flex flex-col gap-4 mt-4 pb-6 overflow-y-auto flex-1">
           {/* Video Upload Area */}
           {!videoPreview ? (
             <div
