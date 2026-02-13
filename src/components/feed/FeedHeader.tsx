@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Loader2, User } from "lucide-react";
+import { Plus, Loader2, User, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
@@ -10,6 +11,7 @@ import { useStories, type UserWithStories } from "@/hooks/useStories";
 const AVATAR_SIZE = 64;
 
 export function FeedHeader() {
+  const navigate = useNavigate();
   const { collapseProgress } = useScrollCollapse(120);
   const { usersWithStories, loading } = useStories();
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
@@ -39,9 +41,16 @@ export function FeedHeader() {
     <>
       {/* FIXED height — never changes — prevents feedback loop */}
       <div
-        className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl border-b border-white/10"
+        className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl border-b border-white/10 flex items-center"
         style={{ height: '96px' }}
       >
+        {/* Search icon */}
+        <button
+          onClick={() => navigate('/search')}
+          className="pl-3 pr-1 flex-shrink-0 text-white/70 hover:text-white transition-colors"
+        >
+          <Search className="w-5 h-5" />
+        </button>
         {loading && usersWithStories.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
