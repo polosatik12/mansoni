@@ -73,16 +73,16 @@ export function AttachmentSheet({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="mx-4 mb-4 rounded-2xl border-0 bg-card">
+      <DrawerContent className="mx-4 mb-4 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl">
         <div className="py-2">
           {menuItems.map((item, index) => (
             <button
               key={index}
               onClick={item.onClick}
-              className="flex w-full items-center gap-4 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+              className="flex w-full items-center gap-4 px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors"
             >
-              <item.icon className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm font-medium">{item.label}</span>
+              <item.icon className="w-5 h-5 text-white/50" />
+              <span className="text-[15px] font-medium text-white">{item.label}</span>
             </button>
           ))}
         </div>
