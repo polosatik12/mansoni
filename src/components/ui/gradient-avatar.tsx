@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, forwardRef } from "react";
 
 // Beautiful gradient combinations
 const GRADIENTS = [
@@ -24,13 +24,13 @@ interface GradientAvatarProps {
   className?: string;
 }
 
-export function GradientAvatar({ 
+export const GradientAvatar = forwardRef<HTMLDivElement | HTMLImageElement, GradientAvatarProps>(function GradientAvatar({ 
   name, 
   seed, 
   avatarUrl, 
   size = "md",
   className = "" 
-}: GradientAvatarProps) {
+}, ref) {
   const sizeClasses = {
     sm: "w-9 h-9 text-sm",
     md: "w-12 h-12 text-base",
@@ -59,6 +59,7 @@ export function GradientAvatar({
   if (avatarUrl) {
     return (
       <img
+        ref={ref as React.Ref<HTMLImageElement>}
         src={avatarUrl}
         alt={name}
         className={`${sizeClasses[size]} rounded-full object-cover border-2 border-white/20 ${className}`}
@@ -68,9 +69,10 @@ export function GradientAvatar({
 
   return (
     <div
+      ref={ref as React.Ref<HTMLDivElement>}
       className={`${sizeClasses[size]} rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center font-bold text-white shadow-lg border-2 border-white/20 ${className}`}
     >
       {initials}
     </div>
   );
-}
+});

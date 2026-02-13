@@ -218,27 +218,38 @@ export function useConversations() {
     fetchConversations();
   }, [fetchConversations]);
 
-  // Realtime subscription for conversation updates — debounced to prevent floods
+  // Realtime subscription for new messages — debounced to prevent floods
   useEffect(() => {
     if (!user) return;
 
     let debounceTimer: number | undefined;
+    let isFetching = false;
+
+    const debouncedRefetch = () => {
+      if (debounceTimer) window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => {
+        if (!isFetching) {
+          isFetching = true;
+          fetchConversations().finally(() => { isFetching = false; });
+        }
+      }, 500);
+    };
 
     const channel = supabase
       .channel('conversations-updates')
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: 'INSERT',
           schema: 'public',
-          table: 'conversations',
+          table: 'messages',
         },
-        () => {
-          // Debounce: only refetch once per 500ms
-          if (debounceTimer) window.clearTimeout(debounceTimer);
-          debounceTimer = window.setTimeout(() => {
-            fetchConversations();
-          }, 500);
+        (payload) => {
+          const msg = payload.new as any;
+          // Only refetch when someone ELSE sends a message
+          if (msg.sender_id !== user.id) {
+            debouncedRefetch();
+          }
         }
       )
       .subscribe();
