@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Play, Pause } from "lucide-react";
 
 interface VideoCircleMessageProps {
@@ -11,21 +11,54 @@ export function VideoCircleMessage({ videoUrl, duration, isOwn }: VideoCircleMes
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
-  const togglePlay = () => {
+  // Preload video metadata to get a thumbnail frame
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    const handleLoaded = () => {
+      setVideoDuration(video.duration || 0);
+      setHasLoaded(true);
+      // Seek to 0.1s to show a thumbnail frame on iOS
+      if (video.currentTime === 0) {
+        video.currentTime = 0.1;
+      }
+    };
+
+    video.addEventListener("loadeddata", handleLoaded);
+    // Force load
+    video.load();
+
+    return () => {
+      video.removeEventListener("loadeddata", handleLoaded);
+    };
+  }, [videoUrl]);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!videoRef.current) return;
     
     if (isPlaying) {
       videoRef.current.pause();
+      setIsPlaying(false);
     } else {
-      videoRef.current.play();
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        setIsPlaying(false);
+      });
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
+      if (!videoDuration && videoRef.current.duration) {
+        setVideoDuration(videoRef.current.duration);
+      }
     }
   };
 
@@ -33,7 +66,7 @@ export function VideoCircleMessage({ videoUrl, duration, isOwn }: VideoCircleMes
     setIsPlaying(false);
     setCurrentTime(0);
     if (videoRef.current) {
-      videoRef.current.currentTime = 0;
+      videoRef.current.currentTime = 0.1;
     }
   };
 
@@ -43,7 +76,6 @@ export function VideoCircleMessage({ videoUrl, duration, isOwn }: VideoCircleMes
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const videoDuration = videoRef.current?.duration || 0;
   const progress = videoDuration > 0 ? (currentTime / videoDuration) * 100 : 0;
 
   return (
@@ -51,7 +83,7 @@ export function VideoCircleMessage({ videoUrl, duration, isOwn }: VideoCircleMes
       {/* Circular video */}
       <div className={`w-48 h-48 rounded-full overflow-hidden border-2 ${
         isOwn ? "border-primary" : "border-muted-foreground/30"
-      }`}>
+      } bg-black/50`}>
         <video
           ref={videoRef}
           src={videoUrl}
@@ -59,6 +91,8 @@ export function VideoCircleMessage({ videoUrl, duration, isOwn }: VideoCircleMes
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
           playsInline
+          preload="auto"
+          muted={false}
         />
       </div>
 
@@ -90,7 +124,7 @@ export function VideoCircleMessage({ videoUrl, duration, isOwn }: VideoCircleMes
       <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-xs ${
         isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
       }`}>
-        {isPlaying ? formatTime(currentTime) : duration}
+        {isPlaying ? formatTime(currentTime) : (videoDuration > 0 ? formatTime(videoDuration) : duration)}
       </div>
     </div>
   );

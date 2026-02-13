@@ -1278,6 +1278,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       {/* Video Circle Recorder */}
       {showVideoRecorder && (
         <VideoCircleRecorder
+          key={`vcr-${Date.now()}`}
           onRecord={handleVideoRecord}
           onCancel={() => setShowVideoRecorder(false)}
           autoRecord={false}
