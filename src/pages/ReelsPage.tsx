@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Heart,
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useReels } from "@/hooks/useReels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreateReelSheet } from "@/components/reels/CreateReelSheet";
 import { ReelCommentsSheet } from "@/components/reels/ReelCommentsSheet";
@@ -64,7 +65,28 @@ export function ReelsPage() {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressing = useRef(false);
 
-  const currentReel = reels[currentIndex];
+  // Fetch following IDs for "Following" tab filtering
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("followers")
+      .select("following_id")
+      .eq("follower_id", user.id)
+      .then(({ data }) => {
+        if (data) setFollowingIds(new Set(data.map(f => f.following_id)));
+      });
+  }, [user]);
+
+  // Filter reels by active tab
+  const filteredReels = useMemo(() => {
+    if (activeTab === "following" && user) {
+      return reels.filter(r => followingIds.has(r.author_id));
+    }
+    return reels;
+  }, [reels, activeTab, followingIds, user]);
+
+  const currentReel = filteredReels[currentIndex];
 
   // Record view
   useEffect(() => {
@@ -111,12 +133,12 @@ export function ReelsPage() {
     const scrollTop = container.scrollTop;
     const itemHeight = container.clientHeight;
     const newIndex = Math.round(scrollTop / itemHeight);
-    if (newIndex !== currentIndex && newIndex >= 0 && newIndex < reels.length) {
+    if (newIndex !== currentIndex && newIndex >= 0 && newIndex < filteredReels.length) {
       setCurrentIndex(newIndex);
       setIsPaused(false);
       setVideoProgress(0);
     }
-  }, [currentIndex, reels.length]);
+  }, [currentIndex, filteredReels.length]);
 
   const handleLike = useCallback((reelId: string) => {
     if (!user) {
@@ -201,7 +223,7 @@ export function ReelsPage() {
     );
   }
 
-  if (reels.length === 0) {
+  if (filteredReels.length === 0) {
     return (
       <div className="h-[100dvh] bg-black flex flex-col items-center justify-center text-white px-8">
         <Play className="w-16 h-16 mb-4 opacity-40" />
@@ -230,7 +252,7 @@ export function ReelsPage() {
             {(["foryou", "following"] as const).map(tab => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => { setActiveTab(tab); setCurrentIndex(0); setVideoProgress(0); }}
                 className={cn(
                   "text-sm font-bold pb-0.5 border-b-2 transition-all",
                   activeTab === tab
@@ -263,7 +285,7 @@ export function ReelsPage() {
           scrollbarWidth: "none",
         }}
       >
-        {reels.map((reel, index) => {
+        {filteredReels.map((reel, index) => {
           const isActive = index === currentIndex;
           const isSaved = savedReels.has(reel.id);
 
@@ -541,7 +563,7 @@ export function ReelsPage() {
           isOpen={!!commentsReelId}
           onClose={() => { setCommentsReelId(null); refetch(); }}
           reelId={commentsReelId}
-          commentsCount={reels.find(r => r.id === commentsReelId)?.comments_count || 0}
+          commentsCount={filteredReels.find(r => r.id === commentsReelId)?.comments_count || 0}
         />
       )}
 
@@ -557,7 +579,7 @@ export function ReelsPage() {
             toast.error("Ошибка удаления: " + result.error);
           } else {
             toast.success("Reel удалён");
-            if (currentIndex >= reels.length - 1 && currentIndex > 0) {
+            if (currentIndex >= filteredReels.length - 1 && currentIndex > 0) {
               setCurrentIndex(currentIndex - 1);
             }
           }
