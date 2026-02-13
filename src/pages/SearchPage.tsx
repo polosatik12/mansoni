@@ -7,6 +7,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSearch } from "@/hooks/useSearch";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { BrandBackground } from "@/components/ui/brand-background";
 import { supabase } from "@/integrations/supabase/client";
 
 interface HashtagResult {
@@ -101,27 +102,28 @@ export function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 relative">
+      <BrandBackground />
       {/* Search Bar */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 safe-area-top">
+      <div className="sticky top-0 z-20 bg-black/30 backdrop-blur-xl border-b border-white/10 px-4 pt-[env(safe-area-inset-top,12px)] pb-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
           <Input
             placeholder="Поиск людей или #хештегов..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-10 pr-4 h-11 rounded-xl bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
+            className="pl-10 pr-4 h-11 rounded-xl bg-white/10 border-0 focus-visible:ring-1 focus-visible:ring-primary text-white placeholder:text-white/50"
           />
         </div>
       </div>
 
       {/* Tab indicators when searching */}
       {query.trim() && (
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-border">
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-white/10">
           <button
             onClick={() => { setActiveTab("users"); searchUsers(query.replace("#", "")); }}
             className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
-              activeTab === "users" ? "bg-primary/15 text-primary" : "text-muted-foreground"
+              activeTab === "users" ? "bg-primary/15 text-primary" : "text-white/50"
             }`}
           >
             Люди
@@ -129,7 +131,7 @@ export function SearchPage() {
           <button
             onClick={() => { setActiveTab("hashtags"); searchByHashtag(query.replace("#", "")); }}
             className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
-              activeTab === "hashtags" ? "bg-primary/15 text-primary" : "text-muted-foreground"
+              activeTab === "hashtags" ? "bg-primary/15 text-primary" : "text-white/50"
             }`}
           >
             # Хештеги
@@ -149,7 +151,7 @@ export function SearchPage() {
               {users.map((user) => (
                 <div
                   key={user.user_id}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 active:bg-muted transition-colors cursor-pointer"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer"
                   onClick={() => handleUserClick(user.user_id)}
                   onTouchEnd={(e) => {
                     const target = e.target as HTMLElement;
@@ -159,13 +161,13 @@ export function SearchPage() {
                 >
                   <Avatar className="w-12 h-12 pointer-events-none">
                     <AvatarImage src={user.avatar_url || undefined} />
-                    <AvatarFallback className="bg-muted">
-                      <User className="w-5 h-5 text-muted-foreground" />
+                    <AvatarFallback className="bg-white/10">
+                      <User className="w-5 h-5 text-white/50" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 pointer-events-none">
                     <div className="flex items-center gap-1">
-                      <span className="font-semibold text-foreground truncate">
+                      <span className="font-semibold text-white truncate">
                         {user.display_name}
                       </span>
                       {user.verified && (
@@ -175,7 +177,7 @@ export function SearchPage() {
                       )}
                     </div>
                     {user.bio && (
-                      <p className="text-sm text-muted-foreground line-clamp-1">
+                      <p className="text-sm text-white/50 line-clamp-1">
                         {user.bio}
                       </p>
                     )}
@@ -195,7 +197,7 @@ export function SearchPage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-white/40">
               <User className="w-12 h-12 mb-2 opacity-20" />
               <p>Пользователи не найдены</p>
             </div>
@@ -209,14 +211,14 @@ export function SearchPage() {
               <Hash className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">#{activeHashtag}</h3>
-              <p className="text-xs text-muted-foreground">{hashtagPosts.length} публикаций</p>
+              <h3 className="font-semibold text-white">#{activeHashtag}</h3>
+              <p className="text-xs text-white/50">{hashtagPosts.length} публикаций</p>
             </div>
           </div>
 
           {hashtagLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Loader2 className="w-6 h-6 animate-spin text-white/40" />
             </div>
           ) : hashtagPosts.length > 0 ? (
             <div className="grid grid-cols-3 gap-[2px] px-1">
@@ -258,7 +260,7 @@ export function SearchPage() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-white/40">
               <Hash className="w-12 h-12 mb-2 opacity-20" />
               <p>Нет публикаций с #{activeHashtag}</p>
             </div>
@@ -271,7 +273,7 @@ export function SearchPage() {
           <div className="px-4 py-3">
             <div className="flex items-center gap-1.5 mb-2.5">
               <TrendingUp className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">Популярные</span>
+              <span className="text-sm font-semibold text-white">Популярные</span>
             </div>
             <ScrollArea className="w-full whitespace-nowrap">
               <div className="flex gap-2">
@@ -279,11 +281,11 @@ export function SearchPage() {
                   <button
                     key={trend.tag}
                     onClick={() => handleTrendClick(trend.tag)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 transition-colors"
                   >
-                    <Hash className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{trend.tag}</span>
-                    <span className="text-xs text-muted-foreground">{trend.posts}</span>
+                    <Hash className="w-4 h-4 text-white/50" />
+                    <span className="text-sm font-medium text-white">{trend.tag}</span>
+                    <span className="text-xs text-white/50">{trend.posts}</span>
                   </button>
                 ))}
               </div>
@@ -294,12 +296,12 @@ export function SearchPage() {
           {/* Explore Grid */}
           <div className="px-1">
             <div className="flex items-center gap-1.5 px-3 mb-2">
-              <Grid3X3 className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-semibold text-foreground">Рекомендации</span>
+              <Grid3X3 className="w-4 h-4 text-white/50" />
+              <span className="text-sm font-semibold text-white">Рекомендации</span>
             </div>
             {exploring ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <Loader2 className="w-6 h-6 animate-spin text-white/40" />
               </div>
             ) : explorePosts.length > 0 ? (
               <div className="grid grid-cols-3 gap-[2px]">
@@ -341,7 +343,7 @@ export function SearchPage() {
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <div className="flex flex-col items-center justify-center py-12 text-white/40">
                 <Search className="w-12 h-12 mb-2 opacity-20" />
                 <p>Нет публикаций для просмотра</p>
               </div>
