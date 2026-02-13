@@ -1034,9 +1034,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                   )}
                   
                   {isVoice ? (
-                    <div className="flex items-center gap-3 min-w-[180px]">
+                    <div className="flex items-center gap-3 min-w-[200px]">
                       <button
-                        className="w-10 h-10 shrink-0 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/15 transition-colors"
+                        className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all active:scale-95"
+                        style={{
+                          background: playingVoice === message.id
+                            ? 'linear-gradient(135deg, #00A3B4 0%, #0066CC 100%)'
+                            : 'rgba(255,255,255,0.12)',
+                          boxShadow: playingVoice === message.id
+                            ? '0 0 12px rgba(0,163,180,0.4)'
+                            : 'none',
+                        }}
                         onClick={() => toggleVoicePlay(message.id, message.media_url || undefined)}
                       >
                         {playingVoice === message.id ? (
@@ -1045,21 +1053,24 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                           <Play className="w-5 h-5 text-white ml-0.5" />
                         )}
                       </button>
-                      <div className="flex-1 flex items-center gap-[2px]">
+                      <div className="flex-1 flex items-end gap-[2px] h-8">
                         {getWaveformHeights(message.id).map((height, i) => (
                           <div
                             key={i}
-                            className={`w-[3px] rounded-full transition-all duration-150 ${
-                              playingVoice === message.id ? 'bg-white/80' : 'bg-white/40'
-                            }`}
+                            className="w-[3px] rounded-full transition-all duration-200"
                             style={{ 
                               height: `${height}px`,
-                              animationDelay: playingVoice === message.id ? `${i * 50}ms` : undefined
+                              background: playingVoice === message.id
+                                ? `linear-gradient(180deg, rgba(0,163,180,0.9) 0%, rgba(0,102,204,0.7) 100%)`
+                                : 'rgba(255,255,255,0.35)',
+                              transform: playingVoice === message.id
+                                ? `scaleY(${1 + Math.sin(Date.now() / 200 + i) * 0.15})`
+                                : 'scaleY(1)',
                             }}
                           />
                         ))}
                       </div>
-                      <span className="text-xs text-white/60 font-medium">
+                      <span className="text-xs text-white/60 font-medium tabular-nums">
                         {message.duration_seconds ? formatTime(message.duration_seconds) : "0:00"}
                       </span>
                     </div>

@@ -224,17 +224,27 @@ export function PostCard({
       {/* Image Carousel */}
       {allImages.length > 0 && (
         <div 
-          className="relative aspect-square cursor-pointer select-none"
+          className="relative aspect-square cursor-pointer select-none overflow-hidden"
           onDoubleClick={handleDoubleTap}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <img
-            src={allImages[currentImageIndex]}
-            alt="Post image"
-            className="w-full h-full object-cover"
-          />
+          {/* Sliding image track */}
+          <div
+            className="flex h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
+          >
+            {allImages.map((img, i) => (
+              <img
+                key={i}
+                src={img}
+                alt={`Post image ${i + 1}`}
+                className="w-full h-full object-cover shrink-0"
+                draggable={false}
+              />
+            ))}
+          </div>
           
           {/* Floating hearts on double tap */}
           {floatingHearts.map((heart) => (
@@ -249,24 +259,23 @@ export function PostCard({
           
           {/* Image counter */}
           {hasMultipleImages && (
-            <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-medium px-2 py-1 rounded-full">
+            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full border border-white/10">
               {currentImageIndex + 1}/{allImages.length}
             </div>
           )}
 
-
           {/* Dots indicator */}
           {hasMultipleImages && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-2.5 py-1.5">
               {allImages.map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => setCurrentImageIndex(index)}
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
                   className={cn(
-                    "w-1.5 h-1.5 rounded-full transition-all",
+                    "rounded-full transition-all duration-300",
                     index === currentImageIndex 
-                      ? "bg-primary w-2" 
-                      : "bg-white/60"
+                      ? "w-2 h-2 bg-white shadow-[0_0_6px_rgba(255,255,255,0.5)]" 
+                      : "w-1.5 h-1.5 bg-white/50"
                   )}
                 />
               ))}
