@@ -264,7 +264,7 @@ export function SimpleMediaEditor({
         </div>
 
         {/* Preview */}
-        <div className="flex-1 flex items-center justify-center p-4 bg-muted/30 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-4 bg-muted/30 overflow-hidden min-h-0">
           {isLoading ? (
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -274,7 +274,8 @@ export function SimpleMediaEditor({
             <video 
               src={previewUrl || undefined}
               controls
-              className="max-w-full max-h-[40vh] rounded-lg"
+              className="max-w-full max-h-full rounded-lg object-contain"
+              style={{ aspectRatio: "9/16" }}
             />
           ) : (
             <canvas
@@ -286,9 +287,27 @@ export function SimpleMediaEditor({
 
         {/* Tools */}
         {isVideo ? (
-          <div className="border-t border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Редактирование видео: предварительный просмотр. Нажмите «Применить» чтобы сохранить.
+          <div className="border-t border-border bg-card p-4 space-y-3">
+            <div className="grid grid-cols-4 gap-2">
+              <button className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => {}}>
+                <Crop className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">Обрезка</span>
+              </button>
+              <button className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => {}}>
+                <Sun className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">Яркость</span>
+              </button>
+              <button className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => {}}>
+                <Contrast className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">Контраст</span>
+              </button>
+              <button className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => {}}>
+                <Palette className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">Фильтры</span>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Расширенное редактирование видео скоро будет доступно
             </p>
           </div>
         ) : (

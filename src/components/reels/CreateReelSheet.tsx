@@ -157,7 +157,7 @@ export function CreateReelSheet({ open, onOpenChange }: CreateReelSheetProps) {
           {!videoPreview ? (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-muted-foreground/30 rounded-xl cursor-pointer hover:border-primary/50 transition-colors aspect-[9/16] max-h-[50vh]"
+              className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-muted-foreground/30 rounded-xl cursor-pointer hover:border-primary/50 transition-colors aspect-[9/16] max-h-[35vh]"
             >
               <Video className="w-12 h-12 text-muted-foreground" />
               <div className="text-center">
@@ -172,7 +172,7 @@ export function CreateReelSheet({ open, onOpenChange }: CreateReelSheetProps) {
               </Button>
             </div>
           ) : (
-            <div className="relative aspect-[9/16] max-h-[50vh] bg-black rounded-xl overflow-hidden">
+            <div className="relative aspect-[9/16] max-h-[35vh] bg-black rounded-xl overflow-hidden">
               <video
                 src={videoPreview}
                 className="w-full h-full object-contain"
