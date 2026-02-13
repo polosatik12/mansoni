@@ -157,7 +157,7 @@ export function ProfilePage() {
               </button>
               {/* Add story button */}
               <button
-                onClick={() => setShowStoryEditor(true)}
+                onClick={() => setShowPostEditor(true)}
                 className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-white/30 flex items-center justify-center z-10"
               >
                 <Plus className="w-4 h-4 text-primary-foreground" />
