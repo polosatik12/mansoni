@@ -30,7 +30,7 @@ export function FeedHeader() {
 
   return (
     <>
-      <div className="bg-black/20 backdrop-blur-xl border-b border-white/10">
+      <div className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl border-b border-white/10">
         {/* Stories row */}
         {loading && usersWithStories.length === 0 ? (
           <div className="flex items-center justify-center py-4">
