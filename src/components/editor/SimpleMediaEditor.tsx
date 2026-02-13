@@ -8,6 +8,7 @@ import {
   Type, Sticker, Palette, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { ContentType } from "@/hooks/useMediaEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -203,20 +204,97 @@ export function SimpleMediaEditor({
     setSelectedFilter("none");
   };
 
+  // Export video with filters applied via canvas re-encoding
+  const exportVideoWithFilters = useCallback(async (): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      if (!mediaFile) return reject(new Error("No file"));
+
+      const video = document.createElement("video");
+      video.src = URL.createObjectURL(mediaFile);
+      video.muted = true;
+      video.playsInline = true;
+
+      video.onloadedmetadata = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d")!;
+
+        const stream = canvas.captureStream(30);
+        const recorder = new MediaRecorder(stream, {
+          mimeType: MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+            ? "video/webm;codecs=vp9"
+            : "video/webm",
+          videoBitsPerSecond: 5_000_000,
+        });
+
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+        recorder.onstop = () => {
+          URL.revokeObjectURL(video.src);
+          resolve(new Blob(chunks, { type: "video/webm" }));
+        };
+        recorder.onerror = () => reject(new Error("Recording failed"));
+
+        // Build CSS filter
+        const filterObj = FILTERS.find(f => f.id === selectedFilter);
+        let filterStr = filterObj?.filter || "";
+        filterStr += ` brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+
+        const drawFrame = () => {
+          if (video.ended || video.paused) {
+            recorder.stop();
+            return;
+          }
+          ctx.save();
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate((rotation * Math.PI) / 180);
+          ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+          ctx.filter = filterStr.trim();
+          ctx.drawImage(video, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+          ctx.restore();
+          requestAnimationFrame(drawFrame);
+        };
+
+        recorder.start();
+        video.play().then(() => {
+          drawFrame();
+        });
+
+        // Safety: stop after video ends
+        video.onended = () => {
+          if (recorder.state === "recording") recorder.stop();
+        };
+      };
+
+      video.onerror = () => reject(new Error("Failed to load video"));
+    });
+  }, [mediaFile, brightness, contrast, saturation, rotation, flipX, flipY, selectedFilter]);
+
+  // Check if video has any edits
+  const hasVideoEdits = brightness !== 100 || contrast !== 100 || saturation !== 100 ||
+    rotation !== 0 || flipX || flipY || selectedFilter !== "none";
+
   // Export
   const handleExport = async () => {
-    if (isVideo && mediaFile) {
-      // For video, just pass through the original file
-      onSave(mediaFile);
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
     setIsExporting(true);
 
     try {
+      if (isVideo && mediaFile) {
+        if (hasVideoEdits) {
+          toast.info("Применяю фильтры к видео...");
+          const blob = await exportVideoWithFilters();
+          onSave(blob);
+        } else {
+          onSave(mediaFile);
+        }
+        return;
+      }
+
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
           (blob) => {
@@ -231,6 +309,7 @@ export function SimpleMediaEditor({
       onSave(blob);
     } catch (error) {
       console.error("Export error:", error);
+      toast.error("Ошибка экспорта");
     } finally {
       setIsExporting(false);
     }

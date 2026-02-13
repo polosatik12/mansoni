@@ -13,6 +13,8 @@ import {
   VolumeX,
   BookmarkCheck,
   UserPlus,
+  Trash2,
+  MoreVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useReels } from "@/hooks/useReels";
@@ -24,6 +26,7 @@ import { ReelCommentsSheet } from "@/components/reels/ReelCommentsSheet";
 import { ReelShareSheet } from "@/components/reels/ReelShareSheet";
 import { Button } from "@/components/ui/button";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { DeleteConfirmDialog } from "@/components/chat/DeleteConfirmDialog";
 
 function formatCount(num: number): string {
   if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -36,7 +39,7 @@ type FeedTab = "foryou" | "following";
 export function ReelsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { reels, loading, toggleLike, recordView, refetch } = useReels();
+  const { reels, loading, toggleLike, recordView, deleteReel, refetch } = useReels();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -46,6 +49,7 @@ export function ReelsPage() {
   const [activeTab, setActiveTab] = useState<FeedTab>("foryou");
   const [savedReels, setSavedReels] = useState<Set<string>>(new Set());
   const [videoProgress, setVideoProgress] = useState(0);
+  const [deleteReelId, setDeleteReelId] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
@@ -401,6 +405,16 @@ export function ReelsPage() {
                   )}
                 </button>
 
+                {/* Delete (own reels only) */}
+                {user && reel.author_id === user.id && (
+                  <button
+                    className="flex flex-col items-center gap-1"
+                    onClick={(e) => { e.stopPropagation(); setDeleteReelId(reel.id); }}
+                  >
+                    <Trash2 className="w-6 h-6 text-white/70 drop-shadow-lg" />
+                  </button>
+                )}
+
                 {/* Vinyl disc */}
                 <div className={cn(
                   "w-11 h-11 rounded-full border-[3px] border-white/20 bg-black overflow-hidden",
@@ -531,7 +545,26 @@ export function ReelsPage() {
         />
       )}
 
-      {/* Animations */}
+      {/* Delete confirmation */}
+      <DeleteConfirmDialog
+        open={!!deleteReelId}
+        count={1}
+        onCancel={() => setDeleteReelId(null)}
+        onConfirm={async () => {
+          if (!deleteReelId) return;
+          const result = await deleteReel(deleteReelId);
+          if (result.error) {
+            toast.error("Ошибка удаления: " + result.error);
+          } else {
+            toast.success("Reel удалён");
+            if (currentIndex >= reels.length - 1 && currentIndex > 0) {
+              setCurrentIndex(currentIndex - 1);
+            }
+          }
+          setDeleteReelId(null);
+        }}
+      />
+
       <style>{`
         @keyframes heartPop {
           0% { transform: scale(0); opacity: 1; }
