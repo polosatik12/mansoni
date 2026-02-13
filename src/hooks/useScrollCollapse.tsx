@@ -7,23 +7,12 @@ export function useScrollCollapse(threshold: number = 50) {
   const [scrollY, setScrollY] = useState(0);
   const rafId = useRef<number | null>(null);
   const lastScrollY = useRef(0);
-  const lastProgress = useRef(0);
 
   const updateScroll = useCallback(() => {
     const currentScrollY = lastScrollY.current;
+    const progress = Math.min(Math.max(currentScrollY / threshold, 0), 1);
     
-    // Dead zone: ignore first 30px of scroll to prevent jittery collapse
-    const deadZone = 30;
-    const effectiveScroll = Math.max(0, currentScrollY - deadZone);
-    const rawProgress = Math.min(effectiveScroll / (threshold - deadZone), 1);
-    const roundedProgress = Math.round(rawProgress * 50) / 50; // 0.02 steps
-    
-    // Only update state if progress changed significantly
-    if (Math.abs(roundedProgress - lastProgress.current) >= 0.02) {
-      lastProgress.current = roundedProgress;
-      setCollapseProgress(roundedProgress);
-    }
-    
+    setCollapseProgress(progress);
     setScrollY(currentScrollY);
     rafId.current = null;
   }, [threshold]);
@@ -34,15 +23,13 @@ export function useScrollCollapse(threshold: number = 50) {
 
     const handleScroll = () => {
       lastScrollY.current = container.scrollTop;
-      
-      // Use requestAnimationFrame to throttle updates to 60 FPS
       if (rafId.current === null) {
         rafId.current = requestAnimationFrame(updateScroll);
       }
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Get initial state
+    handleScroll();
     
     return () => {
       container.removeEventListener("scroll", handleScroll);
