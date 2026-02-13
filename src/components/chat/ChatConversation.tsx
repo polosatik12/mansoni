@@ -1275,6 +1275,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
         <VideoCircleRecorder
           onRecord={handleVideoRecord}
           onCancel={() => setShowVideoRecorder(false)}
+          autoRecord={false}
         />
       )}
 
