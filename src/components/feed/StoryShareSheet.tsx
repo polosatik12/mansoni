@@ -174,7 +174,7 @@ export function StoryShareSheet({ isOpen, onClose, storyId }: StoryShareSheetPro
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="h-[70dvh] max-h-[70dvh] mt-0 flex flex-col border-0 bg-transparent">
+      <DrawerContent className="h-[70dvh] max-h-[70dvh] mt-0 flex flex-col border-0 bg-transparent [&>div:first-child]:hidden">
         <div
           className="h-full flex flex-col rounded-t-2xl overflow-hidden border border-white/20"
           style={{
@@ -184,6 +184,9 @@ export function StoryShareSheet({ isOpen, onClose, storyId }: StoryShareSheetPro
             boxShadow: "0 -8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
           }}
         >
+          <div className="flex justify-center pt-3 pb-2">
+            <div className="w-9 h-1 bg-white/30 rounded-full" />
+          </div>
           <div className="text-center pb-3 border-b border-white/10">
             <h3 className="text-lg font-semibold text-white">Поделиться историей</h3>
           </div>
