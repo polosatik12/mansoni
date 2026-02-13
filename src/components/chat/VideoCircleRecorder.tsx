@@ -193,23 +193,23 @@ export function VideoCircleRecorder({ onRecord, onCancel, autoRecord = true }: V
 
   // Auto-send on release (hold-to-record mode)
   useEffect(() => {
-    if (!autoRecord) return;
+    if (!autoRecord || !isRecording) return;
     
     const handleGlobalRelease = () => {
       // Only auto-send if recording for at least 1 second
-      if (isRecording && recordingTime >= 1) {
+      if (recordingTime >= 1) {
         stopRecording();
-      } else if (isRecording && recordingTime < 1) {
+      } else {
         // Too short - cancel
         handleCancel();
       }
     };
     
-    // Use a small delay to avoid immediate trigger
+    // Use a longer delay to avoid catching the initial button release that opened the recorder
     const timeoutId = setTimeout(() => {
       window.addEventListener('touchend', handleGlobalRelease, { once: true });
       window.addEventListener('mouseup', handleGlobalRelease, { once: true });
-    }, 300);
+    }, 800);
     
     return () => {
       clearTimeout(timeoutId);
