@@ -1052,7 +1052,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
                             ? '0 0 12px rgba(0,163,180,0.4)'
                             : 'none',
                         }}
-                        onClick={() => toggleVoicePlay(message.id, message.media_url || undefined)}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleVoicePlay(message.id, message.media_url || undefined);
+                        }}
                       >
                         {playingVoice === message.id ? (
                           <Pause className="w-5 h-5 text-white" />
