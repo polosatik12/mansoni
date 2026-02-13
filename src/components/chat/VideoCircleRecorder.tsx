@@ -272,6 +272,9 @@ export function VideoCircleRecorder({ onRecord, onCancel, autoRecord = true }: V
                 autoPlay
                 muted
                 playsInline
+                onLoadedMetadata={(e) => {
+                  (e.target as HTMLVideoElement).play().catch(() => {});
+                }}
                 className={`w-full h-full object-cover ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
               />
             ) : (
