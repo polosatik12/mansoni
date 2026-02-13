@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { 
@@ -221,10 +222,14 @@ export function SimpleMediaEditor({
         const ctx = canvas.getContext("2d")!;
 
         const stream = canvas.captureStream(30);
+        const supportedMimeTypes = [
+          "video/mp4",
+          "video/webm;codecs=vp9",
+          "video/webm",
+        ];
+        const mimeType = supportedMimeTypes.find(t => MediaRecorder.isTypeSupported(t)) || "";
         const recorder = new MediaRecorder(stream, {
-          mimeType: MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-            ? "video/webm;codecs=vp9"
-            : "video/webm",
+          ...(mimeType ? { mimeType } : {}),
           videoBitsPerSecond: 5_000_000,
         });
 
@@ -232,7 +237,8 @@ export function SimpleMediaEditor({
         recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
         recorder.onstop = () => {
           URL.revokeObjectURL(video.src);
-          resolve(new Blob(chunks, { type: "video/webm" }));
+          const outputType = mimeType.startsWith("video/mp4") ? "video/mp4" : "video/webm";
+          resolve(new Blob(chunks, { type: outputType }));
         };
         recorder.onerror = () => reject(new Error("Recording failed"));
 
@@ -330,6 +336,10 @@ export function SimpleMediaEditor({
           "sm:max-w-lg sm:h-auto sm:max-h-[90vh] sm:rounded-lg sm:border"
         )}
       >
+        <VisuallyHidden>
+          <DialogTitle>Редактор медиа</DialogTitle>
+          <DialogDescription>Редактирование изображения или видео</DialogDescription>
+        </VisuallyHidden>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <Button variant="ghost" size="icon" onClick={handleClose}>

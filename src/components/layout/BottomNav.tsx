@@ -27,22 +27,7 @@ interface Account {
   isActive: boolean;
 }
 
-const mockAccounts: Account[] = [
-  {
-    id: "1",
-    username: "alex_ivanov",
-    displayName: "Александр Иванов",
-    avatar: "https://i.pravatar.cc/150?img=32",
-    isActive: true,
-  },
-  {
-    id: "2",
-    username: "work_account",
-    displayName: "Рабочий аккаунт",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    isActive: false,
-  },
-];
+// Account switcher now uses real auth data - no more mock accounts
 
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Лента" },
@@ -74,7 +59,6 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
   const { unreadCount } = useUnreadChats();
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [accountSwitcherOpen, setAccountSwitcherOpen] = useState(false);
-  const [accounts, setAccounts] = useState(mockAccounts);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isLongPressRef = useRef(false);
   
@@ -101,8 +85,8 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
 
   const navItems = getNavItems();
 
-  const handleSwitchAccount = (accountId: string) => {
-    setAccounts(prev => prev.map(acc => ({ ...acc, isActive: acc.id === accountId })));
+  const handleSwitchAccount = (_accountId: string) => {
+    // Multi-account switching is not yet implemented
     setAccountSwitcherOpen(false);
   };
 
@@ -262,23 +246,9 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
             <DrawerTitle className="text-center">Сменить аккаунт</DrawerTitle>
           </DrawerHeader>
           <div className="p-4 space-y-2">
-            {accounts.map((account) => (
-              <button
-                key={account.id}
-                onClick={() => handleSwitchAccount(account.id)}
-                className={cn(
-                  "w-full flex items-center gap-3 p-3 rounded-xl transition-colors",
-                  account.isActive ? "bg-primary/10" : "hover:bg-muted"
-                )}
-              >
-                <img src={account.avatar} alt={account.displayName} className="w-12 h-12 rounded-full object-cover" />
-                <div className="flex-1 text-left">
-                  <p className="font-medium text-foreground">{account.username}</p>
-                  <p className="text-sm text-muted-foreground">{account.displayName}</p>
-                </div>
-                {account.isActive && <Check className="w-5 h-5 text-primary" />}
-              </button>
-            ))}
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Функция смены аккаунтов в разработке
+            </p>
             <button
               onClick={handleAddAccount}
               className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors"

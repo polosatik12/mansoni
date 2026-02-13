@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Loader2, X, Check, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -306,6 +307,10 @@ export function MediaEditorModal({
           "sm:max-w-[95vw] sm:h-[90vh] sm:rounded-lg sm:border"
         )}
       >
+        <VisuallyHidden>
+          <DialogTitle>Редактор медиа</DialogTitle>
+          <DialogDescription>Продвинутый редактор изображений</DialogDescription>
+        </VisuallyHidden>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
           <Button
