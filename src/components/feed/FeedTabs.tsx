@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { ServicesMenu } from "@/components/layout/ServicesMenu";
 
 const tabs = [
   { id: "foryou", label: "Рекомендации" },
@@ -11,8 +10,7 @@ export function FeedTabs() {
   const [activeTab, setActiveTab] = useState("foryou");
 
   return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <ServicesMenu />
+    <div className="flex items-center justify-center px-4 py-3">
       <div className="flex bg-white/60 dark:bg-muted backdrop-blur-sm rounded-full p-1 shadow-sm dark:shadow-none border border-white/50 dark:border-transparent">
         {tabs.map((tab) => (
           <button

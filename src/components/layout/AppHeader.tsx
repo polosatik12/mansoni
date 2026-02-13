@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bell } from "lucide-react";
-import { ServicesMenu } from "./ServicesMenu";
+
 import { Button } from "@/components/ui/button";
 import { NotificationsDrawer } from "@/components/notifications/NotificationsDrawer";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -19,7 +19,6 @@ export function AppHeader({ title, showLogo = true }: AppHeaderProps) {
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center justify-between h-12 px-4 max-w-lg mx-auto">
           <div className="w-10" />
-          <ServicesMenu />
           <Button
             variant="ghost"
             size="icon"
