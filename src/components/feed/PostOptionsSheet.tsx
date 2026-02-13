@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { Bookmark, UserPlus, UserMinus, Flag, Link2 } from "lucide-react";
+import { Bookmark, UserPlus, UserMinus, Flag, Link2, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ interface PostOptionsSheetProps {
   authorId: string;
   authorUsername: string;
   anchorRef?: React.RefObject<HTMLButtonElement>;
+  onDeleted?: () => void;
 }
 
 export function PostOptionsSheet({
@@ -24,6 +25,7 @@ export function PostOptionsSheet({
   authorId,
   authorUsername,
   anchorRef,
+  onDeleted,
 }: PostOptionsSheetProps) {
   const { user } = useAuth();
   const { isSaved, toggleSave } = useSavedPosts();
@@ -91,6 +93,25 @@ export function PostOptionsSheet({
     catch { toast.error("Не удалось скопировать"); }
   };
 
+  const handleDelete = async () => {
+    if (!user) return;
+    try {
+      // Delete related data first, then the post
+      await supabase.from('post_media').delete().eq('post_id', postId);
+      await supabase.from('post_likes').delete().eq('post_id', postId);
+      await supabase.from('post_views').delete().eq('post_id', postId);
+      await (supabase as any).from('post_mentions').delete().eq('post_id', postId);
+      await supabase.from('comments').delete().eq('post_id', postId);
+      const { error } = await supabase.from('posts').delete().eq('id', postId).eq('author_id', user.id);
+      if (error) throw error;
+      toast.success("Пост удалён");
+      onDeleted?.();
+      onClose();
+    } catch {
+      toast.error("Не удалось удалить пост");
+    }
+  };
+
   const menuContent = (
     <AnimatePresence>
       {isOpen && pos && (
@@ -132,6 +153,9 @@ export function PostOptionsSheet({
               />
             )}
             <GlassMenuItem icon={Link2} label="Копировать ссылку" onClick={handleCopyLink} />
+            {isOwnPost && (
+              <GlassMenuItem icon={Trash2} label="Удалить пост" onClick={handleDelete} isDestructive isLast />
+            )}
             {!isOwnPost && (
               <GlassMenuItem icon={Flag} label="Пожаловаться" onClick={handleReport} isDestructive isLast />
             )}
