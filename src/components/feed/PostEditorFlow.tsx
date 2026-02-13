@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePostActions } from "@/hooks/usePosts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SimpleMediaEditor } from "@/components/editor";
 
 interface PostEditorFlowProps {
   isOpen: boolean;
@@ -57,6 +58,9 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
   const [aiLabel, setAiLabel] = useState(false);
   const [deviceImages, setDeviceImages] = useState<{ id: string; src: string; file?: File }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [showMediaEditor, setShowMediaEditor] = useState(false);
+  const [editorFile, setEditorFile] = useState<File | null>(null);
+  const [activeEditorTool, setActiveEditorTool] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hide bottom nav when creating content
@@ -360,11 +364,46 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
               {editorTools.map((tool) => {
                 const Icon = tool.icon;
                 return (
-                  <button key={tool.id} className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                  <button 
+                    key={tool.id} 
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 transition-all",
+                      activeEditorTool === tool.id && "scale-105"
+                    )}
+                    onClick={async () => {
+                      setActiveEditorTool(tool.id);
+                      if (tool.id === "filter" || tool.id === "edit") {
+                        // Open SimpleMediaEditor for filter/edit
+                        const imgSrc = selectedImages[0];
+                        const deviceImg = deviceImages.find(d => d.src === imgSrc);
+                        if (deviceImg?.file) {
+                          setEditorFile(deviceImg.file);
+                        } else if (imgSrc) {
+                          try {
+                            const response = await fetch(imgSrc);
+                            const blob = await response.blob();
+                            setEditorFile(new File([blob], `edit-${Date.now()}.jpg`, { type: blob.type }));
+                          } catch {
+                            toast.error("Не удалось загрузить изображение");
+                            return;
+                          }
+                        }
+                        setShowMediaEditor(true);
+                      } else {
+                        toast.info(`${tool.label} — скоро будет доступно`);
+                      }
+                    }}
+                  >
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
+                      activeEditorTool === tool.id ? "bg-primary/30 ring-1 ring-primary/50" : "bg-white/10"
+                    )}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-xs text-white/70">{tool.label}</span>
+                    <span className={cn(
+                      "text-xs transition-colors",
+                      activeEditorTool === tool.id ? "text-white" : "text-white/70"
+                    )}>{tool.label}</span>
                   </button>
                 );
               })}
@@ -492,6 +531,30 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
           </div>
         </>
       )}
+
+      {/* Media Editor */}
+      <SimpleMediaEditor
+        open={showMediaEditor}
+        onOpenChange={setShowMediaEditor}
+        mediaFile={editorFile}
+        contentType="post"
+        onSave={(blob) => {
+          const newUrl = URL.createObjectURL(blob);
+          const newFile = new File([blob], `edited-${Date.now()}.jpg`, { type: blob.type });
+          // Replace selected image with edited version
+          const oldSrc = selectedImages[0];
+          setSelectedImages(prev => prev.map(s => s === oldSrc ? newUrl : s));
+          // Add to device images so it can be uploaded
+          setDeviceImages(prev => [
+            { id: `edited-${Date.now()}`, src: newUrl, file: newFile },
+            ...prev.filter(d => d.src !== oldSrc),
+          ]);
+          setShowMediaEditor(false);
+          setActiveEditorTool(null);
+          toast.success("Изменения применены");
+        }}
+        onCancel={() => { setShowMediaEditor(false); setActiveEditorTool(null); }}
+      />
     </div>
   );
 }
