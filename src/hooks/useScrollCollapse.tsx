@@ -12,9 +12,10 @@ export function useScrollCollapse(threshold: number = 50) {
   const updateScroll = useCallback(() => {
     const currentScrollY = lastScrollY.current;
     
-    // Calculate progress with rounding to 2 decimal places
-    // This prevents unnecessary re-renders for tiny changes
-    const rawProgress = Math.min(currentScrollY / threshold, 1);
+    // Dead zone: ignore first 30px of scroll to prevent jittery collapse
+    const deadZone = 30;
+    const effectiveScroll = Math.max(0, currentScrollY - deadZone);
+    const rawProgress = Math.min(effectiveScroll / (threshold - deadZone), 1);
     const roundedProgress = Math.round(rawProgress * 50) / 50; // 0.02 steps
     
     // Only update state if progress changed significantly
