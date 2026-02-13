@@ -1,52 +1,25 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Plus, Loader2, User } from "lucide-react";
-import { useScrollCollapse } from "@/hooks/useScrollCollapse";
-
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 import { StoryViewer } from "./StoryViewer";
 import { StoryEditorFlow } from "./StoryEditorFlow";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 
-// Animation constants - moved outside for performance
-const EXPANDED_AVATAR_SIZE = 64;
-const COLLAPSED_AVATAR_SIZE = 32;
-const EXPANDED_GAP = 16;
-const COLLAPSED_OVERLAP = 10;
-const MAX_VISIBLE_IN_STACK = 4;
-const EXPANDED_ROW_HEIGHT = 88;
-const HEADER_HEIGHT = 52;
-const PADDING_LEFT = 16;
-const MENU_BUTTON_WIDTH = 40;
-const COLLAPSED_START_X = PADDING_LEFT + MENU_BUTTON_WIDTH + 8;
-
-// Precomputed values for animation
-const SIZE_DIFF = EXPANDED_AVATAR_SIZE - COLLAPSED_AVATAR_SIZE;
-const COLLAPSED_Y = (HEADER_HEIGHT - COLLAPSED_AVATAR_SIZE) / 2;
-const Y_DIFF = COLLAPSED_Y - HEADER_HEIGHT;
+const AVATAR_SIZE = 64;
 
 export function FeedHeader() {
-  const { collapseProgress } = useScrollCollapse(100);
-  const scrollContainerRef = useScrollContainer();
   const { usersWithStories, loading } = useStories();
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [storyEditorOpen, setStoryEditorOpen] = useState(false);
 
-  // Handle story click - either scroll to top or open viewer
   const handleStoryClick = (index: number, user: UserWithStories) => {
-    if (collapseProgress > 0.1 && scrollContainerRef?.current) {
-      scrollContainerRef.current.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    } else if (user.isOwn) {
+    if (user.isOwn) {
       if (user.stories.length > 0) {
-        // Has stories — open viewer
         setSelectedStoryIndex(index);
         setStoryViewerOpen(true);
       } else {
-        // No stories — open editor
         setStoryEditorOpen(true);
       }
     } else if (user.stories.length > 0) {
@@ -55,174 +28,98 @@ export function FeedHeader() {
     }
   };
 
-  // Memoize story styles calculation - only recalculate when users or progress changes
-  const storyStyles = useMemo(() => {
-    return usersWithStories.map((_, index) => {
-      const progress = collapseProgress;
-      
-      // Use scale instead of width/height for GPU acceleration
-      const scale = 1 - ((SIZE_DIFF / EXPANDED_AVATAR_SIZE) * progress);
-      
-      // Expanded X position
-      const expandedX = PADDING_LEFT + index * (EXPANDED_AVATAR_SIZE + EXPANDED_GAP);
-      
-      // Collapsed X position
-      const isInStack = index < MAX_VISIBLE_IN_STACK;
-      const collapsedX = isInStack
-        ? COLLAPSED_START_X + index * COLLAPSED_OVERLAP
-        : COLLAPSED_START_X + (MAX_VISIBLE_IN_STACK - 1) * COLLAPSED_OVERLAP;
-      
-      // Interpolate positions
-      const x = expandedX + (collapsedX - expandedX) * progress;
-      const y = HEADER_HEIGHT + Y_DIFF * progress;
-      
-      // Opacity for items outside stack
-      const opacity = isInStack ? 1 : Math.max(0, 1 - progress * 2);
-      
-      // Z-index
-      const zIndex = isInStack ? MAX_VISIBLE_IN_STACK - index + 10 : 1;
-      
-      // Name visibility
-      const nameOpacity = Math.max(0, 1 - progress * 1.5);
-
-      return { scale, x, y, opacity, zIndex, nameOpacity, isInStack };
-    });
-  }, [usersWithStories.length, collapseProgress]);
-
-  // Collapse the container height but use a CSS transition (not scroll-driven)
-  // to avoid the feedback loop. The trick: use a non-scroll-driven CSS transition
-  // that snaps between two states based on a threshold.
-  const isCollapsed = collapseProgress > 0.3;
-  const containerHeight = isCollapsed ? HEADER_HEIGHT : HEADER_HEIGHT + EXPANDED_ROW_HEIGHT;
-
   return (
     <>
-    <div 
-      className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl overflow-hidden will-change-auto border-b border-white/10"
-      style={{ 
-        height: `${containerHeight}px`,
-        transition: 'height 0.25s ease-out',
-      }}
-    >
-      {/* Header row with menu */}
+      <div className="bg-black/20 backdrop-blur-xl border-b border-white/10">
+        {/* Stories row */}
+        {loading && usersWithStories.length === 0 ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <ScrollArea className="w-full">
+            <div className="flex gap-4 px-4 py-3">
+              {usersWithStories.map((user, index) => {
+                const hasStories = user.stories.length > 0;
 
-      {/* Loading state */}
-      {loading && usersWithStories.length === 0 && (
-        <div 
-          className="absolute flex items-center justify-center"
-          style={{ 
-            left: PADDING_LEFT, 
-            top: HEADER_HEIGHT,
-            height: EXPANDED_AVATAR_SIZE 
-          }}
-        >
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {/* Stories - GPU-accelerated transforms */}
-      {usersWithStories.map((user, index) => {
-        const styles = storyStyles[index];
-        if (!styles) return null;
-        
-        const hasStories = user.stories.length > 0;
-        const showPlusIcon = user.isOwn && collapseProgress < 0.5;
-
-        return (
-          <button
-            key={user.user_id}
-            onClick={() => handleStoryClick(index, user)}
-            className="story-avatar-btn absolute flex flex-col items-center cursor-pointer"
-            style={{
-              left: 0,
-              top: 0,
-              transform: `translate3d(${styles.x}px, ${styles.y}px, 0)`,
-              opacity: styles.opacity,
-              zIndex: styles.zIndex,
-              pointerEvents: styles.opacity < 0.3 ? 'none' : 'auto',
-            }}
-          >
-            {/* Avatar with border - using transform scale for GPU */}
-            <div
-              className={cn(
-                "story-avatar rounded-full flex-shrink-0 relative",
-                user.isOwn && !hasStories
-                  ? "p-0.5 bg-muted"
-                  : user.isOwn && hasStories
-                    ? "p-[2.5px] bg-gradient-to-tr from-primary/50 via-accent/50 to-primary/50"
-                    : user.hasNew
-                      ? "p-[2.5px] bg-gradient-to-tr from-primary via-accent to-primary"
-                      : hasStories
-                        ? "p-0.5 bg-muted-foreground/30"
-                        : "p-0.5 bg-muted"
-              )}
-              style={{
-                width: `${EXPANDED_AVATAR_SIZE}px`,
-                height: `${EXPANDED_AVATAR_SIZE}px`,
-                transform: `scale(${styles.scale})`,
-                transformOrigin: 'top left',
-              }}
-            >
-              <div className="w-full h-full rounded-full bg-background p-[2px]">
-                <div className="w-full h-full rounded-full overflow-hidden bg-muted flex items-center justify-center">
-                  {user.avatar_url ? (
-                    <img
-                      src={user.avatar_url}
-                      alt={user.display_name || ''}
-                      className="w-full h-full object-cover rounded-full"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <User className="w-6 h-6 text-muted-foreground" />
-                  )}
-                </div>
-              </div>
-              {/* Plus icon - use CSS class for transition */}
-              {showPlusIcon && (
-                <div 
-                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center story-avatar cursor-pointer z-20"
-                  style={{ 
-                    opacity: collapseProgress < 0.5 ? 1 : 0,
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setStoryEditorOpen(true);
-                  }}
-                >
-                  <Plus className="w-3 h-3 text-primary-foreground" />
-                </div>
-              )}
+                return (
+                  <button
+                    key={user.user_id}
+                    onClick={() => handleStoryClick(index, user)}
+                    className="flex flex-col items-center flex-shrink-0 cursor-pointer"
+                  >
+                    <div
+                      className={cn(
+                        "rounded-full flex-shrink-0 relative",
+                        user.isOwn && !hasStories
+                          ? "p-0.5 bg-muted"
+                          : user.isOwn && hasStories
+                            ? "p-[2.5px] bg-gradient-to-tr from-primary/50 via-accent/50 to-primary/50"
+                            : user.hasNew
+                              ? "p-[2.5px] bg-gradient-to-tr from-primary via-accent to-primary"
+                              : hasStories
+                                ? "p-0.5 bg-muted-foreground/30"
+                                : "p-0.5 bg-muted"
+                      )}
+                      style={{
+                        width: `${AVATAR_SIZE}px`,
+                        height: `${AVATAR_SIZE}px`,
+                      }}
+                    >
+                      <div className="w-full h-full rounded-full bg-background p-[2px]">
+                        <div className="w-full h-full rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                          {user.avatar_url ? (
+                            <img
+                              src={user.avatar_url}
+                              alt={user.display_name || ''}
+                              className="w-full h-full object-cover rounded-full"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <User className="w-6 h-6 text-muted-foreground" />
+                          )}
+                        </div>
+                      </div>
+                      {user.isOwn && (
+                        <div
+                          className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center cursor-pointer z-20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setStoryEditorOpen(true);
+                          }}
+                        >
+                          <Plus className="w-3 h-3 text-primary-foreground" />
+                        </div>
+                      )}
+                      {user.hasNew && (
+                        <div className="absolute left-1/2 -translate-x-1/2 -bottom-0.5 px-1.5 py-0.5 bg-primary text-primary-foreground text-[9px] font-semibold rounded-full">
+                          NEW
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-xs text-white font-medium max-w-16 truncate mt-1">
+                      {user.isOwn ? 'Вы' : user.display_name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+            <ScrollBar orientation="horizontal" className="invisible" />
+          </ScrollArea>
+        )}
+      </div>
 
-            {/* Name - CSS handles transition */}
-            <span
-              className="story-name text-xs text-white font-medium max-w-16 truncate overflow-hidden"
-              style={{
-                opacity: styles.nameOpacity,
-                height: styles.nameOpacity > 0.1 ? '20px' : '0px',
-                marginTop: styles.nameOpacity > 0.1 ? '4px' : '0px',
-              }}
-            >
-              {user.isOwn ? 'Вы' : user.display_name}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+      <StoryViewer
+        usersWithStories={usersWithStories}
+        initialUserIndex={selectedStoryIndex}
+        isOpen={storyViewerOpen}
+        onClose={() => setStoryViewerOpen(false)}
+      />
 
-    {/* Story Viewer - outside overflow:hidden container */}
-    <StoryViewer
-      usersWithStories={usersWithStories}
-      initialUserIndex={selectedStoryIndex}
-      isOpen={storyViewerOpen}
-      onClose={() => setStoryViewerOpen(false)}
-    />
-
-    {/* Story Editor Flow */}
-    <StoryEditorFlow
-      isOpen={storyEditorOpen}
-      onClose={() => setStoryEditorOpen(false)}
-    />
+      <StoryEditorFlow
+        isOpen={storyEditorOpen}
+        onClose={() => setStoryEditorOpen(false)}
+      />
     </>
   );
 }
