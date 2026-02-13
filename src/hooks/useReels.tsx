@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
@@ -124,14 +124,30 @@ export function useReels() {
     }
   }, [user, likedReels]);
 
+  const viewedReelsRef = useRef<Set<string>>(new Set());
+
   const recordView = useCallback(async (reelId: string) => {
+    // Каждый пользователь/сессия считается только один раз
+    const viewKey = user ? `${user.id}-${reelId}` : null;
+    if (!viewKey || viewedReelsRef.current.has(viewKey)) return;
+    viewedReelsRef.current.add(viewKey);
+
     try {
+      // upsert с уникальной комбинацией user_id + reel_id — если уже есть, ничего не делаем
+      const { data: existing } = await (supabase as any)
+        .from("reel_views")
+        .select("id")
+        .eq("reel_id", reelId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) return; // уже просмотрено
+
       await (supabase as any)
         .from("reel_views")
         .insert({
           reel_id: reelId,
-          user_id: user?.id || null,
-          session_id: !user ? `anon-${Date.now()}` : null,
+          user_id: user.id,
         });
     } catch (error) {
       console.error("Error recording view:", error);
