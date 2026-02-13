@@ -400,14 +400,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     e.preventDefault();
     isHoldingRef.current = false;
     holdStartedRef.current = true;
+
+    // In video mode, open recorder immediately on press (no hold needed)
+    if (recordMode === 'video') {
+      setShowVideoRecorder(true);
+      holdStartedRef.current = false;
+      return;
+    }
     
     holdTimerRef.current = setTimeout(() => {
       isHoldingRef.current = true;
-      if (recordMode === 'voice') {
-        startRecording();
-      } else {
-        setShowVideoRecorder(true);
-      }
+      startRecording();
     }, 200); // 200ms delay to distinguish tap from hold
   }, [recordMode]);
 
@@ -422,7 +425,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     }
     
     if (isHoldingRef.current) {
-      // This was a hold — stop voice recording (video auto-sends on release in VideoCircleRecorder)
+      // This was a hold — stop voice recording
       if (recordMode === 'voice' && isRecording) {
         stopRecording();
       }

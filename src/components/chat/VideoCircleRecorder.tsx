@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowUp, Pause, Play, Camera, Zap, ZapOff } from "lucide-react";
+import { toast } from "sonner";
 
 interface VideoCircleRecorderProps {
   onRecord: (videoBlob: Blob, duration: number) => void;
@@ -95,6 +96,7 @@ export function VideoCircleRecorder({ onRecord, onCancel, autoRecord = true }: V
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
+      toast.error("Не удалось получить доступ к камере");
       setHasPermission(false);
     }
   };
@@ -186,8 +188,12 @@ export function VideoCircleRecorder({ onRecord, onCancel, autoRecord = true }: V
 
   // Auto-start recording when camera is ready
   useEffect(() => {
-    if (hasPermission && !isRecording) {
-      startRecording();
+    if (hasPermission && !isRecording && streamRef.current) {
+      // Small delay to ensure stream is fully ready
+      const timer = setTimeout(() => {
+        startRecording();
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [hasPermission]);
 
