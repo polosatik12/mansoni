@@ -245,6 +245,7 @@ export function SimpleMediaEditor({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent 
+        hideCloseButton
         className={cn(
           "max-w-full h-[100dvh] p-0 gap-0 bg-background border-0 rounded-none",
           "sm:max-w-lg sm:h-auto sm:max-h-[90vh] sm:rounded-lg sm:border"
