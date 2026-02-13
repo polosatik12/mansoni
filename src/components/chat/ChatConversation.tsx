@@ -362,7 +362,9 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   }, []);
 
   const handleVideoRecord = async (videoBlob: Blob, duration: number) => {
-    const file = new File([videoBlob], `video_circle_${Date.now()}.webm`, { type: 'video/webm' });
+    const blobType = videoBlob.type || 'video/webm';
+    const ext = blobType.includes('mp4') ? 'mp4' : 'webm';
+    const file = new File([videoBlob], `video_circle_${Date.now()}.${ext}`, { type: blobType });
     await sendMediaMessage(file, 'video_circle', duration);
     setShowVideoRecorder(false);
   };
