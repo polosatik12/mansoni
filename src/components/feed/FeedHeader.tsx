@@ -52,6 +52,7 @@ export function FeedHeader() {
             style={{
               transform: `scale(${scale})`,
               transformOrigin: 'left center',
+              transition: 'transform 0.15s ease-out',
               willChange: 'transform',
             }}
           >
