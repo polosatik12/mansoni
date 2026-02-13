@@ -168,6 +168,25 @@ export function useReels() {
     }
   }, [user, fetchReels]);
 
+  const deleteReel = useCallback(async (reelId: string) => {
+    if (!user) return { error: "Not authenticated" };
+
+    try {
+      const { error } = await (supabase as any)
+        .from("reels")
+        .delete()
+        .eq("id", reelId)
+        .eq("author_id", user.id);
+
+      if (error) throw error;
+
+      setReels((prev) => prev.filter((r) => r.id !== reelId));
+      return { error: null };
+    } catch (error: any) {
+      return { error: error.message };
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchReels();
   }, [fetchReels]);
@@ -179,6 +198,7 @@ export function useReels() {
     toggleLike,
     recordView,
     createReel,
+    deleteReel,
     refetch: fetchReels,
   };
 }
