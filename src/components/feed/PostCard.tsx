@@ -167,6 +167,27 @@ export function PostCard({
     ? content.slice(0, 100) + "..." 
     : content;
 
+  const renderContentWithHashtags = (text: string) => {
+    const parts = text.split(/(#[\wа-яА-ЯёЁ\d_]+)/gu);
+    return parts.map((part, i) => {
+      if (/^#[\wа-яА-ЯёЁ\d_]+$/u.test(part)) {
+        return (
+          <button
+            key={i}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/search?q=${encodeURIComponent(part)}`);
+            }}
+            className="text-blue-400 font-medium hover:underline"
+          >
+            {part}
+          </button>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   const goToProfile = () => {
     // Use authorId (user_id) for reliable navigation
     if (authorId) {
@@ -288,7 +309,7 @@ export function PostCard({
       <div className="px-4 py-2">
         <p className="text-sm">
           <span className="font-semibold text-white">{author.username}</span>{" "}
-          <span className="text-white/80">{truncatedContent}</span>
+          <span className="text-white/80">{renderContentWithHashtags(truncatedContent)}</span>
           {content.length > 100 && !expanded && (
             <button 
               onClick={() => setExpanded(true)}
