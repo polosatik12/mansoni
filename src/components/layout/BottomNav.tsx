@@ -25,6 +25,7 @@ interface NavItem {
 
 const defaultNavItems: NavItem[] = [
   { to: "/", icon: Home, label: "Лента" },
+  { to: "/search", icon: Search, label: "Поиск" },
   { to: "/reels", icon: PlaySquare, label: "Reels" },
   { to: "/chats", icon: MessageCircle, label: "Чаты", hasBadge: true },
   { to: "/profile", icon: User, label: "Профиль", hasLongPress: true },
