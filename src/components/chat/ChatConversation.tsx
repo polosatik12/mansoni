@@ -73,6 +73,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
+  const [videoRecorderKey, setVideoRecorderKey] = useState(0);
   const [showAttachmentSheet, setShowAttachmentSheet] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -405,6 +406,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
     // In video mode, open recorder immediately on press (no hold needed)
     if (recordMode === 'video') {
+      setVideoRecorderKey(prev => prev + 1);
       setShowVideoRecorder(true);
       holdStartedRef.current = false;
       return;
@@ -1278,7 +1280,7 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
       {/* Video Circle Recorder */}
       {showVideoRecorder && (
         <VideoCircleRecorder
-          key={`vcr-${Date.now()}`}
+          key={videoRecorderKey}
           onRecord={handleVideoRecord}
           onCancel={() => setShowVideoRecorder(false)}
           autoRecord={false}
