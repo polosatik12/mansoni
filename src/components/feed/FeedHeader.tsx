@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Plus, Loader2, User } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -8,11 +8,9 @@ import { StoryEditorFlow } from "./StoryEditorFlow";
 import { useStories, type UserWithStories } from "@/hooks/useStories";
 
 const AVATAR_SIZE = 64;
-const COLLAPSED_SCALE = 0.55;
-const ROW_HEIGHT = 96; // full row height including padding
 
 export function FeedHeader() {
-  const { collapseProgress } = useScrollCollapse(100);
+  const { collapseProgress } = useScrollCollapse(120);
   const { usersWithStories, loading } = useStories();
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
@@ -32,37 +30,33 @@ export function FeedHeader() {
     }
   };
 
-  // Transform-only animation values
+  // Only use transform — never change container height
   const p = collapseProgress;
-  const scale = 1 - p * (1 - COLLAPSED_SCALE);
-  const nameOpacity = Math.max(0, 1 - p * 2.5);
-  // Slide content up as it collapses to remove empty space visually
-  const translateY = -p * (ROW_HEIGHT * (1 - COLLAPSED_SCALE));
+  const scale = 1 - p * 0.4; // 1.0 → 0.6
+  const nameOpacity = Math.max(0, 1 - p * 3);
 
   return (
     <>
+      {/* FIXED height — never changes — prevents feedback loop */}
       <div
-        className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl border-b border-white/10 overflow-hidden"
-        style={{
-          // Height shrinks via transform on content, but we match it here
-          // Use a CSS variable approach: fixed base minus collapse offset
-          height: `${ROW_HEIGHT - p * (ROW_HEIGHT - ROW_HEIGHT * COLLAPSED_SCALE)}px`,
-        }}
+        className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl border-b border-white/10"
+        style={{ height: '96px' }}
       >
         {loading && usersWithStories.length === 0 ? (
-          <div className="flex items-center justify-center py-4">
+          <div className="flex items-center justify-center h-full">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <div
+            className="h-full flex items-center"
             style={{
-              transform: `translate3d(0, ${translateY}px, 0) scale(${scale})`,
-              transformOrigin: 'top left',
+              transform: `scale(${scale})`,
+              transformOrigin: 'left center',
               willChange: 'transform',
             }}
           >
             <ScrollArea className="w-full">
-              <div className="flex gap-4 px-4 py-3">
+              <div className="flex gap-4 px-4">
                 {usersWithStories.map((user, index) => {
                   const hasStories = user.stories.length > 0;
 
@@ -104,7 +98,7 @@ export function FeedHeader() {
                             )}
                           </div>
                         </div>
-                        {user.isOwn && (
+                        {user.isOwn && p < 0.5 && (
                           <div
                             className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary border-2 border-background flex items-center justify-center cursor-pointer z-20"
                             onClick={(e) => {
@@ -115,25 +109,15 @@ export function FeedHeader() {
                             <Plus className="w-3 h-3 text-primary-foreground" />
                           </div>
                         )}
-                        {user.hasNew && nameOpacity > 0.1 && (
-                          <div
-                            className="absolute left-1/2 -translate-x-1/2 -bottom-0.5 px-1.5 py-0.5 bg-primary text-primary-foreground text-[9px] font-semibold rounded-full"
-                            style={{ opacity: nameOpacity }}
-                          >
-                            NEW
-                          </div>
-                        )}
                       </div>
-                      <span
-                        className="text-xs text-white font-medium max-w-16 truncate overflow-hidden"
-                        style={{
-                          opacity: nameOpacity,
-                          height: nameOpacity > 0.05 ? '18px' : '0px',
-                          marginTop: nameOpacity > 0.05 ? '4px' : '0px',
-                        }}
-                      >
-                        {user.isOwn ? 'Вы' : user.display_name}
-                      </span>
+                      {nameOpacity > 0.05 && (
+                        <span
+                          className="text-xs text-white font-medium max-w-16 truncate mt-1"
+                          style={{ opacity: nameOpacity }}
+                        >
+                          {user.isOwn ? 'Вы' : user.display_name}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
