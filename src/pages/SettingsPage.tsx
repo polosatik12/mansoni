@@ -224,7 +224,7 @@ export function SettingsPage() {
       <h2 className="text-xl font-semibold flex-1 text-white">{title}</h2>
       {currentScreen === "main" && (
         <button 
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
         >
           <X className="w-5 h-5 text-white" />
