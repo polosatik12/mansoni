@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Plus, Loader2, User } from "lucide-react";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
-import { ServicesMenu } from "@/components/layout/ServicesMenu";
+
 import { cn } from "@/lib/utils";
 import { useScrollContainer } from "@/contexts/ScrollContainerContext";
 import { StoryViewer } from "./StoryViewer";
@@ -99,12 +99,6 @@ export function FeedHeader() {
       style={{ height: `${containerHeight}px` }}
     >
       {/* Header row with menu */}
-      <div 
-        className="absolute top-0 left-0 right-0 flex items-center px-4"
-        style={{ height: `${HEADER_HEIGHT}px` }}
-      >
-        <ServicesMenu />
-      </div>
 
       {/* Loading state */}
       {loading && usersWithStories.length === 0 && (
