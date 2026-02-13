@@ -141,24 +141,28 @@ export function ProfilePage() {
         <div className="px-4 py-4">
           <div className="flex items-start gap-4">
             {/* Avatar - clickable to view photo, long press for create menu */}
-            <button 
-              className="relative cursor-pointer"
-              onClick={() => profile.avatar_url ? setShowAvatarViewer(true) : setShowCreateMenu(true)}
-              onContextMenu={(e) => { e.preventDefault(); setShowCreateMenu(true); }}
-            >
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
-              <GradientAvatar
-                name={profile.display_name || "User"}
-                seed={user?.id}
-                avatarUrl={profile.avatar_url}
-                size="lg"
-                className="relative"
-              />
+            <div className="relative">
+              <button 
+                className="cursor-pointer"
+                onClick={() => profile.avatar_url ? setShowAvatarViewer(true) : null}
+              >
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
+                <GradientAvatar
+                  name={profile.display_name || "User"}
+                  seed={user?.id}
+                  avatarUrl={profile.avatar_url}
+                  size="lg"
+                  className="relative"
+                />
+              </button>
               {/* Add story button */}
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-white/30 flex items-center justify-center">
+              <button
+                onClick={() => setShowStoryEditor(true)}
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary border-2 border-white/30 flex items-center justify-center z-10"
+              >
                 <Plus className="w-4 h-4 text-primary-foreground" />
-              </div>
-            </button>
+              </button>
+            </div>
 
             {/* Stats */}
             <div className="flex-1">
