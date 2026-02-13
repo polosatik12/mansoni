@@ -54,7 +54,7 @@ export function SimpleMediaEditor({
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState("adjust");
   
-  // Adjustments
+  // Adjustments (shared for image and video)
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
@@ -62,11 +62,20 @@ export function SimpleMediaEditor({
   const [flipX, setFlipX] = useState(false);
   const [flipY, setFlipY] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("none");
+  const [videoActiveTab, setVideoActiveTab] = useState("adjust");
 
   // Preview URL
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const isVideo = mediaFile?.type.startsWith("video/") ?? false;
+
+  // Compute CSS filter string for video preview
+  const videoCssFilter = (() => {
+    const filter = FILTERS.find(f => f.id === selectedFilter);
+    let filterStr = filter?.filter || "";
+    filterStr += ` brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+    return filterStr.trim();
+  })();
 
   // Load media
   useEffect(() => {
@@ -275,7 +284,11 @@ export function SimpleMediaEditor({
               src={previewUrl || undefined}
               controls
               className="max-w-full max-h-full rounded-lg object-contain"
-              style={{ aspectRatio: "9/16" }}
+              style={{ 
+                aspectRatio: "9/16",
+                filter: videoCssFilter,
+                transform: `rotate(${rotation}deg) scaleX(${flipX ? -1 : 1}) scaleY(${flipY ? -1 : 1})`,
+              }}
             />
           ) : (
             <canvas
@@ -287,28 +300,84 @@ export function SimpleMediaEditor({
 
         {/* Tools */}
         {isVideo ? (
-          <div className="border-t border-border bg-card p-4 space-y-3">
-            <div className="grid grid-cols-4 gap-2">
-              <button className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => {}}>
-                <Crop className="w-5 h-5 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">Обрезка</span>
-              </button>
-              <button className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => {}}>
-                <Sun className="w-5 h-5 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">Яркость</span>
-              </button>
-              <button className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => {}}>
-                <Contrast className="w-5 h-5 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">Контраст</span>
-              </button>
-              <button className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => {}}>
-                <Palette className="w-5 h-5 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">Фильтры</span>
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground text-center">
-              Расширенное редактирование видео скоро будет доступно
-            </p>
+          <div className="border-t border-border bg-card">
+            <Tabs value={videoActiveTab} onValueChange={setVideoActiveTab} className="w-full">
+              <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-12 px-2">
+                <TabsTrigger value="adjust" className="gap-2 data-[state=active]:bg-muted">
+                  <Sun className="w-4 h-4" />
+                  Настройки
+                </TabsTrigger>
+                <TabsTrigger value="filters" className="gap-2 data-[state=active]:bg-muted">
+                  <Palette className="w-4 h-4" />
+                  Фильтры
+                </TabsTrigger>
+                <TabsTrigger value="transform" className="gap-2 data-[state=active]:bg-muted">
+                  <Crop className="w-4 h-4" />
+                  Трансформ
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="adjust" className="p-4 space-y-4 m-0">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm"><Sun className="w-4 h-4" />Яркость</div>
+                    <span className="text-sm text-muted-foreground">{brightness}%</span>
+                  </div>
+                  <Slider value={[brightness]} onValueChange={([v]) => setBrightness(v)} min={50} max={150} step={1} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm"><Contrast className="w-4 h-4" />Контраст</div>
+                    <span className="text-sm text-muted-foreground">{contrast}%</span>
+                  </div>
+                  <Slider value={[contrast]} onValueChange={([v]) => setContrast(v)} min={50} max={150} step={1} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm"><Droplets className="w-4 h-4" />Насыщенность</div>
+                    <span className="text-sm text-muted-foreground">{saturation}%</span>
+                  </div>
+                  <Slider value={[saturation]} onValueChange={([v]) => setSaturation(v)} min={0} max={200} step={1} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="filters" className="p-4 m-0">
+                <div className="grid grid-cols-4 gap-2">
+                  {FILTERS.map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setSelectedFilter(filter.id)}
+                      className={cn(
+                        "aspect-square rounded-lg border-2 p-1 transition-all",
+                        selectedFilter === filter.id ? "border-primary" : "border-transparent hover:border-muted-foreground/30"
+                      )}
+                    >
+                      <div className="w-full h-full rounded bg-muted flex items-center justify-center" style={{ filter: filter.filter || undefined }}>
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground mt-1 block">{filter.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="transform" className="p-4 m-0">
+                <div className="flex items-center justify-center gap-4">
+                  <Button variant="outline" size="icon" onClick={() => setRotation((r) => (r + 90) % 360)} className="h-12 w-12">
+                    <RotateCw className="w-5 h-5" />
+                  </Button>
+                  <Button variant={flipX ? "default" : "outline"} size="icon" onClick={() => setFlipX(!flipX)} className="h-12 w-12">
+                    <FlipHorizontal className="w-5 h-5" />
+                  </Button>
+                  <Button variant={flipY ? "default" : "outline"} size="icon" onClick={() => setFlipY(!flipY)} className="h-12 w-12">
+                    <FlipVertical className="w-5 h-5" />
+                  </Button>
+                </div>
+                <div className="text-center mt-4">
+                  <Button variant="ghost" size="sm" onClick={handleReset}>Сбросить всё</Button>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         ) : (
           <div className="border-t border-border bg-card">
