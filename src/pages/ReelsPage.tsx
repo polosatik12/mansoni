@@ -275,7 +275,7 @@ export function ReelsPage() {
             >
               {/* Video */}
               <div className="absolute inset-0 bg-black">
-                {reel.video_url.includes(".mp4") || reel.video_url.includes("video") ? (
+                {/\.(mp4|mov|webm|ogg|m4v)/i.test(reel.video_url) || reel.video_url.includes("video") ? (
                   <video
                     ref={(el) => { if (el) videoRefs.current.set(index, el); }}
                     src={reel.video_url}
