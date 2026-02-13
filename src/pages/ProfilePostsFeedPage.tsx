@@ -155,6 +155,10 @@ export function ProfilePostsFeedPage() {
                 mentions={post.mentions}
                 timeAgo={formatTime(post.created_at)}
                 isLiked={post.isLiked}
+                onDeleted={(postId) => {
+                  setPosts(prev => prev.filter(p => p.id !== postId));
+                  if (posts.length <= 1) navigate(-1);
+                }}
               />
             </div>
           ))}

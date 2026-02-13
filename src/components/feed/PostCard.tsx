@@ -32,6 +32,7 @@ interface PostCardProps {
   isRecommended?: boolean;
   isLiked?: boolean;
   onLikeChange?: (postId: string, liked: boolean) => void;
+  onDeleted?: (postId: string) => void;
 }
 
 export function PostCard({
@@ -50,6 +51,7 @@ export function PostCard({
   isRecommended = false,
   isLiked = false,
   onLikeChange,
+  onDeleted,
 }: PostCardProps) {
   const navigate = useNavigate();
   const { toggleLike } = usePostActions();
@@ -380,6 +382,7 @@ export function PostCard({
               authorId={authorId}
               authorUsername={author.username}
               anchorRef={optionsBtnRef}
+              onDeleted={() => onDeleted?.(id)}
             />
           )}
         </>
