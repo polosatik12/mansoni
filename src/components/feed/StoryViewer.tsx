@@ -11,6 +11,7 @@ import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { StoryShareSheet } from "./StoryShareSheet";
 
 interface StoryViewerProps {
   usersWithStories: UserWithStories[];
@@ -35,6 +36,7 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
   const [sendingReply, setSendingReply] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const replyInputRef = useRef<HTMLInputElement>(null);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -476,8 +478,8 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
                 <button
                   type="button"
                   onClick={() => {
-                    onClose();
-                    navigate(`/chats`);
+                    setShareOpen(true);
+                    setIsPaused(true);
                   }}
                   className="p-2 text-white"
                 >
@@ -526,6 +528,13 @@ export function StoryViewer({ usersWithStories, initialUserIndex, isOpen, onClos
             </div>
           </div>
         )}
+
+        {/* Story Share Sheet */}
+        <StoryShareSheet
+          isOpen={shareOpen}
+          onClose={() => { setShareOpen(false); setIsPaused(false); }}
+          storyId={currentStory.id}
+        />
       </div>
     </div>,
     document.body
