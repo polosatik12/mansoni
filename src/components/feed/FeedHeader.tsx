@@ -89,15 +89,20 @@ export function FeedHeader() {
     });
   }, [usersWithStories.length, collapseProgress]);
 
-  // Fixed container height to prevent layout feedback loop
-  // Stories visually collapse via transforms, but container stays the same height
-  const totalHeight = HEADER_HEIGHT + EXPANDED_ROW_HEIGHT;
+  // Collapse the container height but use a CSS transition (not scroll-driven)
+  // to avoid the feedback loop. The trick: use a non-scroll-driven CSS transition
+  // that snaps between two states based on a threshold.
+  const isCollapsed = collapseProgress > 0.3;
+  const containerHeight = isCollapsed ? HEADER_HEIGHT : HEADER_HEIGHT + EXPANDED_ROW_HEIGHT;
 
   return (
     <>
     <div 
       className="sticky top-0 z-30 bg-black/20 backdrop-blur-xl overflow-hidden will-change-auto border-b border-white/10"
-      style={{ height: `${totalHeight}px` }}
+      style={{ 
+        height: `${containerHeight}px`,
+        transition: 'height 0.25s ease-out',
+      }}
     >
       {/* Header row with menu */}
 
