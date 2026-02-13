@@ -17,39 +17,16 @@ export function Stories({ onOpenStory }: StoriesProps) {
   const [selectedUserIndex, setSelectedUserIndex] = useState(0);
   const [storyEditorOpen, setStoryEditorOpen] = useState(false);
 
-  // Telegram-style: stack to the left
-  const maxVisibleInStack = 4;
-  const stackOverlap = 16;
+  // Simple collapse: shrink avatars and fade names
   const expandedAvatarSize = 64;
-  const collapsedAvatarSize = 44;
-  const expandedGap = 16;
-  const expandedItemWidth = expandedAvatarSize + expandedGap;
+  const collapsedAvatarSize = 40;
 
   // Calculate current avatar size
   const avatarSize = expandedAvatarSize - (collapseProgress * (expandedAvatarSize - collapsedAvatarSize));
   
-  // Name opacity fades out
-  const nameOpacity = 1 - collapseProgress;
-  const nameHeight = 20 * (1 - collapseProgress);
-
-  // Calculate position for each story
-  const getStoryStyle = (index: number) => {
-    const originalX = index * expandedItemWidth;
-    const isInStack = index < maxVisibleInStack;
-    const targetX = isInStack ? index * stackOverlap : (maxVisibleInStack - 1) * stackOverlap;
-    const currentX = originalX - (collapseProgress * (originalX - targetX));
-    const zIndex = usersWithStories.length - index;
-    const isHidden = !isInStack && collapseProgress > 0.5;
-    const hiddenProgress = Math.max(0, (collapseProgress - 0.5) * 2);
-    const itemOpacity = isInStack ? 1 : 1 - hiddenProgress;
-    const itemScale = isInStack ? 1 : 1 - (hiddenProgress * 0.3);
-
-    return {
-      transform: `translateX(${currentX - (index * expandedItemWidth)}px) scale(${itemScale})`,
-      zIndex,
-      opacity: itemOpacity,
-    };
-  };
+  // Name opacity fades out quickly
+  const nameOpacity = Math.max(0, 1 - collapseProgress * 2.5);
+  const nameHeight = 20 * Math.max(0, 1 - collapseProgress * 2.5);
 
   const handleStoryClick = (index: number, user: UserWithStories) => {
     if (user.isOwn) {
@@ -88,19 +65,17 @@ export function Stories({ onOpenStory }: StoriesProps) {
         <ScrollArea className="w-full">
           <div 
             className="flex px-4 transition-all duration-150"
-            style={{ gap: `${expandedGap}px` }}
+            style={{ gap: `${16 - collapseProgress * 8}px` }}
           >
             {usersWithStories.map((user, index) => {
-              const storyStyle = getStoryStyle(index);
               const hasStories = user.stories.length > 0;
               
               return (
                 <div 
                   key={user.user_id} 
-                  className="flex flex-col items-center flex-shrink-0 transition-all duration-200 ease-out cursor-pointer"
+                  className="flex flex-col items-center flex-shrink-0 cursor-pointer"
                   style={{
-                    ...storyStyle,
-                    pointerEvents: storyStyle.opacity < 0.3 ? 'none' : 'auto',
+                    transition: 'all 0.15s ease-out',
                   }}
                   onClick={() => handleStoryClick(index, user)}
                 >
