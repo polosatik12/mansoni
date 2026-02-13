@@ -124,7 +124,7 @@ export function ProfilePostsFeedPage() {
         {/* Header */}
         <div className="sticky top-0 z-20 bg-black/40 backdrop-blur-xl border-b border-white/10">
           <div className="flex items-center gap-3 px-4 py-3">
-            <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+            <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/profile")} className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
             <h1 className="font-semibold text-white">Публикации</h1>
