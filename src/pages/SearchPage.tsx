@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search, Play, Hash, User, Loader2, TrendingUp, Grid3X3, Heart, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,10 @@ const defaultTrends = [
 
 export function SearchPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"explore" | "users" | "hashtags">("explore");
+  const [searchParams] = useSearchParams();
+  const initialQ = searchParams.get("q") || "";
+  const [query, setQuery] = useState(initialQ);
+  const [activeTab, setActiveTab] = useState<"explore" | "users" | "hashtags">(initialQ.startsWith("#") ? "hashtags" : "explore");
   const { users, explorePosts, loading, exploring, searchUsers, fetchExplorePosts, toggleFollow } = useSearch();
   const [hashtagPosts, setHashtagPosts] = useState<any[]>([]);
   const [hashtagLoading, setHashtagLoading] = useState(false);
