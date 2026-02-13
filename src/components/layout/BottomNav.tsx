@@ -1,5 +1,5 @@
 import { useState, useEffect, forwardRef, useRef, useCallback } from "react";
-import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, ChevronDown, Camera, MessageCircle, User, PlaySquare } from "lucide-react";
+import { Home, Search, Heart, FileText, LucideIcon, Plus, Check, MessageCircle, User, PlaySquare } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
@@ -19,13 +19,7 @@ interface NavItem {
   hasLongPress?: boolean;
 }
 
-interface Account {
-  id: string;
-  username: string;
-  displayName: string;
-  avatar: string;
-  isActive: boolean;
-}
+// Account switcher placeholder - multi-account support not yet implemented
 
 // Account switcher now uses real auth data - no more mock accounts
 
