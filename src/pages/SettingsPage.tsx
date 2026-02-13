@@ -72,6 +72,15 @@ export function SettingsPage() {
   const [comments, setComments] = useState<UserComment[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [sessionTime, setSessionTime] = useState(formatDuration(getTotalTime()));
+  
+  // Toggle states for settings
+  const [pushEnabled, setPushEnabled] = useState(true);
+  const [likesNotif, setLikesNotif] = useState(true);
+  const [commentsNotif, setCommentsNotif] = useState(true);
+  const [followersNotif, setFollowersNotif] = useState(true);
+  const [privateAccount, setPrivateAccount] = useState(false);
+  const [activityStatus, setActivityStatus] = useState(true);
+  const [twoFactor, setTwoFactor] = useState(false);
 
   // Update time every minute
   useEffect(() => {
@@ -422,29 +431,29 @@ export function SettingsPage() {
                   <Bell className="w-5 h-5 text-white/60" />,
                   "Push-уведомления",
                   "Получать уведомления на устройство",
-                  true,
-                  () => {}
+                  pushEnabled,
+                  setPushEnabled
                 )}
                 {renderToggleItem(
                   <Heart className="w-5 h-5 text-white/60" />,
                   "Лайки",
                   "Уведомлять о новых лайках",
-                  true,
-                  () => {}
+                  likesNotif,
+                  setLikesNotif
                 )}
                 {renderToggleItem(
                   <MessageCircle className="w-5 h-5 text-white/60" />,
                   "Комментарии",
                   "Уведомлять о новых комментариях",
-                  true,
-                  () => {}
+                  commentsNotif,
+                  setCommentsNotif
                 )}
                 {renderToggleItem(
                   <Users className="w-5 h-5 text-white/60" />,
                   "Подписчики",
                   "Уведомлять о новых подписчиках",
-                  true,
-                  () => {}
+                  followersNotif,
+                  setFollowersNotif
                 )}
               </div>
             </div>
@@ -461,15 +470,15 @@ export function SettingsPage() {
                   <Lock className="w-5 h-5 text-white/60" />,
                   "Закрытый аккаунт",
                   "Только подписчики видят ваши публикации",
-                  false,
-                  () => {}
+                  privateAccount,
+                  setPrivateAccount
                 )}
                 {renderToggleItem(
                   <Eye className="w-5 h-5 text-white/60" />,
                   "Статус активности",
                   "Показывать когда вы были онлайн",
-                  true,
-                  () => {}
+                  activityStatus,
+                  setActivityStatus
                 )}
               </div>
               <div className="mx-4 mt-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
@@ -492,8 +501,8 @@ export function SettingsPage() {
                   <Shield className="w-5 h-5 text-white/60" />,
                   "Двухфакторная аутентификация",
                   "Дополнительная защита аккаунта",
-                  false,
-                  () => {}
+                  twoFactor,
+                  setTwoFactor
                 )}
               </div>
               <div className="mx-4 mt-3 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden">
