@@ -388,8 +388,15 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
 
   // Hold-to-record handlers for dynamic mic/video button
   const holdStartedRef = useRef(false); // Track if mousedown happened on button
+  const isTouchDeviceRef = useRef(false); // Prevent duplicate mouse events on touch devices
 
   const handleRecordButtonDown = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    // On touch devices, ignore mouse events (touch already handled it)
+    if ('touches' in e) {
+      isTouchDeviceRef.current = true;
+    } else if (isTouchDeviceRef.current) {
+      return; // Skip mouse event on touch device
+    }
     e.preventDefault();
     isHoldingRef.current = false;
     holdStartedRef.current = true;
