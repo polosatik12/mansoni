@@ -152,7 +152,7 @@ export function CreateReelSheet({ open, onOpenChange }: CreateReelSheetProps) {
           <SheetTitle>Новый Reel</SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col gap-4 mt-4 pb-6 overflow-y-auto flex-1">
+        <div className="flex flex-col gap-4 mt-4 pb-6 px-4 overflow-y-auto flex-1">
           {/* Video Upload Area */}
           {!videoPreview ? (
             <div
