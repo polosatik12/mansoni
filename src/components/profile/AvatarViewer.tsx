@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { X, ZoomIn, ZoomOut } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -11,12 +10,9 @@ interface AvatarViewerProps {
 }
 
 export function AvatarViewer({ src, name, isOpen, onClose }: AvatarViewerProps) {
-  const [scale, setScale] = useState(1);
-
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
-      setScale(1);
     }
   };
 
@@ -35,20 +31,13 @@ export function AvatarViewer({ src, name, isOpen, onClose }: AvatarViewerProps) 
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => { onClose(); setScale(1); }}
+              onClick={onClose}
               className="text-white hover:bg-white/20"
             >
               <X className="w-6 h-6" />
             </Button>
             <span className="text-white font-semibold text-sm">{name}</span>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(s - 0.5, 0.5))} className="text-white hover:bg-white/20">
-                <ZoomOut className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(s + 0.5, 3))} className="text-white hover:bg-white/20">
-                <ZoomIn className="w-5 h-5" />
-              </Button>
-            </div>
+            <div className="w-10" />
           </div>
 
           {/* Avatar image */}
@@ -58,8 +47,7 @@ export function AvatarViewer({ src, name, isOpen, onClose }: AvatarViewerProps) 
             exit={{ scale: 0.5, opacity: 0 }}
             src={src}
             alt={name}
-            className="w-72 h-72 rounded-full object-cover transition-transform duration-200"
-            style={{ transform: `scale(${scale})` }}
+            className="w-72 h-72 rounded-full object-cover"
             draggable={false}
           />
         </motion.div>
