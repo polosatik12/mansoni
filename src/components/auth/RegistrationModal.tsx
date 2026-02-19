@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { X, User, Mail, Calendar as CalendarIcon, Users } from "lucide-react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -210,48 +208,68 @@ export function RegistrationModal({ isOpen, onClose, phone, onSuccess }: Registr
               </div>
             </div>
 
-            {/* Birth Date */}
+            {/* Birth Date - inline selects */}
             <div className="space-y-2">
               <Label className="text-white/80 text-sm">Дата рождения</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-2 pl-10 pr-4 h-12 bg-white/10 border border-white/20 rounded-xl text-white text-left text-sm relative focus:border-white/40 transition-colors"
-                  >
-                    <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                    {birthDate 
-                      ? format(parse(birthDate, "yyyy-MM-dd", new Date()), "d MMMM yyyy", { locale: ru })
-                      : <span className="text-white/40">Выберите дату</span>
-                    }
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-auto p-0 bg-transparent border-0 shadow-none z-[9999]" 
-                  align="start"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
-                  onInteractOutside={(e) => {
-                    // Prevent closing when interacting with dropdown selects inside calendar
-                    const target = e.target as HTMLElement;
-                    if (target?.closest?.('[role="listbox"]') || target?.closest?.('select')) {
-                      e.preventDefault();
-                    }
+              <div className="flex gap-2">
+                {/* Day */}
+                <select
+                  value={birthDate ? new Date(birthDate).getDate().toString() : ""}
+                  onChange={(e) => {
+                    const day = e.target.value;
+                    const current = birthDate ? new Date(birthDate) : new Date(2000, 0, 1);
+                    const month = birthDate ? current.getMonth() : 0;
+                    const year = birthDate ? current.getFullYear() : 2000;
+                    const newDate = new Date(year, month, parseInt(day));
+                    setBirthDate(format(newDate, "yyyy-MM-dd"));
                   }}
+                  className="flex-1 h-12 bg-white/10 border border-white/20 rounded-xl text-white text-sm px-3 appearance-none focus:border-white/40 focus:outline-none transition-colors"
+                  style={{ colorScheme: 'dark' }}
                 >
-                  <Calendar
-                    mode="single"
-                    selected={birthDate ? parse(birthDate, "yyyy-MM-dd", new Date()) : undefined}
-                    onSelect={(date) => {
-                      if (date) setBirthDate(format(date, "yyyy-MM-dd"));
-                    }}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    locale={ru}
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+                  <option value="" disabled className="bg-neutral-800">День</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                    <option key={d} value={d} className="bg-neutral-800">{d}</option>
+                  ))}
+                </select>
+                {/* Month */}
+                <select
+                  value={birthDate ? new Date(birthDate).getMonth().toString() : ""}
+                  onChange={(e) => {
+                    const month = parseInt(e.target.value);
+                    const current = birthDate ? new Date(birthDate) : new Date(2000, 0, 1);
+                    const day = birthDate ? current.getDate() : 1;
+                    const year = birthDate ? current.getFullYear() : 2000;
+                    const newDate = new Date(year, month, day);
+                    setBirthDate(format(newDate, "yyyy-MM-dd"));
+                  }}
+                  className="flex-[1.4] h-12 bg-white/10 border border-white/20 rounded-xl text-white text-sm px-3 appearance-none focus:border-white/40 focus:outline-none transition-colors"
+                  style={{ colorScheme: 'dark' }}
+                >
+                  <option value="" disabled className="bg-neutral-800">Месяц</option>
+                  {["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"].map((m, i) => (
+                    <option key={i} value={i} className="bg-neutral-800">{m}</option>
+                  ))}
+                </select>
+                {/* Year */}
+                <select
+                  value={birthDate ? new Date(birthDate).getFullYear().toString() : ""}
+                  onChange={(e) => {
+                    const year = parseInt(e.target.value);
+                    const current = birthDate ? new Date(birthDate) : new Date(2000, 0, 1);
+                    const day = birthDate ? current.getDate() : 1;
+                    const month = birthDate ? current.getMonth() : 0;
+                    const newDate = new Date(year, month, day);
+                    setBirthDate(format(newDate, "yyyy-MM-dd"));
+                  }}
+                  className="flex-1 h-12 bg-white/10 border border-white/20 rounded-xl text-white text-sm px-3 appearance-none focus:border-white/40 focus:outline-none transition-colors"
+                  style={{ colorScheme: 'dark' }}
+                >
+                  <option value="" disabled className="bg-neutral-800">Год</option>
+                  {Array.from({ length: 87 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                    <option key={y} value={y} className="bg-neutral-800">{y}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Gender */}
