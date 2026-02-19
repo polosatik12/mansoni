@@ -1,7 +1,7 @@
 import { MessageCircle, Bell, BellOff, Phone, Video, Image, FileText, Link2, Mic, Users, Ban, X, User, Loader2, QrCode } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useVideoCallContext } from "@/contexts/VideoCallContext";
 import { MediaGallerySheet } from "@/components/chat/MediaGallerySheet";
@@ -222,12 +222,13 @@ export function ContactProfilePage() {
             className="relative mb-4"
           >
             <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
-            <Avatar className="w-24 h-24 border-2 border-white/30 relative">
-              <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.display_name || 'Contact'} />
-              <AvatarFallback className="bg-violet-500/80 backdrop-blur-xl text-white text-3xl font-medium">
-                {profile?.display_name?.charAt(0)?.toUpperCase() || <User className="w-10 h-10" />}
-              </AvatarFallback>
-            </Avatar>
+            <GradientAvatar
+              name={profile?.display_name || 'User'}
+              seed={userId || ''}
+              avatarUrl={profile?.avatar_url}
+              size="xl"
+              className="border-2 border-white/30 relative"
+            />
           </button>
 
           {/* Name & Status - clickable */}
