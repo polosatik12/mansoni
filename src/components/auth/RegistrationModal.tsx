@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { X, User, Mail, Calendar as CalendarIcon, Users } from "lucide-react";
+import { X, User, Mail, Users } from "lucide-react";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -208,67 +207,67 @@ export function RegistrationModal({ isOpen, onClose, phone, onSuccess }: Registr
               </div>
             </div>
 
-            {/* Birth Date - inline selects */}
+            {/* Birth Date - glass selects */}
             <div className="space-y-2">
               <Label className="text-white/80 text-sm">Дата рождения</Label>
               <div className="flex gap-2">
                 {/* Day */}
-                <select
+                <Select
                   value={birthDate ? new Date(birthDate).getDate().toString() : ""}
-                  onChange={(e) => {
-                    const day = e.target.value;
+                  onValueChange={(day) => {
                     const current = birthDate ? new Date(birthDate) : new Date(2000, 0, 1);
                     const month = birthDate ? current.getMonth() : 0;
                     const year = birthDate ? current.getFullYear() : 2000;
-                    const newDate = new Date(year, month, parseInt(day));
-                    setBirthDate(format(newDate, "yyyy-MM-dd"));
+                    setBirthDate(format(new Date(year, month, parseInt(day)), "yyyy-MM-dd"));
                   }}
-                  className="flex-1 h-12 bg-white/10 border border-white/20 rounded-xl text-white text-sm px-3 appearance-none focus:border-white/40 focus:outline-none transition-colors"
-                  style={{ colorScheme: 'dark' }}
                 >
-                  <option value="" disabled className="bg-neutral-800">День</option>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                    <option key={d} value={d} className="bg-neutral-800">{d}</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="flex-1 h-12 bg-white/10 border-white/20 rounded-xl text-white focus:ring-0">
+                    <SelectValue placeholder="День" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black/60 backdrop-blur-xl border-white/20 rounded-xl z-[200] max-h-60">
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                      <SelectItem key={d} value={d.toString()} className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {/* Month */}
-                <select
+                <Select
                   value={birthDate ? new Date(birthDate).getMonth().toString() : ""}
-                  onChange={(e) => {
-                    const month = parseInt(e.target.value);
+                  onValueChange={(month) => {
                     const current = birthDate ? new Date(birthDate) : new Date(2000, 0, 1);
                     const day = birthDate ? current.getDate() : 1;
                     const year = birthDate ? current.getFullYear() : 2000;
-                    const newDate = new Date(year, month, day);
-                    setBirthDate(format(newDate, "yyyy-MM-dd"));
+                    setBirthDate(format(new Date(year, parseInt(month), day), "yyyy-MM-dd"));
                   }}
-                  className="flex-[1.4] h-12 bg-white/10 border border-white/20 rounded-xl text-white text-sm px-3 appearance-none focus:border-white/40 focus:outline-none transition-colors"
-                  style={{ colorScheme: 'dark' }}
                 >
-                  <option value="" disabled className="bg-neutral-800">Месяц</option>
-                  {["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"].map((m, i) => (
-                    <option key={i} value={i} className="bg-neutral-800">{m}</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="flex-[1.4] h-12 bg-white/10 border-white/20 rounded-xl text-white focus:ring-0">
+                    <SelectValue placeholder="Месяц" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black/60 backdrop-blur-xl border-white/20 rounded-xl z-[200] max-h-60">
+                    {["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"].map((m, i) => (
+                      <SelectItem key={i} value={i.toString()} className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {/* Year */}
-                <select
+                <Select
                   value={birthDate ? new Date(birthDate).getFullYear().toString() : ""}
-                  onChange={(e) => {
-                    const year = parseInt(e.target.value);
+                  onValueChange={(year) => {
                     const current = birthDate ? new Date(birthDate) : new Date(2000, 0, 1);
                     const day = birthDate ? current.getDate() : 1;
                     const month = birthDate ? current.getMonth() : 0;
-                    const newDate = new Date(year, month, day);
-                    setBirthDate(format(newDate, "yyyy-MM-dd"));
+                    setBirthDate(format(new Date(parseInt(year), month, day), "yyyy-MM-dd"));
                   }}
-                  className="flex-1 h-12 bg-white/10 border border-white/20 rounded-xl text-white text-sm px-3 appearance-none focus:border-white/40 focus:outline-none transition-colors"
-                  style={{ colorScheme: 'dark' }}
                 >
-                  <option value="" disabled className="bg-neutral-800">Год</option>
-                  {Array.from({ length: 87 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                    <option key={y} value={y} className="bg-neutral-800">{y}</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="flex-1 h-12 bg-white/10 border-white/20 rounded-xl text-white focus:ring-0">
+                    <SelectValue placeholder="Год" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black/60 backdrop-blur-xl border-white/20 rounded-xl z-[200] max-h-60">
+                    {Array.from({ length: 87 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                      <SelectItem key={y} value={y.toString()} className="text-white hover:bg-white/10 focus:bg-white/10 focus:text-white">{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
