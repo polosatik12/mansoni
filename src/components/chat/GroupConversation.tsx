@@ -381,7 +381,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
         </div>
 
         {/* Input */}
-        <div className="flex-shrink-0 px-2 py-2 relative z-10 backdrop-blur-xl bg-black/20 border-t border-white/10 safe-area-bottom">
+        <div className="flex-shrink-0 px-2 py-2 pb-6 relative z-10 backdrop-blur-xl bg-black/20 border-t border-white/10 safe-area-bottom">
           <div className="flex items-center gap-2">
             <div className="flex-1">
               <input
