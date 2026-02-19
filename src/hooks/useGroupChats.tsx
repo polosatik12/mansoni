@@ -24,6 +24,8 @@ export interface GroupMessage {
   media_type?: string | null;
   created_at: string;
   forwarded_from?: string | null;
+  shared_reel_id?: string | null;
+  shared_post_id?: string | null;
   sender?: {
     display_name: string | null;
     avatar_url: string | null;
@@ -233,14 +235,27 @@ export function useGroupMessages(groupId: string | null) {
     };
   }, [groupId]);
 
-  const sendMessage = async (content: string) => {
-    if (!groupId || !user || !content.trim()) return;
+  const sendMessage = async (
+    content: string,
+    options?: {
+      mediaUrl?: string;
+      mediaType?: string;
+      sharedReelId?: string;
+      sharedPostId?: string;
+    }
+  ) => {
+    if (!groupId || !user) return;
+    if (!content.trim() && !options?.mediaUrl && !options?.sharedReelId && !options?.sharedPostId) return;
 
     try {
       const { error } = await supabase.from("group_chat_messages").insert({
         group_id: groupId,
         sender_id: user.id,
         content: content.trim(),
+        media_url: options?.mediaUrl || null,
+        media_type: options?.mediaType || null,
+        shared_reel_id: options?.sharedReelId || null,
+        shared_post_id: options?.sharedPostId || null,
       });
 
       if (error) throw error;
