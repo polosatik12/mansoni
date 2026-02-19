@@ -306,20 +306,22 @@ export function PostCard({
       )}
 
       {/* Caption */}
-      <div className="px-4 py-2">
-        <p className="text-sm">
-          <span className="font-semibold text-white">{author.username}</span>{" "}
-          <span className="text-white/80">{renderContentWithHashtags(truncatedContent)}</span>
-          {content.length > 100 && !expanded && (
-            <button 
-              onClick={() => setExpanded(true)}
-              className="text-white/50 ml-1"
-            >
-              ещё
-            </button>
-          )}
-        </p>
-      </div>
+      {content.trim() && (
+        <div className="px-4 py-2">
+          <p className="text-sm">
+            <span className="font-semibold text-white">{author.username}</span>{" "}
+            <span className="text-white/80">{renderContentWithHashtags(truncatedContent)}</span>
+            {content.length > 100 && !expanded && (
+              <button 
+                onClick={() => setExpanded(true)}
+                className="text-white/50 ml-1"
+              >
+                ещё
+              </button>
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Mentions */}
       {mentions && mentions.length > 0 && (
