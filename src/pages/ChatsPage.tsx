@@ -308,12 +308,11 @@ export function ChatsPage() {
               />
             </div>
             
-            {/* Title - shifts based on expand */}
+            {/* Title - always centered */}
             <h1 
               className="text-lg font-semibold absolute left-1/2 text-white"
               style={{
-                transform: `translateX(-50%) translateX(${(1 - expandProgress) * 30}px)`,
-                transition: 'transform 0.25s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                transform: 'translateX(-50%)',
               }}
             >
               Чаты
