@@ -143,7 +143,7 @@ export function ProfilePage() {
                 className="cursor-pointer"
                 onClick={() => profile.avatar_url ? setShowAvatarViewer(true) : null}
               >
-                
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
                 <GradientAvatar
                   name={profile.display_name || "User"}
                   seed={user?.id}
