@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { X, User, Mail, Calendar, Users } from "lucide-react";
+import { X, User, Mail, Calendar as CalendarIcon, Users } from "lucide-react";
+import { format, parse } from "date-fns";
+import { ru } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -209,16 +213,37 @@ export function RegistrationModal({ isOpen, onClose, phone, onSuccess }: Registr
             {/* Birth Date */}
             <div className="space-y-2">
               <Label className="text-white/80 text-sm">Дата рождения</Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                <Input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  required
-                  className="pl-10 h-12 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-white/40 focus:border-white/40 focus:ring-0 [color-scheme:dark]"
-                />
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-2 pl-10 pr-4 h-12 bg-white/10 border border-white/20 rounded-xl text-white text-left text-sm relative focus:border-white/40 transition-colors"
+                  >
+                    <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                    {birthDate 
+                      ? format(parse(birthDate, "yyyy-MM-dd", new Date()), "d MMMM yyyy", { locale: ru })
+                      : <span className="text-white/40">Выберите дату</span>
+                    }
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-transparent border-0 shadow-none" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={birthDate ? parse(birthDate, "yyyy-MM-dd", new Date()) : undefined}
+                    onSelect={(date) => {
+                      if (date) setBirthDate(format(date, "yyyy-MM-dd"));
+                    }}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                    locale={ru}
+                    captionLayout="dropdown-buttons"
+                    fromYear={1940}
+                    toYear={new Date().getFullYear()}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Gender */}
