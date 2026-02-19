@@ -53,7 +53,13 @@ export function ChatsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"chats" | "groups" | "channels">("chats");
   
-  
+  // Refetch when switching tabs
+  useEffect(() => {
+    if (activeFilter === "groups") refetchGroups();
+    else if (activeFilter === "channels") refetchChannels();
+    else refetch();
+  }, [activeFilter]);
+
   // Local scroll container for chat list
   const chatListRef = useRef<HTMLDivElement>(null);
   
@@ -156,8 +162,14 @@ export function ChatsPage() {
     }
   };
 
-  const handleGroupCreated = (groupId: string) => {
-    refetchGroups();
+  const handleGroupCreated = async (groupId: string) => {
+    setActiveFilter("groups");
+    await refetchGroups();
+    // Small delay to let groups load, then open the created group
+    setTimeout(() => {
+      const found = groups.find(g => g.id === groupId);
+      if (found) setSelectedGroup(found);
+    }, 800);
   };
 
   // Show auth prompt if not logged in
