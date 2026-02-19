@@ -226,7 +226,18 @@ export function RegistrationModal({ isOpen, onClose, phone, onSuccess }: Registr
                     }
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-transparent border-0 shadow-none" align="start">
+                <PopoverContent 
+                  className="w-auto p-0 bg-transparent border-0 shadow-none z-[9999]" 
+                  align="start"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  onInteractOutside={(e) => {
+                    // Prevent closing when interacting with dropdown selects inside calendar
+                    const target = e.target as HTMLElement;
+                    if (target?.closest?.('[role="listbox"]') || target?.closest?.('select')) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
                   <Calendar
                     mode="single"
                     selected={birthDate ? parse(birthDate, "yyyy-MM-dd", new Date()) : undefined}
@@ -237,9 +248,6 @@ export function RegistrationModal({ isOpen, onClose, phone, onSuccess }: Registr
                       date > new Date() || date < new Date("1900-01-01")
                     }
                     locale={ru}
-                    captionLayout="dropdown-buttons"
-                    fromYear={1940}
-                    toYear={new Date().getFullYear()}
                     className="pointer-events-auto"
                   />
                 </PopoverContent>
