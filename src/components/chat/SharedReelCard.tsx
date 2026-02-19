@@ -81,7 +81,7 @@ export function SharedReelCard({ reelId, isOwn, messageId, onDelete }: SharedRee
       isLongPress.current = false;
       return;
     }
-    navigate(`/reels`);
+    navigate(`/reels`, { state: { startReelId: reelId } });
   };
 
   const handleTouchStart = () => {

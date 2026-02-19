@@ -17,6 +17,7 @@ import { EmojiStickerPicker } from "./EmojiStickerPicker";
 import { AttachmentSheet } from "./AttachmentSheet";
 import { MediaPreviewOverlay } from "./MediaPreviewOverlay";
 import { VideoCircleRecorder } from "./VideoCircleRecorder";
+import { SharedReelCard } from "./SharedReelCard";
 
 interface GroupConversationProps {
   group: GroupChat;
@@ -472,6 +473,27 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                     </div>
                   )}
 
+                  {/* Shared Reel Card */}
+                  {message.shared_reel_id ? (
+                    <div
+                      onMouseDown={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
+                      onMouseUp={handleMessageLongPressEnd}
+                      onMouseLeave={handleMessageLongPressEnd}
+                      onTouchStart={(e) => handleMessageLongPressStart(message.id, message.content, isOwn, e)}
+                      onTouchEnd={handleMessageLongPressEnd}
+                    >
+                      {showSenderName && (
+                        <p className="text-[13px] font-medium mb-1 px-1" style={{ color: senderColor }}>
+                          {message.sender?.display_name || "Аноним"}
+                        </p>
+                      )}
+                      <SharedReelCard reelId={message.shared_reel_id} isOwn={isOwn} />
+                      <div className="flex items-center justify-end gap-1 mt-1 px-1">
+                        <span className="text-[11px] text-white/40">{formatMessageTime(message.created_at)}</span>
+                        {isOwn && <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />}
+                      </div>
+                    </div>
+                  ) : (
                   <div
                     className={`max-w-[75%] rounded-2xl px-3 py-2 select-none ${
                       isOwn
@@ -513,6 +535,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                       {isOwn && <CheckCheck className="w-4 h-4 text-[#6ab3f3]" />}
                     </div>
                   </div>
+                  )}
                   </div>
                 </div>
               );

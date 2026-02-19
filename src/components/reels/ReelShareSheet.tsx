@@ -9,7 +9,7 @@ import { useGroupChats } from "@/hooks/useGroupChats";
 import { useChannels } from "@/hooks/useChannels";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Drawer,
   DrawerContent,

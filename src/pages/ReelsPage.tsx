@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Heart,
   MessageCircle,
@@ -39,6 +39,7 @@ type FeedTab = "foryou" | "following";
 
 export function ReelsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { reels, loading, toggleLike, recordView, deleteReel, refetch } = useReels();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -86,9 +87,25 @@ export function ReelsPage() {
     return reels;
   }, [reels, activeTab, followingIds, user]);
 
-  const currentReel = filteredReels[currentIndex];
+  // Jump to specific reel if navigated with startReelId
+  useEffect(() => {
+    const startReelId = location.state?.startReelId;
+    if (!startReelId || filteredReels.length === 0) return;
+    const idx = filteredReels.findIndex(r => r.id === startReelId);
+    if (idx !== -1) {
+      setCurrentIndex(idx);
+      // Scroll to position
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollTop = idx * containerRef.current.clientHeight;
+        }
+      }, 100);
+    }
+    // Clear state so re-renders don't reset position
+    window.history.replaceState({}, '');
+  }, [filteredReels, location.state?.startReelId]);
 
-  // Record view
+  const currentReel = filteredReels[currentIndex];
   useEffect(() => {
     if (currentReel && !viewedReels.current.has(currentReel.id)) {
       viewedReels.current.add(currentReel.id);
