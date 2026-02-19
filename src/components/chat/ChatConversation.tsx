@@ -38,11 +38,12 @@ import { PinnedMessageBar } from "./PinnedMessageBar";
 import { ForwardSheet } from "./ForwardSheet";
 import { ReplyPreview, EditPreview, QuotedReply } from "./ReplyPreview";
 import { AnimatePresence, motion } from "framer-motion";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 
 interface ChatConversationProps {
   conversationId: string;
   chatName: string;
-  chatAvatar: string;
+  chatAvatar: string | null;
   otherUserId: string;
   onBack: () => void;
   participantCount?: number;
@@ -656,13 +657,15 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
           
           {/* Avatar + Name + Status - clickable to profile */}
           <button
-            onClick={() => navigate(`/contact/${otherUserId}`, { state: { name: chatName, avatar: chatAvatar, conversationId } })}
+            onClick={() => navigate(`/contact/${otherUserId}`, { state: { name: chatName, avatar: chatAvatar || undefined, conversationId } })}
             className="flex items-center gap-3 flex-1 min-w-0 hover:bg-white/5 rounded-lg px-2 py-1 transition-colors"
           >
-            <img
-              src={chatAvatar}
-              alt={chatName}
-              className="w-10 h-10 rounded-full object-cover bg-[#6ab3f3] flex-shrink-0"
+            <GradientAvatar
+              name={chatName}
+              seed={otherUserId}
+              avatarUrl={chatAvatar}
+              size="sm"
+              className="w-10 h-10 text-base flex-shrink-0"
             />
             <div className="flex flex-col items-start min-w-0">
               <h2 className="font-semibold text-white text-base truncate max-w-[180px]">{chatName}</h2>
@@ -887,10 +890,12 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
               {!isOwn && (
                 <div className="w-7 shrink-0">
                   {showAvatar && (
-                    <img 
-                      src={chatAvatar} 
-                      alt="" 
-                      className="w-7 h-7 rounded-full object-cover"
+                    <GradientAvatar
+                      name={chatName}
+                      seed={otherUserId}
+                      avatarUrl={chatAvatar}
+                      size="sm"
+                      className="w-7 h-7 text-xs"
                     />
                   )}
                 </div>

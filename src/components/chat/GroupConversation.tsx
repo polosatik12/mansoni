@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { ArrowLeft, Send, CheckCheck } from "lucide-react";
 import { useGroupMessages, GroupChat } from "@/hooks/useGroupChats";
 import { useAuth } from "@/hooks/useAuth";
@@ -249,13 +250,12 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                   {!isOwn && (
                     <div className="w-8 shrink-0">
                       {showAvatar && (
-                        <img
-                          src={
-                            message.sender?.avatar_url ||
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.sender_id}`
-                          }
-                          alt=""
-                          className="w-8 h-8 rounded-full object-cover"
+                        <GradientAvatar
+                          name={message.sender?.display_name || 'User'}
+                          seed={message.sender_id}
+                          avatarUrl={message.sender?.avatar_url || null}
+                          size="sm"
+                          className="w-8 h-8 text-xs"
                         />
                       )}
                     </div>
