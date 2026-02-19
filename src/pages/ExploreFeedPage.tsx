@@ -113,7 +113,7 @@ export function ExploreFeedPage() {
       <header className="sticky top-0 z-30 bg-black/30 backdrop-blur-xl border-b border-white/10 safe-area-top">
         <div className="flex items-center h-12 px-4">
           <button
-            onClick={() => { window.history.back(); }}
+            onClick={() => navigate("/search")}
             className="flex items-center justify-center w-10 h-10 -ml-2 rounded-full hover:bg-white/10 transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-white" />
