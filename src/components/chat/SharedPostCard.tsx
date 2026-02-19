@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Heart, MessageCircle, ChevronRight, Trash2 } from "lucide-react";
+import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
@@ -183,10 +184,12 @@ export function SharedPostCard({ postId, isOwn, messageId, onDelete }: SharedPos
         <div className="p-3">
           {/* Author info */}
           <div className="flex items-center gap-2 mb-2">
-            <img
-              src={post.author?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_id}`}
-              alt={authorName}
-              className="w-6 h-6 rounded-full object-cover"
+            <GradientAvatar
+              name={authorName}
+              seed={post.author_id}
+              avatarUrl={post.author?.avatar_url || null}
+              size="sm"
+              className="w-6 h-6 text-[10px]"
             />
             <span className="text-sm font-medium text-white truncate flex-1">
               {authorName}
