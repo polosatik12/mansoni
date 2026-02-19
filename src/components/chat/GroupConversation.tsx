@@ -517,7 +517,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
         </div>
 
         {/* Input */}
-        <div className="flex-shrink-0 relative z-10 backdrop-blur-xl bg-black/20 border-t border-white/10">
+        <div className="flex-shrink-0 relative z-10 backdrop-blur-xl bg-black/20">
           <div className="px-3 py-3">
             {isRecording ? (
               <div className="flex items-center gap-3">
