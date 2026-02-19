@@ -10,7 +10,6 @@ import {
   Shield,
   Crown,
   Trash2,
-  User,
 } from "lucide-react";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +17,7 @@ import { useGroupMembers, GroupChat } from "@/hooks/useGroupChats";
 import { useGroupManagement } from "@/hooks/useGroupManagement";
 import { EditGroupSheet } from "./EditGroupSheet";
 import { AddGroupMembersSheet } from "./AddGroupMembersSheet";
+import { ImageViewer } from "./ImageViewer";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -32,19 +32,22 @@ interface GroupInfoSheetProps {
   onClose: () => void;
   onLeave?: () => void;
   onGroupUpdated?: (updated: Partial<GroupChat>) => void;
+  onSearchOpen?: () => void;
 }
 
-export function GroupInfoSheet({ group, open, onClose, onLeave, onGroupUpdated }: GroupInfoSheetProps) {
+export function GroupInfoSheet({ group, open, onClose, onLeave, onGroupUpdated, onSearchOpen }: GroupInfoSheetProps) {
   const { user } = useAuth();
   const { members, loading, refetch: refetchMembers } = useGroupMembers(open ? group.id : null);
   const { removeMember, updateMemberRole } = useGroupManagement();
 
   const [editOpen, setEditOpen] = useState(false);
   const [addMembersOpen, setAddMembersOpen] = useState(false);
+  const [avatarViewerOpen, setAvatarViewerOpen] = useState(false);
 
   const isOwner = group.owner_id === user?.id;
   const currentMember = members.find((m) => m.user_id === user?.id);
   const isAdmin = currentMember?.role === "admin" || isOwner;
+
 
   const getRoleIcon = (role: string | null) => {
     if (role === "owner") return <Crown className="w-3.5 h-3.5 text-amber-400" />;
@@ -152,16 +155,21 @@ export function GroupInfoSheet({ group, open, onClose, onLeave, onGroupUpdated }
         <div className="flex-1 overflow-y-auto relative z-10">
           {/* Group avatar & name */}
           <div className="flex flex-col items-center pt-8 pb-4 px-4">
-            <GradientAvatar
-              name={group.name}
-              seed={group.id}
-              avatarUrl={group.avatar_url}
-              size="xl"
-            />
+            <button
+              onClick={() => group.avatar_url && setAvatarViewerOpen(true)}
+              className={group.avatar_url ? "cursor-pointer" : "cursor-default"}
+            >
+              <GradientAvatar
+                name={group.name}
+                seed={group.id}
+                avatarUrl={group.avatar_url}
+                size="xl"
+              />
+            </button>
             <h1 className="text-xl font-bold text-white mt-4">{group.name}</h1>
             <p className="text-sm text-white/50 mt-1">
-              {group.member_count} участник
-              {group.member_count === 1 ? "" : group.member_count < 5 ? "а" : "ов"}
+              {members.length} участник
+              {members.length === 1 ? "" : members.length < 5 ? "а" : "ов"}
             </p>
             {group.description && (
               <p className="text-sm text-white/70 mt-3 text-center max-w-[280px]">
@@ -172,13 +180,19 @@ export function GroupInfoSheet({ group, open, onClose, onLeave, onGroupUpdated }
 
           {/* Action buttons row */}
           <div className="flex items-center justify-center gap-6 py-4 border-t border-white/10 mx-4">
-            <button className="flex flex-col items-center gap-1.5 text-white/50">
+            <button
+              onClick={() => toast.info("Уведомления группы скоро появятся")}
+              className="flex flex-col items-center gap-1.5 text-white/60 hover:text-white transition-colors"
+            >
               <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
                 <Bell className="w-5 h-5" />
               </div>
               <span className="text-[11px]">Уведомления</span>
             </button>
-            <button className="flex flex-col items-center gap-1.5 text-white/50">
+            <button
+              onClick={() => { onClose(); onSearchOpen?.(); }}
+              className="flex flex-col items-center gap-1.5 text-white/60 hover:text-white transition-colors"
+            >
               <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
                 <Search className="w-5 h-5" />
               </div>
@@ -313,6 +327,17 @@ export function GroupInfoSheet({ group, open, onClose, onLeave, onGroupUpdated }
         onClose={() => setAddMembersOpen(false)}
         onMembersAdded={handleMembersAdded}
       />
+
+      {/* Avatar viewer */}
+      {avatarViewerOpen && group.avatar_url && (
+        <ImageViewer
+          src={group.avatar_url}
+          alt={group.name}
+          onClose={() => setAvatarViewerOpen(false)}
+        />
+      )}
     </>
   );
 }
+
+
