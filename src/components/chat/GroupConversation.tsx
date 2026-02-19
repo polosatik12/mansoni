@@ -381,29 +381,52 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
         </div>
 
         {/* Input */}
-        <div className="flex-shrink-0 px-2 py-2 pb-6 relative z-10 backdrop-blur-xl bg-black/20 border-t border-white/10 safe-area-bottom">
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Сообщение"
-                value={inputText}
-                onChange={(e) => {
-                  setInputText(e.target.value);
-                  sendTyping();
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="w-full h-11 px-4 rounded-full bg-[#242f3d] text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-[#6ab3f3]/30 transition-all"
-              />
+        <div className="flex-shrink-0 relative z-10 backdrop-blur-xl bg-black/20 border-t border-white/10">
+          <div className="px-3 py-3">
+            <div className="flex items-center gap-3">
+              {/* Input field - same style as ChatConversation */}
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Сообщение"
+                  value={inputText}
+                  onChange={(e) => {
+                    setInputText(e.target.value);
+                    sendTyping();
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                  className="w-full h-11 px-5 rounded-full text-white placeholder:text-white/50 outline-none bg-black/40 border-0 transition-all"
+                />
+              </div>
+              {/* Send button - same gradient as ChatConversation */}
+              {inputText.trim() ? (
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={handleSend}
+                  disabled={sending}
+                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all disabled:opacity-50"
+                  style={{
+                    background: 'linear-gradient(135deg, #00A3B4 0%, #0066CC 50%, #00C896 100%)',
+                    boxShadow: '0 0 25px rgba(0,163,180,0.5), 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <Send className="w-5 h-5 text-white" />
+                </button>
+              ) : (
+                <button
+                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all backdrop-blur-xl border border-cyan-400/30"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(0,163,180,0.3) 0%, rgba(0,102,204,0.2) 100%)',
+                    boxShadow: '0 0 20px rgba(0,163,180,0.3), inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 20px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  <Send className="w-5 h-5 text-cyan-300" />
+                </button>
+              )}
             </div>
-            <button
-              onClick={handleSend}
-              disabled={!inputText.trim() || sending}
-              className="w-11 h-11 rounded-full bg-[#6ab3f3] flex items-center justify-center shrink-0 disabled:opacity-50"
-            >
-              <Send className="w-5 h-5 text-white" />
-            </button>
           </div>
+          {/* Safe area for bottom */}
+          <div className="safe-area-bottom" />
         </div>
       </div>
 
