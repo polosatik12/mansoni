@@ -123,14 +123,14 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
       <div 
         ref={ref as React.Ref<HTMLDivElement>}
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-[100]",
+          "fixed left-0 right-0 z-[100]",
           "touch-none select-none",
-          "px-4 pb-[100px]",
+          "px-4",
           (keyboardOpen || hidden) && "pointer-events-none"
         )}
         style={{
           position: 'fixed',
-          bottom: 0,
+          bottom: 12,
           left: 0,
           right: 0,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
