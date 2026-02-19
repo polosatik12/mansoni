@@ -97,8 +97,9 @@ export function SearchPage() {
     navigate(`/user/${userId}`);
   };
 
-  const handlePostClick = (index: number) => {
-    navigate(`/explore/${index}`);
+  const handlePostClick = (index: number, tag?: string) => {
+    const tagParam = tag ? `?tag=${encodeURIComponent(tag)}` : "";
+    navigate(`/explore/${index}${tagParam}`);
   };
 
   return (
@@ -228,7 +229,7 @@ export function SearchPage() {
                   <div
                     key={post.id}
                     className="aspect-square relative group cursor-pointer overflow-hidden bg-muted"
-                    onClick={() => handlePostClick(index)}
+                    onClick={() => handlePostClick(index, activeHashtag || undefined)}
                   >
                     <img
                       src={post.post_media?.[0]?.media_url}
