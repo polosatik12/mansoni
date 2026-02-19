@@ -184,16 +184,18 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
     e.preventDefault();
     isHoldingRef.current = false;
     holdStartedRef.current = true;
-    if (recordMode === 'video') {
-      setVideoRecorderKey(prev => prev + 1);
-      setShowVideoRecorder(true);
-      holdStartedRef.current = false;
-      return;
-    }
+
+    // Hold threshold: 350ms — after that it's a "hold" (record), before that it's a "tap" (switch mode)
     holdTimerRef.current = setTimeout(() => {
       isHoldingRef.current = true;
-      startRecording();
-    }, 200);
+      if (recordMode === 'voice') {
+        startRecording();
+      } else {
+        // video mode — open circle recorder
+        setVideoRecorderKey(prev => prev + 1);
+        setShowVideoRecorder(true);
+      }
+    }, 350);
   }, [recordMode]);
 
   const handleRecordButtonUp = useCallback(() => {
@@ -201,8 +203,10 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
     holdStartedRef.current = false;
     if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
     if (isHoldingRef.current) {
+      // was a hold — stop voice recording if needed (video recorder handles itself)
       if (recordMode === 'voice' && isRecording) stopRecording();
     } else {
+      // was a tap — always switch mode
       setRecordMode(prev => prev === 'voice' ? 'video' : 'voice');
     }
     isHoldingRef.current = false;
