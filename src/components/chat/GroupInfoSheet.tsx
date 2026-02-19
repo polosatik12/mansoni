@@ -10,14 +10,15 @@ import {
   Shield,
   Crown,
   Trash2,
+  X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useGroupMembers, GroupChat } from "@/hooks/useGroupChats";
 import { useGroupManagement } from "@/hooks/useGroupManagement";
 import { EditGroupSheet } from "./EditGroupSheet";
 import { AddGroupMembersSheet } from "./AddGroupMembersSheet";
-import { ImageViewer } from "./ImageViewer";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -328,14 +329,39 @@ export function GroupInfoSheet({ group, open, onClose, onLeave, onGroupUpdated, 
         onMembersAdded={handleMembersAdded}
       />
 
-      {/* Avatar viewer */}
-      {avatarViewerOpen && group.avatar_url && (
-        <ImageViewer
-          src={group.avatar_url}
-          alt={group.name}
-          onClose={() => setAvatarViewerOpen(false)}
-        />
-      )}
+      {/* Avatar viewer — same style as profile AvatarViewer */}
+      <AnimatePresence>
+        {avatarViewerOpen && group.avatar_url && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[350] flex flex-col items-center justify-center"
+            onClick={() => setAvatarViewerOpen(false)}
+          >
+            <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 z-10">
+              <button
+                onClick={() => setAvatarViewerOpen(false)}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <span className="text-white font-semibold text-sm">{group.name}</span>
+              <div className="w-10" />
+            </div>
+            <motion.img
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              src={group.avatar_url}
+              alt={group.name}
+              className="w-72 h-72 rounded-full object-cover"
+              draggable={false}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
