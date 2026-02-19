@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 export type ContentFilter = 'all' | 'media' | 'text';
@@ -31,16 +31,6 @@ export function FeedFilters({ filter, onFilterChange }: FeedFiltersProps) {
           {f.label}
         </button>
       ))}
-      
-      {filter !== 'all' && (
-        <button
-          onClick={() => onFilterChange('all')}
-          className="p-1.5 rounded-full text-white/30 hover:text-white/50 transition-colors ml-auto"
-          aria-label="Сбросить фильтр"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
     </div>
   );
 }
