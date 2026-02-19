@@ -14,6 +14,8 @@ import { createQueryClient, createPersister } from "@/lib/queryClient";
 import { initErrorTracking } from "@/lib/sentry";
 import { Loader2 } from "lucide-react";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 
 // Initialize error tracking
 initErrorTracking();
@@ -58,6 +60,7 @@ function PageLoader() {
 }
 
 const App = () => (
+  <ErrorBoundary>
   <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}>
     <AuthProvider>
       <VideoCallProvider>
@@ -190,6 +193,7 @@ const App = () => (
       </VideoCallProvider>
     </AuthProvider>
   </PersistQueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
