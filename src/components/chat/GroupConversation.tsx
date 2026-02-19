@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { ArrowLeft, Send, CheckCheck, Search, X, Smile, Mic, Video } from "lucide-react";
 import { AttachmentIcon } from "./AttachmentIcon";
-import { useGroupMessages, GroupChat } from "@/hooks/useGroupChats";
+import { useGroupMessages, useGroupMembers, GroupChat } from "@/hooks/useGroupChats";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
 import { format } from "date-fns";
@@ -29,6 +29,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
   const { profile } = useProfile();
   const [group, setGroup] = useState(initialGroup);
   const { messages, loading, sendMessage } = useGroupMessages(group.id);
+  const { members } = useGroupMembers(group.id);
   const { setIsChatOpen } = useChatOpen();
   const { sendTyping, stopTyping, typingUsers } = useTypingIndicator(
     `typing:group:${group.id}`,
@@ -343,7 +344,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                 <p className={`text-xs ${typingUsers.length > 0 ? 'text-emerald-400 italic' : 'text-[#6ab3f3]'}`}>
                   {typingUsers.length > 0
                     ? formatTypingText(typingUsers)
-                    : `${group.member_count} участник${group.member_count === 1 ? '' : group.member_count! < 5 ? 'а' : 'ов'}`
+                    : `${members.length} участник${members.length === 1 ? '' : members.length < 5 ? 'а' : 'ов'}`
                   }
                 </p>
               </button>
