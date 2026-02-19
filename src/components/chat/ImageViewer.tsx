@@ -57,7 +57,7 @@ export function ImageViewer({ src, alt = "Image", onClose }: ImageViewerProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[80] flex items-center justify-center"
+        className="fixed inset-0 z-[350] flex items-center justify-center"
         style={{ backgroundColor: `rgba(0,0,0,${opacity})` }}
         onClick={handleBackdropClick}
       >
