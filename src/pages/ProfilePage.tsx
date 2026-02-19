@@ -125,10 +125,7 @@ export function ProfilePage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 pt-safe">
           <div className="w-10" />
-          <div className="flex items-center gap-1.5">
-            <h1 className="font-semibold text-lg text-white">{profile.display_name || 'Профиль'}</h1>
-            {profile.verified && <VerifiedBadge size="md" />}
-          </div>
+          <h1 className="font-semibold text-lg text-white">Профиль</h1>
           <button 
             onClick={() => navigate('/settings')}
             className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
