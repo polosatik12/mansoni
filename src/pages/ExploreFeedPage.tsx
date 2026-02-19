@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useSearch } from "@/hooks/useSearch";
@@ -12,10 +12,11 @@ export function ExploreFeedPage() {
   const { explorePosts, exploring, fetchExplorePosts } = useSearch();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolled = useRef(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   // Fetch posts on mount
   useEffect(() => {
-    fetchExplorePosts();
+    fetchExplorePosts().finally(() => setInitialLoad(false));
   }, [fetchExplorePosts]);
 
   // Scroll to selected post once posts are loaded
@@ -59,7 +60,7 @@ export function ExploreFeedPage() {
       </header>
 
       {/* Posts Feed */}
-      {exploring ? (
+      {exploring || initialLoad ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
