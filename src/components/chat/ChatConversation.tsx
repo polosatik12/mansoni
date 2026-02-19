@@ -405,18 +405,17 @@ export function ChatConversation({ conversationId, chatName, chatAvatar, otherUs
     isHoldingRef.current = false;
     holdStartedRef.current = true;
 
-    // In video mode, open recorder immediately on press (no hold needed)
-    if (recordMode === 'video') {
-      setVideoRecorderKey(prev => prev + 1);
-      setShowVideoRecorder(true);
-      holdStartedRef.current = false;
-      return;
-    }
-    
+    // Hold threshold: 350ms — after that it's a "hold" (record), before that it's a "tap" (switch mode)
     holdTimerRef.current = setTimeout(() => {
       isHoldingRef.current = true;
-      startRecording();
-    }, 200); // 200ms delay to distinguish tap from hold
+      if (recordMode === 'voice') {
+        startRecording();
+      } else {
+        // video mode — open circle recorder only on hold
+        setVideoRecorderKey(prev => prev + 1);
+        setShowVideoRecorder(true);
+      }
+    }, 350);
   }, [recordMode]);
 
   const handleRecordButtonUp = useCallback(() => {
