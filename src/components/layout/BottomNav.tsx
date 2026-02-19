@@ -125,7 +125,7 @@ export const BottomNav = forwardRef<HTMLElement, BottomNavProps>(function Bottom
         className={cn(
           "fixed bottom-0 left-0 right-0 z-[100]",
           "touch-none select-none",
-          "px-4 pb-1",
+          "px-4 pb-3",
           (keyboardOpen || hidden) && "pointer-events-none"
         )}
         style={{
