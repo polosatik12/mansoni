@@ -216,8 +216,11 @@ export function ContactProfilePage() {
 
         {/* Profile Section */}
         <div className="flex flex-col items-center px-4 pt-4 pb-6">
-          {/* Glass Avatar */}
-          <div className="relative mb-4">
+          {/* Glass Avatar - clickable */}
+          <button 
+            onClick={() => userId && navigate(`/user/${userId}`)}
+            className="relative mb-4"
+          >
             <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-white/10 backdrop-blur-xl" />
             <Avatar className="w-24 h-24 border-2 border-white/30 relative">
               <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.display_name || 'Contact'} />
@@ -225,10 +228,12 @@ export function ContactProfilePage() {
                 {profile?.display_name?.charAt(0)?.toUpperCase() || <User className="w-10 h-10" />}
               </AvatarFallback>
             </Avatar>
-          </div>
+          </button>
 
-          {/* Name & Status */}
-          <h1 className="text-xl font-semibold text-white mb-1">{profile?.display_name || 'Пользователь'}</h1>
+          {/* Name & Status - clickable */}
+          <button onClick={() => userId && navigate(`/user/${userId}`)}>
+            <h1 className="text-xl font-semibold text-white mb-1">{profile?.display_name || 'Пользователь'}</h1>
+          </button>
           <p className="text-sm text-white/60 mb-6">{getOnlineStatus()}</p>
 
           {/* Action Buttons */}
