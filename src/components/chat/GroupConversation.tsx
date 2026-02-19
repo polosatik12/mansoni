@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
-import { ArrowLeft, Send, CheckCheck } from "lucide-react";
+import { ArrowLeft, Send, CheckCheck, Search, X } from "lucide-react";
 import { useGroupMessages, GroupChat } from "@/hooks/useGroupChats";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
@@ -35,7 +35,10 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
   const [sending, setSending] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const searchResultRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
 
   // Context menu state
@@ -149,36 +152,69 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
   return (
     <>
       <div className="fixed inset-0 flex flex-col z-[200]">
-        {/* Header - clickable to open group info */}
+        {/* Header */}
         <div className="flex-shrink-0 safe-area-top relative z-10 backdrop-blur-xl bg-black/20 border-b border-white/10">
-          <div className="flex items-center px-2 py-2">
-            {/* Back button */}
-            <button
-              onClick={onBack}
-              className="flex items-center gap-1 px-2 py-1 text-[#6ab3f3] hover:bg-white/5 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-
-            {/* Center - Group info (clickable) */}
-            <button
-              onClick={() => setInfoOpen(true)}
-              className="flex-1 flex flex-col items-center justify-center min-w-0 hover:opacity-80 transition-opacity"
-            >
-              <h2 className="font-semibold text-white text-base truncate max-w-[200px]">
-                {group.name}
-              </h2>
-              <p className={`text-xs ${typingUsers.length > 0 ? 'text-emerald-400 italic' : 'text-[#6ab3f3]'}`}>
-                {typingUsers.length > 0
-                  ? formatTypingText(typingUsers)
-                  : `${group.member_count} участник${group.member_count === 1 ? '' : group.member_count! < 5 ? 'а' : 'ов'}`
-                }
-              </p>
-            </button>
-
-            {/* Spacer to balance back button */}
-            <div className="w-10" />
-          </div>
+          {searchOpen ? (
+            /* Search bar mode */
+            <div className="flex items-center gap-2 px-2 py-2">
+              <button
+                onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                className="flex items-center gap-1 px-2 py-1 text-[#6ab3f3] hover:bg-white/5 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Поиск по сообщениям..."
+                  autoFocus
+                  className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 outline-none focus:border-[#6ab3f3]/40 transition-colors text-sm"
+                />
+              </div>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="p-1.5 text-white/40 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ) : (
+            /* Normal header */
+            <div className="flex items-center px-2 py-2">
+              <button
+                onClick={onBack}
+                className="flex items-center gap-1 px-2 py-1 text-[#6ab3f3] hover:bg-white/5 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setInfoOpen(true)}
+                className="flex-1 flex flex-col items-center justify-center min-w-0 hover:opacity-80 transition-opacity"
+              >
+                <h2 className="font-semibold text-white text-base truncate max-w-[200px]">
+                  {group.name}
+                </h2>
+                <p className={`text-xs ${typingUsers.length > 0 ? 'text-emerald-400 italic' : 'text-[#6ab3f3]'}`}>
+                  {typingUsers.length > 0
+                    ? formatTypingText(typingUsers)
+                    : `${group.member_count} участник${group.member_count === 1 ? '' : group.member_count! < 5 ? 'а' : 'ов'}`
+                  }
+                </p>
+              </button>
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="p-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Messages - scrollable with animated brand background */}
@@ -233,14 +269,46 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
               </div>
             )}
 
-            {messages.map((message, index) => {
+            {/* Search results count */}
+            {searchOpen && searchQuery.trim() && (
+              <div className="text-center py-2">
+                <span className="text-xs text-white/40">
+                  {messages.filter(m => m.content.toLowerCase().includes(searchQuery.toLowerCase())).length} совпадений
+                </span>
+              </div>
+            )}
+
+            {messages
+              .filter(message =>
+                !searchOpen || !searchQuery.trim() ||
+                message.content.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((message, index, filteredArr) => {
               const isOwn = message.sender_id === user?.id;
-              const prevMessage = index > 0 ? messages[index - 1] : null;
+              const origIndex = messages.indexOf(message);
+              const prevMessage = origIndex > 0 ? messages[origIndex - 1] : null;
               const showAvatar =
                 !isOwn && (!prevMessage || prevMessage.sender_id !== message.sender_id);
               const showSenderName = !isOwn && showAvatar;
               const senderColor = getMemberColor(message.sender_id);
               const showDate = shouldShowDateSeparator(message.created_at, prevMessage?.created_at);
+              const isMatch = searchOpen && searchQuery.trim() &&
+                message.content.toLowerCase().includes(searchQuery.toLowerCase());
+
+              const highlightContent = (text: string) => {
+                if (!isMatch) return <span>{text}</span>;
+                const lower = text.toLowerCase();
+                const qLower = searchQuery.toLowerCase();
+                const idx = lower.indexOf(qLower);
+                if (idx === -1) return <span>{text}</span>;
+                return (
+                  <>
+                    {text.slice(0, idx)}
+                    <mark className="bg-yellow-400/40 text-white rounded px-0.5">{text.slice(idx, idx + searchQuery.length)}</mark>
+                    {text.slice(idx + searchQuery.length)}
+                  </>
+                );
+              };
 
               return (
                 <div key={message.id}>
@@ -293,7 +361,7 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
                     )}
 
                     <p className="text-[15px] leading-[1.4] whitespace-pre-wrap">
-                      {message.content}
+                      {highlightContent(message.content)}
                     </p>
 
                     {/* Time and read status */}

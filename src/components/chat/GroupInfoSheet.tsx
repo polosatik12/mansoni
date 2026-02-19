@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   ArrowLeft,
   Bell,
+  BellOff,
   Search,
   MoreVertical,
   UserPlus,
@@ -44,6 +45,15 @@ export function GroupInfoSheet({ group, open, onClose, onLeave, onGroupUpdated, 
   const [editOpen, setEditOpen] = useState(false);
   const [addMembersOpen, setAddMembersOpen] = useState(false);
   const [avatarViewerOpen, setAvatarViewerOpen] = useState(false);
+  const mutedKey = `group_muted_${group.id}`;
+  const [muted, setMuted] = useState(() => localStorage.getItem(mutedKey) === "true");
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    localStorage.setItem(mutedKey, String(next));
+    toast.success(next ? "Уведомления отключены" : "Уведомления включены");
+  };
 
   const isOwner = group.owner_id === user?.id;
   const currentMember = members.find((m) => m.user_id === user?.id);
@@ -182,13 +192,13 @@ export function GroupInfoSheet({ group, open, onClose, onLeave, onGroupUpdated, 
           {/* Action buttons row */}
           <div className="flex items-center justify-center gap-6 py-4 border-t border-white/10 mx-4">
             <button
-              onClick={() => toast.info("Уведомления группы скоро появятся")}
-              className="flex flex-col items-center gap-1.5 text-white/60 hover:text-white transition-colors"
+              onClick={toggleMute}
+              className={`flex flex-col items-center gap-1.5 transition-colors ${muted ? "text-white/40" : "text-white/60 hover:text-white"}`}
             >
-              <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
-                <Bell className="w-5 h-5" />
+              <div className={`w-11 h-11 rounded-full backdrop-blur-xl border flex items-center justify-center transition-colors ${muted ? "bg-white/5 border-white/10" : "bg-white/10 border-white/20"}`}>
+                {muted ? <BellOff className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
               </div>
-              <span className="text-[11px]">Уведомления</span>
+              <span className="text-[11px]">{muted ? "Включить" : "Выключить"}</span>
             </button>
             <button
               onClick={() => { onClose(); onSearchOpen?.(); }}
