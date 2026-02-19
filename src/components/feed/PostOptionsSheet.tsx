@@ -178,7 +178,7 @@ function GlassMenuItem({ icon: Icon, label, onClick, isDestructive, isLast }: {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 active:bg-white/15 transition-colors ${!isLast ? "border-b border-white/10" : ""}`}
+      className={`w-full flex items-center gap-2 px-4 py-3 hover:bg-white/10 active:bg-white/15 transition-colors ${!isLast ? "border-b border-white/10" : ""}`}
     >
       <Icon className={`w-5 h-5 ${isDestructive ? "text-red-400" : "text-white/80"}`} />
       <span className={`text-[15px] font-medium ${isDestructive ? "text-red-400" : "text-white/90"}`}>{label}</span>
