@@ -34,7 +34,9 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
 
   // Context menu state
   const [contextMenuMessage, setContextMenuMessage] = useState<{
@@ -344,7 +346,9 @@ export function GroupConversation({ group: initialGroup, onBack, onLeave }: Grou
         onClose={() => setInfoOpen(false)}
         onLeave={onLeave}
         onGroupUpdated={handleGroupUpdated}
+        onSearchOpen={() => setSearchOpen(true)}
       />
+
 
       {/* Message Context Menu */}
       {contextMenuMessage && (
