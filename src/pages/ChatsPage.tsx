@@ -378,8 +378,10 @@ export function ChatsPage() {
           ref={chatListRef}
           className="flex-1 overflow-y-auto overscroll-contain px-3 py-2"
         >
-          {/* Loading — skeleton */}
-          {(chatsLoading || channelsLoading || groupsLoading) && (
+          {/* Loading — skeleton (only for active filter) */}
+          {((activeFilter === "chats" && chatsLoading) ||
+            (activeFilter === "groups" && groupsLoading) ||
+            (activeFilter === "channels" && channelsLoading)) && (
             <ChatListSkeleton count={8} />
           )}
 
@@ -396,17 +398,32 @@ export function ChatsPage() {
             </div>
           )}
 
-          {/* Empty state */}
-          {!chatsLoading && !groupsLoading && !channelsLoading && !chatsError && 
-           conversations.length === 0 && groups.length === 0 && channels.length === 0 && (
+          {/* Empty state — only for the active filter */}
+          {activeFilter === "chats" && !chatsLoading && !chatsError && conversations.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-6">
               <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
                 <MessageCircle className="w-8 h-8 text-white/60" />
               </div>
               <h3 className="font-semibold mb-1 text-white">Нет чатов</h3>
-              <p className="text-sm text-white/60">
-                Найдите пользователей через поиск или создайте группу/канал
-              </p>
+              <p className="text-sm text-white/60">Найдите пользователей через поиск</p>
+            </div>
+          )}
+          {activeFilter === "groups" && !groupsLoading && groups.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
+                <Users className="w-8 h-8 text-white/60" />
+              </div>
+              <h3 className="font-semibold mb-1 text-white">Нет групп</h3>
+              <p className="text-sm text-white/60">Создайте группу через кнопку «+»</p>
+            </div>
+          )}
+          {activeFilter === "channels" && !channelsLoading && channels.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-4">
+                <Megaphone className="w-8 h-8 text-white/60" />
+              </div>
+              <h3 className="font-semibold mb-1 text-white">Нет каналов</h3>
+              <p className="text-sm text-white/60">Создайте канал через кнопку «+»</p>
             </div>
           )}
 
