@@ -265,16 +265,16 @@ export function ProfilePage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center p-3"
-                            style={{
-                              background: `linear-gradient(135deg, 
-                                hsl(${(post.id.charCodeAt(0) * 37) % 360}, 45%, 28%), 
-                                hsl(${(post.id.charCodeAt(1) * 53 + 60) % 360}, 50%, 22%))`
-                            }}
-                          >
-                            <p className="text-white text-[11px] font-medium line-clamp-5 text-center leading-snug drop-shadow-sm">
+                          <div className="w-full h-full flex flex-col justify-between p-2.5 bg-white/[0.07] border border-white/10">
+                            <p className="text-white text-[11px] font-normal line-clamp-6 leading-[1.45] break-words">
                               {post.content || "Пост"}
                             </p>
+                            <div className="flex items-center gap-1 mt-1.5">
+                              <div className="w-3.5 h-3.5 rounded-full bg-white/20 flex-shrink-0" />
+                              <span className="text-white/40 text-[9px] font-medium truncate">
+                                {profile.display_name || "Вы"}
+                              </span>
+                            </div>
                           </div>
                         )}
                         {isVideo && (
