@@ -15,7 +15,10 @@ interface HashtagResult {
   count: number;
 }
 
-const TREND_TAGS = ["новости", "технологии", "путешествия", "еда", "мода", "спорт"];
+interface TrendTag {
+  tag: string;
+  count: number;
+}
 
 function formatCount(n: number): string {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
@@ -32,29 +35,50 @@ export function SearchPage() {
   const [hashtagPosts, setHashtagPosts] = useState<any[]>([]);
   const [hashtagLoading, setHashtagLoading] = useState(false);
   const [activeHashtag, setActiveHashtag] = useState<string | null>(null);
-  const [trendCounts, setTrendCounts] = useState<Record<string, number>>({});
+  const [trendTags, setTrendTags] = useState<TrendTag[]>([]);
 
   useEffect(() => {
     fetchExplorePosts();
   }, [fetchExplorePosts]);
 
-  // Fetch real post counts for trending hashtags
+  // Dynamically fetch trending hashtags from post content
   useEffect(() => {
-    const fetchTrendCounts = async () => {
-      const counts: Record<string, number> = {};
-      await Promise.all(
-        TREND_TAGS.map(async (tag) => {
-          const { count } = await supabase
-            .from("posts")
-            .select("id", { count: "exact", head: true })
-            .eq("is_published", true)
-            .ilike("content", `%#${tag}%`);
-          counts[tag] = count ?? 0;
-        })
-      );
-      setTrendCounts(counts);
+    const fetchTrendingHashtags = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("posts")
+          .select("content")
+          .eq("is_published", true)
+          .not("content", "is", null)
+          .limit(500);
+
+        if (error) throw error;
+
+        // Extract all hashtags from post content
+        const tagCounts: Record<string, number> = {};
+        const hashtagRegex = /#([\wа-яёА-ЯЁ]+)/gu;
+
+        (data || []).forEach((post) => {
+          if (!post.content) return;
+          const matches = post.content.matchAll(hashtagRegex);
+          for (const match of matches) {
+            const tag = match[1].toLowerCase();
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          }
+        });
+
+        // Sort by count and take top 15
+        const sorted = Object.entries(tagCounts)
+          .map(([tag, count]) => ({ tag, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 15);
+
+        setTrendTags(sorted);
+      } catch (err) {
+        console.error("Error fetching trending hashtags:", err);
+      }
     };
-    fetchTrendCounts();
+    fetchTrendingHashtags();
   }, []);
 
   // Debounced search
@@ -296,7 +320,7 @@ export function SearchPage() {
             </div>
             <ScrollArea className="w-full whitespace-nowrap">
               <div className="flex gap-2">
-                {TREND_TAGS.map((tag) => (
+                {trendTags.map(({ tag, count }) => (
                   <button
                     key={tag}
                     onClick={() => handleTrendClick(tag)}
@@ -304,9 +328,7 @@ export function SearchPage() {
                   >
                     <Hash className="w-4 h-4 text-white/50" />
                     <span className="text-sm font-medium text-white">{tag}</span>
-                    {trendCounts[tag] !== undefined && (
-                      <span className="text-xs text-white/50">{formatCount(trendCounts[tag])}</span>
-                    )}
+                    <span className="text-xs text-white/50">{formatCount(count)}</span>
                   </button>
                 ))}
               </div>
