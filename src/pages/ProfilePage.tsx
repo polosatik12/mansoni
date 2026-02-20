@@ -265,8 +265,14 @@ export function ProfilePage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center p-2 bg-white/5">
-                            <p className="text-white/60 text-xs line-clamp-4 text-center leading-snug">
+                          <div className="w-full h-full flex items-center justify-center p-3"
+                            style={{
+                              background: `linear-gradient(135deg, 
+                                hsl(${(post.id.charCodeAt(0) * 37) % 360}, 45%, 28%), 
+                                hsl(${(post.id.charCodeAt(1) * 53 + 60) % 360}, 50%, 22%))`
+                            }}
+                          >
+                            <p className="text-white text-[11px] font-medium line-clamp-5 text-center leading-snug drop-shadow-sm">
                               {post.content || "Пост"}
                             </p>
                           </div>
