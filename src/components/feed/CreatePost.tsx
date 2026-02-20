@@ -19,21 +19,21 @@ export function CreatePost() {
 
   return (
     <>
-      <div className="px-4 py-3 bg-card border-b border-border flex items-center gap-3">
+      <div className="mx-4 my-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 flex items-center gap-3">
         <img
           src="https://i.pravatar.cc/150?img=32"
           alt="Your avatar"
           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
         />
         <div 
-          className="flex-1 text-muted-foreground text-sm cursor-pointer"
+          className="flex-1 text-white/50 text-sm cursor-pointer"
           onClick={() => setShowMenu(true)}
         >
           Что нового?
         </div>
         <Button 
           size="sm" 
-          className="rounded-full px-5 font-semibold h-9"
+          className="rounded-full px-5 font-semibold h-9 bg-white/20 hover:bg-white/30 text-white border border-white/20 backdrop-blur-sm"
           onClick={() => setShowMenu(true)}
         >
           Создать
