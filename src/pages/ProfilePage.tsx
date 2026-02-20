@@ -252,45 +252,69 @@ export function ProfilePage() {
                   <Loader2 className="w-8 h-8 animate-spin text-white/60" />
                 </div>
               ) : posts.length > 0 ? (
-                <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden">
-                  {posts.map((post) => {
-                    const imageUrl = getPostImage(post);
-                    const isVideo = post.post_media?.[0]?.media_type === 'video';
+                <div className="flex flex-col gap-2">
+                  {/* Photo posts grid */}
+                  {(() => {
+                    const photoPosts = posts.filter(p => getPostImage(p));
+                    const textPosts = posts.filter(p => !getPostImage(p));
                     return (
-                      <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10" onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}>
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={`Post ${post.id}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col justify-between p-2.5 bg-white/[0.07] border border-white/10">
-                            <p className="text-white text-[11px] font-normal line-clamp-6 leading-[1.45] break-words">
-                              {post.content || "Пост"}
-                            </p>
-                            <div className="flex items-center gap-1 mt-1.5">
-                              <div className="w-3.5 h-3.5 rounded-full bg-white/20 flex-shrink-0" />
-                              <span className="text-white/40 text-[9px] font-medium truncate">
-                                {profile.display_name || "Вы"}
-                              </span>
-                            </div>
+                      <>
+                        {photoPosts.length > 0 && (
+                          <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden">
+                            {photoPosts.map((post) => {
+                              const imageUrl = getPostImage(post);
+                              const isVideo = post.post_media?.[0]?.media_type === 'video';
+                              return (
+                                <div key={post.id} className="aspect-square relative group cursor-pointer overflow-hidden bg-white/10" onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}>
+                                  <img
+                                    src={imageUrl!}
+                                    alt={`Post ${post.id}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  {isVideo && (
+                                    <>
+                                      <div className="absolute top-2 right-2">
+                                        <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
+                                      </div>
+                                      <div className="absolute bottom-2 left-2 flex items-center gap-1">
+                                        <Eye className="w-4 h-4 text-white drop-shadow-lg" />
+                                        <span className="text-white text-xs font-medium drop-shadow-lg">{post.views_count}</span>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
-                        {isVideo && (
-                          <>
-                            <div className="absolute top-2 right-2">
-                              <Play className="w-5 h-5 text-white fill-white drop-shadow-lg" />
-                            </div>
-                            <div className="absolute bottom-2 left-2 flex items-center gap-1">
-                              <Eye className="w-4 h-4 text-white drop-shadow-lg" />
-                              <span className="text-white text-xs font-medium drop-shadow-lg">{post.views_count}</span>
-                            </div>
-                          </>
+
+                        {/* Text posts as Threads-style cards */}
+                        {textPosts.length > 0 && (
+                          <div className="flex flex-col gap-2 mt-1">
+                            {textPosts.map((post) => (
+                              <div
+                                key={post.id}
+                                className="w-full rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm px-4 py-3.5 cursor-pointer active:bg-white/10 transition-colors"
+                                onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}
+                              >
+                                <p className="text-white text-sm leading-relaxed line-clamp-5 break-words">
+                                  {post.content || "Пост"}
+                                </p>
+                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
+                                  <div className="w-5 h-5 rounded-full bg-white/20 flex-shrink-0 overflow-hidden">
+                                    {profile.avatar_url ? (
+                                      <img src={profile.avatar_url} className="w-full h-full object-cover" />
+                                    ) : null}
+                                  </div>
+                                  <span className="text-white/50 text-xs">{profile.display_name || "Вы"}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
-                      </div>
+                      </>
                     );
-                  })}
+                  })()}
                 </div>
               ) : (
                 <div className="py-12 text-center">
