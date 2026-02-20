@@ -15,14 +15,12 @@ interface HashtagResult {
   count: number;
 }
 
-const defaultTrends = [
-  { tag: "новости", posts: "12.5K" },
-  { tag: "технологии", posts: "8.2K" },
-  { tag: "путешествия", posts: "5.1K" },
-  { tag: "еда", posts: "15.3K" },
-  { tag: "мода", posts: "9.7K" },
-  { tag: "спорт", posts: "6.8K" },
-];
+const TREND_TAGS = ["новости", "технологии", "путешествия", "еда", "мода", "спорт"];
+
+function formatCount(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
 
 export function SearchPage() {
   const navigate = useNavigate();
@@ -34,10 +32,30 @@ export function SearchPage() {
   const [hashtagPosts, setHashtagPosts] = useState<any[]>([]);
   const [hashtagLoading, setHashtagLoading] = useState(false);
   const [activeHashtag, setActiveHashtag] = useState<string | null>(null);
+  const [trendCounts, setTrendCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchExplorePosts();
   }, [fetchExplorePosts]);
+
+  // Fetch real post counts for trending hashtags
+  useEffect(() => {
+    const fetchTrendCounts = async () => {
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        TREND_TAGS.map(async (tag) => {
+          const { count } = await supabase
+            .from("posts")
+            .select("id", { count: "exact", head: true })
+            .eq("is_published", true)
+            .ilike("content", `%#${tag}%`);
+          counts[tag] = count ?? 0;
+        })
+      );
+      setTrendCounts(counts);
+    };
+    fetchTrendCounts();
+  }, []);
 
   // Debounced search
   useEffect(() => {
@@ -278,15 +296,17 @@ export function SearchPage() {
             </div>
             <ScrollArea className="w-full whitespace-nowrap">
               <div className="flex gap-2">
-                {defaultTrends.map((trend) => (
+                {TREND_TAGS.map((tag) => (
                   <button
-                    key={trend.tag}
-                    onClick={() => handleTrendClick(trend.tag)}
+                    key={tag}
+                    onClick={() => handleTrendClick(tag)}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 transition-colors"
                   >
                     <Hash className="w-4 h-4 text-white/50" />
-                    <span className="text-sm font-medium text-white">{trend.tag}</span>
-                    <span className="text-xs text-white/50">{trend.posts}</span>
+                    <span className="text-sm font-medium text-white">{tag}</span>
+                    {trendCounts[tag] !== undefined && (
+                      <span className="text-xs text-white/50">{formatCount(trendCounts[tag])}</span>
+                    )}
                   </button>
                 ))}
               </div>
