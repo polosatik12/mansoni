@@ -228,6 +228,15 @@ export function PostEditorFlow({ isOpen, onClose }: PostEditorFlowProps) {
             </Button>
           </div>
 
+          {/* Text-only shortcut */}
+          <button
+            onClick={handleTextOnly}
+            className="relative z-10 w-full py-2.5 text-sm text-white/60 bg-white/5 border-b border-white/10 flex items-center justify-center gap-2 hover:bg-white/10 transition-colors"
+          >
+            <Type className="w-4 h-4" />
+            Текстовый пост без фото
+          </button>
+
           {/* Preview */}
           <div className="aspect-square relative overflow-hidden">
             {selectedImages.length > 0 ? (
