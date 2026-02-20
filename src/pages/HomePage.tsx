@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BrandBackground } from "@/components/ui/brand-background";
 import { usePosts } from "@/hooks/usePosts";
 import { usePresence } from "@/hooks/usePresence";
+import { CreatePost } from "@/components/feed/CreatePost";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -52,6 +53,8 @@ export function HomePage() {
       <div className="min-h-[100dvh] relative z-10">
         <FeedHeader />
         
+        <CreatePost />
+
         <FeedFilters 
           filter={contentFilter} 
           onFilterChange={setContentFilter} 
