@@ -3,7 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ProfileReelsGrid } from "@/components/profile/ProfileReelsGrid";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AvatarViewer } from "@/components/profile/AvatarViewer";
 import { cn } from "@/lib/utils";
@@ -11,12 +11,17 @@ import { CreateMenu } from "@/components/feed/CreateMenu";
 import { PostEditorFlow } from "@/components/feed/PostEditorFlow";
 import { StoryEditorFlow } from "@/components/feed/StoryEditorFlow";
 import { FollowersSheet } from "@/components/profile/FollowersSheet";
+import { CommentsSheet } from "@/components/feed/CommentsSheet";
+import { ShareSheet } from "@/components/feed/ShareSheet";
 import { useProfile, useUserPosts } from "@/hooks/useProfile";
 import { useSavedPosts } from "@/hooks/useSavedPosts";
 import { useAuth } from "@/hooks/useAuth";
+import { usePostActions } from "@/hooks/usePosts";
+import { supabase } from "@/integrations/supabase/client";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { BrandBackground } from "@/components/ui/brand-background";
+import { toast } from "sonner";
 
 const tabs = [
   { id: "posts", icon: Grid3X3, label: "Публикации" },
@@ -51,6 +56,50 @@ export function ProfilePage() {
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
   const [showAvatarViewer, setShowAvatarViewer] = useState(false);
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [sharePostId, setSharePostId] = useState<string | null>(null);
+  const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+
+  const { toggleLike } = usePostActions();
+
+  // Load like status for text posts
+  useEffect(() => {
+    if (!user || !posts.length) return;
+    const textPosts = posts.filter(p => !getPostImage(p));
+    if (!textPosts.length) return;
+    
+    const ids = textPosts.map(p => p.id);
+    const counts: Record<string, number> = {};
+    textPosts.forEach(p => { counts[p.id] = p.likes_count; });
+    setLikeCounts(counts);
+
+    supabase
+      .from('post_likes')
+      .select('post_id')
+      .eq('user_id', user.id)
+      .in('post_id', ids)
+      .then(({ data }) => {
+        const liked: Record<string, boolean> = {};
+        data?.forEach(r => { liked[r.post_id] = true; });
+        setLikedPosts(liked);
+      });
+  }, [user, posts]);
+
+  const handleToggleLike = useCallback(async (postId: string) => {
+    const isLiked = !!likedPosts[postId];
+    // Optimistic update
+    setLikedPosts(prev => ({ ...prev, [postId]: !isLiked }));
+    setLikeCounts(prev => ({ ...prev, [postId]: (prev[postId] || 0) + (isLiked ? -1 : 1) }));
+    
+    const { error } = await toggleLike(postId, isLiked);
+    if (error) {
+      // Revert
+      setLikedPosts(prev => ({ ...prev, [postId]: isLiked }));
+      setLikeCounts(prev => ({ ...prev, [postId]: (prev[postId] || 0) + (isLiked ? 1 : -1) }));
+      toast.error("Не удалось обновить лайк");
+    }
+  }, [likedPosts, toggleLike]);
 
   // Open saved tab from URL param
   useEffect(() => {
@@ -388,7 +437,7 @@ export function ProfilePage() {
                               <span className="text-white/40 text-sm">· {formatTimeAgo(post.created_at)}</span>
                             </div>
                             <button
-                              onClick={(e) => { e.stopPropagation(); }}
+                              onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }}
                               className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors -mr-1"
                             >
                               <MoreHorizontal className="w-4 h-4 text-white/50" />
@@ -399,18 +448,33 @@ export function ProfilePage() {
                           </p>
                           {/* Action icons */}
                           <div className="flex items-center gap-5 mt-3">
-                            <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all">
-                              <Heart className="w-[18px] h-[18px]" />
-                              {post.likes_count > 0 && <span className="text-xs">{post.likes_count}</span>}
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleToggleLike(post.id); }} 
+                              className={cn(
+                                "flex items-center gap-1.5 active:scale-90 transition-all",
+                                likedPosts[post.id] ? "text-red-500" : "text-white/40 hover:text-white/70"
+                              )}
+                            >
+                              <Heart className={cn("w-[18px] h-[18px]", likedPosts[post.id] && "fill-current")} />
+                              {(likeCounts[post.id] || 0) > 0 && <span className="text-xs">{likeCounts[post.id]}</span>}
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setCommentsPostId(post.id); }} 
+                              className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all"
+                            >
                               <MessageCircle className="w-[18px] h-[18px]" />
                               {post.comments_count > 0 && <span className="text-xs">{post.comments_count}</span>}
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); toast.success("Репост!"); }} 
+                              className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all"
+                            >
                               <Repeat2 className="w-[18px] h-[18px]" />
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setSharePostId(post.id); }} 
+                              className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all"
+                            >
                               <Send className="w-[18px] h-[18px]" />
                             </button>
                           </div>
@@ -488,6 +552,26 @@ export function ProfilePage() {
           name={profile.display_name || "Профиль"}
           isOpen={showAvatarViewer}
           onClose={() => setShowAvatarViewer(false)}
+        />
+      )}
+
+      {/* Comments Sheet */}
+      {commentsPostId && (
+        <CommentsSheet
+          isOpen={!!commentsPostId}
+          onClose={() => setCommentsPostId(null)}
+          postId={commentsPostId}
+          commentsCount={posts.find(p => p.id === commentsPostId)?.comments_count || 0}
+        />
+      )}
+
+      {/* Share Sheet */}
+      {sharePostId && (
+        <ShareSheet
+          isOpen={!!sharePostId}
+          onClose={() => setSharePostId(null)}
+          postId={sharePostId}
+          postContent={posts.find(p => p.id === sharePostId)?.content || ""}
         />
       )}
     </div>
