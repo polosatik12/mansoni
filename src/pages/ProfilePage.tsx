@@ -1,4 +1,6 @@
-import { Settings, Grid3X3, Bookmark, Play, Plus, AtSign, Share2, Eye, User, Loader2, Edit3, QrCode } from "lucide-react";
+import { Settings, Grid3X3, Bookmark, Play, Plus, AtSign, Share2, Eye, User, Loader2, Edit3, QrCode, Heart, MessageCircle, Repeat2, Send, MoreHorizontal } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 import { ProfileReelsGrid } from "@/components/profile/ProfileReelsGrid";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -353,6 +355,11 @@ export function ProfilePage() {
                 </div>
               ) : (() => {
                 const textPosts = posts.filter(p => !getPostImage(p));
+                const formatTimeAgo = (dateString: string) => {
+                  try {
+                    return formatDistanceToNow(new Date(dateString), { addSuffix: false, locale: ru });
+                  } catch { return ""; }
+                };
                 return textPosts.length > 0 ? (
                   <div className="flex flex-col divide-y divide-white/[0.08]">
                     {textPosts.map((post) => (
@@ -374,16 +381,47 @@ export function ProfilePage() {
                         </div>
                         {/* Right: content */}
                         <div className="flex-1 min-w-0 pt-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-white font-semibold text-sm">{profile.display_name || "Вы"}</span>
-                            {profile.verified && <VerifiedBadge size="sm" />}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-white font-semibold text-[15px]">{profile.display_name || "Вы"}</span>
+                              {profile.verified && <VerifiedBadge size="sm" />}
+                              <span className="text-white/40 text-sm">· {formatTimeAgo(post.created_at)}</span>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); }}
+                              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors -mr-1"
+                            >
+                              <MoreHorizontal className="w-4 h-4 text-white/50" />
+                            </button>
                           </div>
-                          <p className="text-white/80 text-[15px] leading-relaxed mt-1 break-words whitespace-pre-wrap">
+                          <p className="text-white/90 text-[15px] leading-relaxed mt-1 break-words whitespace-pre-wrap">
                             {post.content || "Пост"}
                           </p>
-                          <div className="flex items-center gap-4 mt-2.5 text-white/40 text-xs">
-                            <span>{new Date(post.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
+                          {/* Action icons */}
+                          <div className="flex items-center gap-5 mt-3">
+                            <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors">
+                              <Heart className="w-[18px] h-[18px]" />
+                              {post.likes_count > 0 && <span className="text-xs">{post.likes_count}</span>}
+                            </button>
+                            <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors">
+                              <MessageCircle className="w-[18px] h-[18px]" />
+                              {post.comments_count > 0 && <span className="text-xs">{post.comments_count}</span>}
+                            </button>
+                            <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors">
+                              <Repeat2 className="w-[18px] h-[18px]" />
+                            </button>
+                            <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors">
+                              <Send className="w-[18px] h-[18px]" />
+                            </button>
                           </div>
+                          {/* Replies count */}
+                          {(post.comments_count > 0 || post.likes_count > 0) && (
+                            <div className="flex items-center gap-2 mt-2 text-white/30 text-xs">
+                              {post.comments_count > 0 && <span>{post.comments_count} ответ{post.comments_count > 1 ? (post.comments_count < 5 ? 'а' : 'ов') : ''}</span>}
+                              {post.comments_count > 0 && post.likes_count > 0 && <span>·</span>}
+                              {post.likes_count > 0 && <span>{post.likes_count} отмет{post.likes_count > 1 ? (post.likes_count < 5 ? 'ки' : 'ок') : 'ка'} «Нравится»</span>}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
