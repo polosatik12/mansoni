@@ -399,18 +399,18 @@ export function ProfilePage() {
                           </p>
                           {/* Action icons */}
                           <div className="flex items-center gap-5 mt-3">
-                            <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors">
+                            <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all">
                               <Heart className="w-[18px] h-[18px]" />
                               {post.likes_count > 0 && <span className="text-xs">{post.likes_count}</span>}
                             </button>
-                            <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors">
+                            <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all">
                               <MessageCircle className="w-[18px] h-[18px]" />
                               {post.comments_count > 0 && <span className="text-xs">{post.comments_count}</span>}
                             </button>
-                            <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors">
+                            <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all">
                               <Repeat2 className="w-[18px] h-[18px]" />
                             </button>
-                            <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors">
+                            <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`); }} className="flex items-center gap-1.5 text-white/40 hover:text-white/70 active:scale-90 transition-all">
                               <Send className="w-[18px] h-[18px]" />
                             </button>
                           </div>
