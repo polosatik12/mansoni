@@ -294,7 +294,7 @@ export function ProfilePage() {
                             {textPosts.map((post) => (
                               <div
                                 key={post.id}
-                                className="w-full rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm px-4 py-3.5 cursor-pointer active:bg-white/10 transition-colors"
+                                className="w-full rounded-2xl bg-black/40 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/20 px-4 py-3.5 cursor-pointer active:bg-black/50 transition-colors"
                                 onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}
                               >
                                 <p className="text-white text-sm leading-relaxed line-clamp-5 break-words">
