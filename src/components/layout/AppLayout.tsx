@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { ScrollContainerProvider } from "@/contexts/ScrollContainerContext";
 import { useChatOpen } from "@/contexts/ChatOpenContext";
+import { useSwipeBack } from "@/hooks/useSwipeBack";
 import { cn } from "@/lib/utils";
 
 export function AppLayout() {
@@ -10,6 +11,10 @@ export function AppLayout() {
   const location = useLocation();
   const { shouldHideBottomNav } = useChatOpen();
   const isReelsPage = location.pathname === "/reels";
+  const isHomePage = location.pathname === "/";
+  
+  // Enable swipe-back on all pages except home
+  useSwipeBack({ enabled: !isHomePage });
 
   return (
     <div 
