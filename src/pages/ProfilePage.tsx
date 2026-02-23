@@ -354,24 +354,31 @@ export function ProfilePage() {
               ) : (() => {
                 const textPosts = posts.filter(p => !getPostImage(p));
                 return textPosts.length > 0 ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-3">
                     {textPosts.map((post) => (
                       <div
                         key={post.id}
-                        className="w-full rounded-2xl bg-black/40 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/20 px-4 py-3.5 cursor-pointer active:bg-black/50 transition-colors"
+                        className="relative w-full rounded-2xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
                         onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}
                       >
-                        <p className="text-white text-sm leading-relaxed line-clamp-5 break-words">
-                          {post.content || "Пост"}
-                        </p>
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
-                          <div className="w-5 h-5 rounded-full bg-white/20 flex-shrink-0 overflow-hidden">
-                            {profile.avatar_url ? (
-                              <img src={profile.avatar_url} className="w-full h-full object-cover" />
-                            ) : null}
+                        {/* Glass card */}
+                        <div className="bg-white/[0.08] backdrop-blur-2xl border border-white/[0.15] rounded-2xl px-4 pt-4 pb-3">
+                          <p className="text-white/90 text-[15px] leading-relaxed line-clamp-6 break-words font-light">
+                            {post.content || "Пост"}
+                          </p>
+                          <div className="flex items-center gap-2.5 mt-3 pt-3 border-t border-white/[0.08]">
+                            <GradientAvatar
+                              name={profile.display_name || "User"}
+                              seed={user?.id}
+                              avatarUrl={profile.avatar_url}
+                              size="sm"
+                              className="!w-6 !h-6 !text-[10px]"
+                            />
+                            <span className="text-white/50 text-xs font-medium">{profile.display_name || "Вы"}</span>
                           </div>
-                          <span className="text-white/50 text-xs">{profile.display_name || "Вы"}</span>
                         </div>
+                        {/* Bottom gradient accent */}
+                        <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent rounded-full" />
                       </div>
                     ))}
                   </div>
