@@ -478,14 +478,6 @@ export function ProfilePage() {
                               <Send className="w-[18px] h-[18px]" />
                             </button>
                           </div>
-                          {/* Replies count */}
-                          {(post.comments_count > 0 || post.likes_count > 0) && (
-                            <div className="flex items-center gap-2 mt-2 text-white/30 text-xs">
-                              {post.comments_count > 0 && <span>{post.comments_count} ответ{post.comments_count > 1 ? (post.comments_count < 5 ? 'а' : 'ов') : ''}</span>}
-                              {post.comments_count > 0 && post.likes_count > 0 && <span>·</span>}
-                              {post.likes_count > 0 && <span>{post.likes_count} отмет{post.likes_count > 1 ? (post.likes_count < 5 ? 'ки' : 'ок') : 'ка'} «Нравится»</span>}
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}
