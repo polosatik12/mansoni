@@ -354,31 +354,37 @@ export function ProfilePage() {
               ) : (() => {
                 const textPosts = posts.filter(p => !getPostImage(p));
                 return textPosts.length > 0 ? (
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col divide-y divide-white/[0.08]">
                     {textPosts.map((post) => (
                       <div
                         key={post.id}
-                        className="relative w-full rounded-2xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+                        className="flex gap-3 py-4 cursor-pointer active:bg-white/[0.03] transition-colors"
                         onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}
                       >
-                        {/* Glass card */}
-                        <div className="bg-white/[0.08] backdrop-blur-2xl border border-white/[0.15] rounded-2xl px-4 pt-4 pb-3">
-                          <p className="text-white/90 text-[15px] leading-relaxed line-clamp-6 break-words font-light">
+                        {/* Left: avatar + thread line */}
+                        <div className="flex flex-col items-center">
+                          <GradientAvatar
+                            name={profile.display_name || "User"}
+                            seed={user?.id}
+                            avatarUrl={profile.avatar_url}
+                            size="sm"
+                            className="!w-9 !h-9"
+                          />
+                          <div className="flex-1 w-[2px] bg-white/[0.1] mt-2 rounded-full min-h-[8px]" />
+                        </div>
+                        {/* Right: content */}
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-white font-semibold text-sm">{profile.display_name || "Вы"}</span>
+                            {profile.verified && <VerifiedBadge size="sm" />}
+                          </div>
+                          <p className="text-white/80 text-[15px] leading-relaxed mt-1 break-words whitespace-pre-wrap">
                             {post.content || "Пост"}
                           </p>
-                          <div className="flex items-center gap-2.5 mt-3 pt-3 border-t border-white/[0.08]">
-                            <GradientAvatar
-                              name={profile.display_name || "User"}
-                              seed={user?.id}
-                              avatarUrl={profile.avatar_url}
-                              size="sm"
-                              className="!w-6 !h-6 !text-[10px]"
-                            />
-                            <span className="text-white/50 text-xs font-medium">{profile.display_name || "Вы"}</span>
+                          <div className="flex items-center gap-4 mt-2.5 text-white/40 text-xs">
+                            <span>{new Date(post.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
                           </div>
                         </div>
-                        {/* Bottom gradient accent */}
-                        <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent rounded-full" />
                       </div>
                     ))}
                   </div>
