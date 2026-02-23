@@ -254,12 +254,11 @@ export function ProfilePage() {
               ) : posts.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {/* Photo posts grid */}
-                  {(() => {
+                {(() => {
                     const photoPosts = posts.filter(p => getPostImage(p));
-                    const textPosts = posts.filter(p => !getPostImage(p));
                     return (
                       <>
-                        {photoPosts.length > 0 && (
+                {photoPosts.length > 0 && (
                           <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden">
                             {photoPosts.map((post) => {
                               const imageUrl = getPostImage(post);
@@ -285,31 +284,6 @@ export function ProfilePage() {
                                 </div>
                               );
                             })}
-                          </div>
-                        )}
-
-                        {/* Text posts as Threads-style cards */}
-                        {textPosts.length > 0 && (
-                          <div className="flex flex-col gap-2 mt-1">
-                            {textPosts.map((post) => (
-                              <div
-                                key={post.id}
-                                className="w-full rounded-2xl bg-black/40 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/20 px-4 py-3.5 cursor-pointer active:bg-black/50 transition-colors"
-                                onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}
-                              >
-                                <p className="text-white text-sm leading-relaxed line-clamp-5 break-words">
-                                  {post.content || "Пост"}
-                                </p>
-                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
-                                  <div className="w-5 h-5 rounded-full bg-white/20 flex-shrink-0 overflow-hidden">
-                                    {profile.avatar_url ? (
-                                      <img src={profile.avatar_url} className="w-full h-full object-cover" />
-                                    ) : null}
-                                  </div>
-                                  <span className="text-white/50 text-xs">{profile.display_name || "Вы"}</span>
-                                </div>
-                              </div>
-                            ))}
                           </div>
                         )}
                       </>
@@ -372,13 +346,46 @@ export function ProfilePage() {
           )}
 
           {activeTab === "tagged" && (
-            <div className="py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
-                <AtSign className="w-8 h-8 text-white/60" />
-              </div>
-              <h3 className="font-semibold text-white mb-1">Отметки</h3>
-              <p className="text-sm text-white/60">Публикации с вашими отметками</p>
-            </div>
+            <>
+              {postsLoading ? (
+                <div className="p-12 flex justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-white/60" />
+                </div>
+              ) : (() => {
+                const textPosts = posts.filter(p => !getPostImage(p));
+                return textPosts.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {textPosts.map((post) => (
+                      <div
+                        key={post.id}
+                        className="w-full rounded-2xl bg-black/40 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/20 px-4 py-3.5 cursor-pointer active:bg-black/50 transition-colors"
+                        onClick={() => navigate(`/profile-posts/${user.id}?startPost=${post.id}`)}
+                      >
+                        <p className="text-white text-sm leading-relaxed line-clamp-5 break-words">
+                          {post.content || "Пост"}
+                        </p>
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
+                          <div className="w-5 h-5 rounded-full bg-white/20 flex-shrink-0 overflow-hidden">
+                            {profile.avatar_url ? (
+                              <img src={profile.avatar_url} className="w-full h-full object-cover" />
+                            ) : null}
+                          </div>
+                          <span className="text-white/50 text-xs">{profile.display_name || "Вы"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-3">
+                      <AtSign className="w-8 h-8 text-white/60" />
+                    </div>
+                    <h3 className="font-semibold text-white mb-1">Отметки</h3>
+                    <p className="text-sm text-white/60">Публикации с вашими отметками</p>
+                  </div>
+                );
+              })()}
+            </>
           )}
         </div>
       </div>
