@@ -208,7 +208,7 @@ export function ShareSheet({
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="h-[70dvh] max-h-[70dvh] mt-0 flex flex-col border-0 bg-transparent">
         <div
-          className="h-full flex flex-col rounded-t-2xl overflow-hidden border border-white/20"
+          className="h-full flex flex-col rounded-t-2xl overflow-hidden border border-white/20 border-t-0"
           style={{
             background: "rgba(255,255,255,0.08)",
             backdropFilter: "blur(24px) saturate(1.5)",
